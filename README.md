@@ -1,4 +1,5 @@
 # **Repository for cafepy package** #
+## - A Python package for computing diagnostics and verifications using the CAFE system output 
 ### Contact: Dougie Squire ###
 
 --------------------------
