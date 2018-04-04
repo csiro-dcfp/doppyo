@@ -5,9 +5,9 @@
     Python Version: 3.6
 """
 
-__all__ = ['find_other_dims', 'did_event', 'compute_likelihood', 'categorize', 'sum_contingency',
-          'calc_difference', 'calc_division', 'calc_integral', 'compute_pdf', 'compute_cdf', 
-          'compute_rank', 'compute_histogram']
+__all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_histogram',
+           'calc_integral', 'calc_difference', 'calc_division', 'calc_boxavg_latlon',
+           'make_lon_positive', 'find_other_dims']
 
 # ===================================================================================================
 # Packages

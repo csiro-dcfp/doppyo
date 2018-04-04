@@ -13,7 +13,8 @@ __all__ = ['compute_rank_histogram', 'compute_rps', 'compute_reliability', 'comp
            'compute_threat_score', 'compute_equit_threat_score', 'compute_odds_ratio',
            'compute_odds_ratio_skill', 'compute_mean_additive_bias', 
            'compute_mean_multiplicative_bias', 'compute_mean_absolute_error', 
-           'compute_mean_squared_error', 'compute_rms_error', 'did_event', 'compute_likelihood']
+           'compute_mean_squared_error', 'compute_rms_error', 'did_event', 'compute_likelihood',
+           'sum_contingency']
 
 # ===================================================================================================
 # Packages
