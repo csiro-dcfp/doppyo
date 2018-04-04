@@ -1,0 +1,38 @@
+# Specific local files8
+/python_charmers/Data
+/python_charmers/Notebooks
+
+# python and jupyter notebook files
+.ipynb_checkpoints
+__pycache__
+
+# Mac stuff
+._*
+
+# Standard error output files
+*.err
+
+# excel files
+*.xlsx
+*.xl
+
+# nc files
+*.nc
+!ncar_landsea_mask.nc
+
+# mac files
+.DS_Store
+
+# Backup files
+*.bak
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
