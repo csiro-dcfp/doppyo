@@ -1,6 +1,4 @@
-# Specific local files8
-/python_charmers/Data
-/python_charmers/Notebooks
+# Specific local files
 
 # python and jupyter notebook files
 .ipynb_checkpoints
@@ -18,7 +16,6 @@ __pycache__
 
 # nc files
 *.nc
-!ncar_landsea_mask.nc
 
 # mac files
 .DS_Store
