@@ -1,5 +1,5 @@
 """
-    Functions for assessing one data-set relative to another (usually model output to observation)
+    pyLatte functions for assessing one data-set relative to another (usually model output to observation)
     Author: Dougie Squire
     Date created: 04/04/2018
     Python Version: 3.6
@@ -23,7 +23,7 @@ import numpy as np
 import xarray as xr
 
 # Load cafepy packages -----
-from cafepy import cafeutils
+from cafepy import utils
 
 
 # ===================================================================================================
@@ -33,7 +33,7 @@ def compute_rank_histogram(fcst, obsv, indep_dims, ensemble_dim='ensemble'):
     """ Returns rank histogram """
     
     # Rank the data -----
-    da_ranked = cafeutils.compute_rank(fcst, obsv, dim=ensemble_dim)
+    da_ranked = utils.compute_rank(fcst, obsv, dim=ensemble_dim)
 
     # Initialise bins -----
     bins = range(1,len(fcst[ensemble_dim])+2)
@@ -42,7 +42,7 @@ def compute_rank_histogram(fcst, obsv, indep_dims, ensemble_dim='ensemble'):
                                  bins[:-1]+dbin, 
                                  [bins[-1]+dbin[-1]]))
     
-    return cafeutils.compute_histogram(da_ranked, bin_edges, dims=indep_dims)
+    return utils.compute_histogram(da_ranked, bin_edges, dims=indep_dims)
 
 
 # ===================================================================================================
@@ -61,10 +61,10 @@ def compute_rps(fcst, obsv, bins, indep_dims, ensemble_dim):
                                  [bins[-1]+dbin[-1]]))
 
     # Compute cumulative density functions -----
-    cdf_fcst = cafeutils.compute_cdf(fcst, bin_edges=bin_edges, dim=ensemble_dim)
-    cdf_obsv = cafeutils.compute_cdf(obsv, bin_edges=bin_edges, dim=None)
+    cdf_fcst = utils.compute_cdf(fcst, bin_edges=bin_edges, dim=ensemble_dim)
+    cdf_obsv = utils.compute_cdf(obsv, bin_edges=bin_edges, dim=None)
     
-    return cafeutils.calc_integral((cdf_fcst - cdf_obsv) ** 2, dim='bins').mean(dim=indep_dims)
+    return utils.calc_integral((cdf_fcst - cdf_obsv) ** 2, dim='bins').mean(dim=indep_dims)
 
 
 # ===================================================================================================
@@ -202,10 +202,10 @@ def compute_discrimination(fcst_likelihood, obsv_logical, fcst_prob, indep_dims)
 
     # Compute histogram of forecast likelihoods when observation is True/False -----
     replace_val = 100*max(fcst_prob_edges) # Replace nans with a value not in any bin
-    hist_obsved = cafeutils.compute_histogram(fcst_likelihood.where(obsv_logical == True) \
+    hist_obsved = utils.compute_histogram(fcst_likelihood.where(obsv_logical == True) \
                                                              .fillna(replace_val), 
                                               fcst_prob_edges, dims=indep_dims)
-    hist_not_obsved = cafeutils.compute_histogram(fcst_likelihood.where(obsv_logical == False) \
+    hist_not_obsved = utils.compute_histogram(fcst_likelihood.where(obsv_logical == False) \
                                                                  .fillna(replace_val), 
                                                   fcst_prob_edges, dims=indep_dims)
     
@@ -360,8 +360,8 @@ def calc_contingency(fcst, obsv, category_edges, indep_dims):
 def compute_contingency_table(da_fcst, da_obsv, category_edges, indep_dims, ensemble_dim=None):
     """ Return contingency table for given categories """
     
-    fcst_categorized = cafeutils.categorize(da_fcst, category_edges)
-    obsv_categorized = cafeutils.categorize(da_obsv, category_edges)
+    fcst_categorized = utils.categorize(da_fcst, category_edges)
+    obsv_categorized = utils.categorize(da_obsv, category_edges)
     
     if ensemble_dim == None:
         contingency = fcst_categorized.to_dataset('contingency') \
@@ -673,12 +673,12 @@ def compute_mean_additive_bias(fcst, obsv, indep_dims, ensemble_dim=None):
 
     if ensemble_dim == None:
         mean_additive_bias = fcst.to_dataset('mean_additive_bias') \
-                                 .apply(cafeutils.calc_difference, obsv=obsv) \
+                                 .apply(utils.calc_difference, obsv=obsv) \
                                  .mean(dim=indep_dims)['mean_additive_bias']
     else:
         fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
         mean_additive_bias = fcst.groupby(ensemble_dim) \
-                                 .apply(cafeutils.calc_difference, obsv=obsv) \
+                                 .apply(utils.calc_difference, obsv=obsv) \
                                  .mean(dim=fcst_mean_dims) \
                                  .rename('mean_additive_bias')
     return mean_additive_bias
@@ -709,13 +709,13 @@ def compute_mean_absolute_error(fcst, obsv, indep_dims, ensemble_dim=None):
 
     if ensemble_dim == None:
         mean_absolute_error = ((fcst.to_dataset('mean_absolute_error') \
-                                    .apply(cafeutils.calc_difference, obsv=obsv) \
+                                    .apply(utils.calc_difference, obsv=obsv) \
                                     ** 2) ** 0.5) \
                                     .mean(dim=indep_dims)['mean_absolute_error']
     else:
         fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
         mean_absolute_error = ((fcst.groupby(ensemble_dim) \
-                                    .apply(cafeutils.calc_difference, obsv=obsv) \
+                                    .apply(utils.calc_difference, obsv=obsv) \
                                     ** 2) ** 0.5) \
                                     .mean(dim=fcst_mean_dims) \
                                     .rename('mean_absolute_error')
@@ -732,13 +732,13 @@ def compute_mean_squared_error(fcst, obsv, indep_dims, ensemble_dim=None):
 
     if ensemble_dim == None:
         mean_squared_error = (fcst.to_dataset('mean_squared_error') \
-                                  .apply(cafeutils.calc_difference, obsv=obsv) \
+                                  .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \
                                   .mean(dim=indep_dims)['mean_squared_error']
     else:
         fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
         mean_squared_error = (fcst.groupby(ensemble_dim) \
-                                  .apply(cafeutils.calc_difference, obsv=obsv) \
+                                  .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \
                                   .mean(dim=fcst_mean_dims) \
                                   .rename('mean_squared_error')

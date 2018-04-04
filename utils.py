@@ -1,5 +1,5 @@
 """
-    General support functions for the cafepy package
+    General support functions for the pyLatte package
     Author: Dougie Squire
     Date created: 04/04/2018
     Python Version: 3.6
