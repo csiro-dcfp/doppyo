@@ -1,6 +1,6 @@
-# **Tests repository for cafepy package** #
+# **Tests repository for pyLatte package** #
 
 --------------------------
-Contains tests for cafepy package
+Contains tests for pyLatte package
 
 Contact: Dougie Squire

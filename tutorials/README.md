@@ -1,7 +1,7 @@
-# **Tutorials repository for cafepy package** #
+# **Tutorials repository for pyLatte package** #
 
 --------------------------
-Contains tutorials for the cafepy package
+Contains tutorials for the pyLatte package
 
 Contact: Dougie Squire
 
