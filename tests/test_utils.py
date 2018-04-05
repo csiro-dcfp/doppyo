@@ -8,7 +8,7 @@
 # ===================================================================================================
 # Packages
 # ===================================================================================================
-from pyLatte import utils
+from pylatte import utils
 import numpy as np
 import xarray as xr
 
@@ -23,3 +23,4 @@ def test_categorize():
 
     bin_edges = utils.get_bin_edges(tile)
     assert np.all(utils.categorize(da,bin_edges) == da)
+    
