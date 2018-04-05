@@ -7,7 +7,7 @@
 
 __all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_histogram',
            'calc_integral', 'calc_difference', 'calc_division', 'calc_boxavg_latlon',
-           'make_lon_positive', 'find_other_dims']
+           'make_lon_positive', 'get_bin_edges', 'timer', 'find_other_dims']
 
 # ===================================================================================================
 # Packages
@@ -179,6 +179,18 @@ def make_lon_positive(da):
     da = da.sortby('lon')
     
     return da
+
+
+# ===================================================================================================
+def get_bin_edges(bins):
+    ''' Returns bin edges '''
+    
+    dbin = np.diff(bins)/2
+    bin_edges = np.concatenate(([bins[0]-dbin[0]], 
+                                 bins[:-1]+dbin, 
+                                 [bins[-1]+dbin[-1]]))
+    
+    return bin_edges
 
 
 # ===================================================================================================
