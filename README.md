@@ -24,6 +24,8 @@ Contains codes/documents associated with the pyLatte package (name courtesy of V
 
 In `pyLatte/requirements` run `conda env create -f pylatte_env.yml`
 
+Or, if updating existing pylatte_env, activate the environment, then in `pyLatte/requirements` run `conda env update --file=pylatte_env.yml'
+
 **4)**   Activate the pylatte_env environment:
 
 `source activate pylatte_env`
