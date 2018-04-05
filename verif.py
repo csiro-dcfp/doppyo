@@ -23,7 +23,7 @@ import numpy as np
 import xarray as xr
 
 # Load cafepy packages -----
-from pyLatte import utils
+from pylatte import utils
 
 
 # ===================================================================================================
