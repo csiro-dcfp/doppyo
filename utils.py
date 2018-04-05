@@ -26,7 +26,7 @@ def categorize(da,bin_edges):
     Output indices are such that bin_edges[i-1] <= x < bin_edges[i]
     """
     
-    return da.to_dataset('categorized').apply(np.digitize,bins=bin_edges)['categorized']
+    return da.to_dataset(name='categorized').apply(np.digitize,bins=bin_edges)['categorized']
 
 
 # ===================================================================================================
@@ -91,7 +91,7 @@ def compute_histogram(da, bin_edges, dims):
     
     other_dims = find_other_dims(da,dims)
     if other_dims == None:
-        hist = da.to_dataset('histogram').apply(make_histogram,bin_edges=bin_edges)['histogram']
+        hist = da.to_dataset(name='histogram').apply(make_histogram,bin_edges=bin_edges)['histogram']
     else:
         hist = da.stack(stacked=other_dims) \
                  .groupby('stacked') \

@@ -125,7 +125,7 @@ def compute_reliability(fcst_likelihood, obsv_logical, fcst_prob, indep_dims, na
         relative_freq = relative_freq.fillna(0)
         
     # Package in dataset -----
-    reliability = relative_freq.to_dataset('relative_freq')
+    reliability = relative_freq.to_dataset(name='relative_freq')
     reliability.relative_freq.attrs['name'] = 'relative frequency'
     reliability['fcst_number'] = fcst_number
     reliability.fcst_number.attrs['name'] = 'number of forecasts'
@@ -170,7 +170,7 @@ def compute_roc(fcst_likelihood, obsv_logical, fcst_prob, indep_dims):
                                      dim='forecast_probability')
 
     # Package in dataset -----
-    roc = hit_rate.to_dataset('hit_rate')
+    roc = hit_rate.to_dataset(name='hit_rate')
     roc.hit_rate.attrs['name'] = 'hit rate'
     roc['false_alarm_rate'] = false_alarm_rate
     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
@@ -198,7 +198,7 @@ def compute_discrimination(fcst_likelihood, obsv_logical, fcst_prob, indep_dims)
                                                   fcst_prob_edges, dims=indep_dims)
     
     # Package in dataset -----
-    discrimination = hist_obsved.to_dataset('hist_obsved')
+    discrimination = hist_obsved.to_dataset(name='hist_obsved')
     discrimination.hist_obsved.attrs['name'] = 'histogram of forecast likelihood, event observed'
     discrimination['hist_not_obsved'] = hist_not_obsved
     discrimination.hist_not_obsved.attrs['name'] = 'histogram of forecast likelihood, event not observed'
@@ -296,7 +296,7 @@ def compute_Brier_score(fcst_likelihood, obsv_logical, indep_dims, fcst_prob=Non
         Brier_total = (1 / N) * ((mean_fcst_likelihood - obsv_binary) ** 2).sum(dim=indep_dims)
 
         # Package in dataset -----
-        Brier = Brier_total.to_dataset('Brier_total')
+        Brier = Brier_total.to_dataset(name='Brier_total')
         Brier.Brier_total.attrs['name'] = 'total Brier score'
         Brier['Brier_reliability'] = Brier_reliability
         Brier.Brier_reliability.attrs['name'] = 'reliability component of Brier score'
@@ -349,7 +349,7 @@ def compute_contingency_table(da_fcst, da_obsv, category_edges, indep_dims, ense
     obsv_categorized = utils.categorize(da_obsv, category_edges)
     
     if ensemble_dim == None:
-        contingency = fcst_categorized.to_dataset('contingency') \
+        contingency = fcst_categorized.to_dataset(name='contingency') \
                                       .apply(calc_contingency, obsv=obsv_categorized, \
                                              category_edges=category_edges, \
                                              indep_dims=indep_dims)['contingency']
@@ -657,7 +657,7 @@ def compute_mean_additive_bias(fcst, obsv, indep_dims, ensemble_dim=None):
         indep_dims = [indep_dims]
 
     if ensemble_dim == None:
-        mean_additive_bias = fcst.to_dataset('mean_additive_bias') \
+        mean_additive_bias = fcst.to_dataset(name='mean_additive_bias') \
                                  .apply(utils.calc_difference, obsv=obsv) \
                                  .mean(dim=indep_dims)['mean_additive_bias']
     else:
@@ -693,7 +693,7 @@ def compute_mean_absolute_error(fcst, obsv, indep_dims, ensemble_dim=None):
         indep_dims = [indep_dims]
 
     if ensemble_dim == None:
-        mean_absolute_error = ((fcst.to_dataset('mean_absolute_error') \
+        mean_absolute_error = ((fcst.to_dataset(name='mean_absolute_error') \
                                     .apply(utils.calc_difference, obsv=obsv) \
                                     ** 2) ** 0.5) \
                                     .mean(dim=indep_dims)['mean_absolute_error']
@@ -716,7 +716,7 @@ def compute_mean_squared_error(fcst, obsv, indep_dims, ensemble_dim=None):
         indep_dims = [indep_dims]
 
     if ensemble_dim == None:
-        mean_squared_error = (fcst.to_dataset('mean_squared_error') \
+        mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
                                   .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \
                                   .mean(dim=indep_dims)['mean_squared_error']
