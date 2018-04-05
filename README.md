@@ -20,9 +20,13 @@ Contains codes/documents associated with the pyLatte package (name courtesy of V
 
 `export PYTHONPATH`
  
-3)   Replicate the pylatte_env environment, containing all necessary packages:
+3)   Replicate the pylatte_env environment locally:
 
-In `pyLatte/requirements`, run `conda env create -f pylatte_env.yml`
+In `pyLatte/requirements` run `conda env create -f pylatte_env.yml`
+
+4)   Activate the pylatte_env environment:
+
+`source activate pylatte_env`
 
 Contact: Dougie Squire
 
