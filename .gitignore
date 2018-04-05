@@ -2,6 +2,7 @@
 
 # python and jupyter notebook files
 .ipynb_checkpoints
+.pytest_cache
 __pycache__
 
 # Mac stuff
