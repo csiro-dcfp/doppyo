@@ -1,36 +1,36 @@
 # Specific local files
 
 # python and jupyter notebook files
-.ipynb_checkpoints
-.pytest_cache
-__pycache__
+**/.ipynb_checkpoints
+**/.pytest_cache
+**/__pycache__
 
 # Mac stuff
-._*
+**/._*
 
 # Standard error output files
-*.err
+**/*.err
 
 # excel files
-*.xlsx
-*.xl
+**/*.xlsx
+**/*.xl
 
 # nc files
-*.nc
+**/*.nc
 
 # mac files
-.DS_Store
+**/.DS_Store
 
 # Backup files
-*.bak
+**/*.bak
 
 # Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+**/*.lai
+**/*.la
+**/*.a
+**/*.lib
 
 # Executables
-*.exe
-*.out
-*.app
+**/*.exe
+**/*.out
+**/*.app

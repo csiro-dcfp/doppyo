@@ -35,7 +35,7 @@ def compute_pdf(da, bin_edges, dim):
     
     hist = compute_histogram(da, bin_edges, dim)
     
-    return hist / calc_integral(hist, dim='bins')
+    return hist / calc_integral(hist, dim='bins', method='rect')
 
 
 # ===================================================================================================
