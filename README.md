@@ -10,21 +10,21 @@ Contains codes/documents associated with the pyLatte package (name courtesy of V
 
 --------------------------
 #### To use the pyLatte package:
-1)   Clone the pyLatte Bitbucket repository to your local machine: 
+**1)**   Clone the pyLatte Bitbucket repository to your local machine: 
  
 `git clone https://<userid>@bitbucket.csiro.au/scm/df/pylatte.git`
  
-2)   Within your .bashrc (or equivalent), add the pyLatte location to your PYTHONPATH:
+**2)**   Within your .bashrc (or equivalent), add the pyLatte location to your PYTHONPATH:
 
 `PYTHONPATH="${PYTHONPATH}:/location/of/pyLatte/clone"`
 
 `export PYTHONPATH`
  
-3)   Replicate the pylatte_env environment locally:
+**3)**   Replicate the pylatte_env environment locally:
 
 In `pyLatte/requirements` run `conda env create -f pylatte_env.yml`
 
-4)   Activate the pylatte_env environment:
+**4)**   Activate the pylatte_env environment:
 
 `source activate pylatte_env`
 
