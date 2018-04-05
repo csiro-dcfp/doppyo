@@ -37,7 +37,7 @@ def compute_rank_histogram(fcst, obsv, indep_dims, ensemble_dim='ensemble'):
 
     # Initialise bins -----
     bins = range(1,len(fcst[ensemble_dim])+2)
-    bin_edges = get_bin_edges(bins)
+    bin_edges = utils.get_bin_edges(bins)
     
     return utils.compute_histogram(da_ranked, bin_edges, dims=indep_dims)
 
@@ -52,7 +52,7 @@ def compute_rps(fcst, obsv, bins, indep_dims, ensemble_dim):
     obsv_hist_dims = indep_dims
 
     # Initialise bins -----
-    bin_edges = get_bin_edges(bins)
+    bin_edges = utils.get_bin_edges(bins)
 
     # Compute cumulative density functions -----
     cdf_fcst = utils.compute_cdf(fcst, bin_edges=bin_edges, dim=ensemble_dim)
@@ -71,7 +71,7 @@ def compute_reliability(fcst_likelihood, obsv_logical, fcst_prob, indep_dims, na
     obsv_binary = obsv_logical.copy()*1
     
     # Initialise probability bins -----
-    fcst_prob_edges = get_bin_edges(fcst_prob)
+    fcst_prob_edges = utils.get_bin_edges(fcst_prob)
     
     # Logical of forecasts that fall within probability bin -----
     fcst_in_bin = (fcst_likelihood >= fcst_prob_edges[0]) & \
@@ -186,7 +186,7 @@ def compute_discrimination(fcst_likelihood, obsv_logical, fcst_prob, indep_dims)
     """
     
     # Initialise probability bins -----
-    fcst_prob_edges = get_bin_edges(fcst_prob)
+    fcst_prob_edges = utils.get_bin_edges(fcst_prob)
 
     # Compute histogram of forecast likelihoods when observation is True/False -----
     replace_val = 100*max(fcst_prob_edges) # Replace nans with a value not in any bin
@@ -229,7 +229,7 @@ def compute_Brier_score(fcst_likelihood, obsv_logical, indep_dims, fcst_prob=Non
     if fcst_prob is not None:
 
         # Initialise probability bins -----
-        fcst_prob_edges = get_bin_edges(fcst_prob)
+        fcst_prob_edges = utils.get_bin_edges(fcst_prob)
 
         # Initialise mean_fcst_prob array -----
         mean_fcst_likelihood = fcst_likelihood.copy()
