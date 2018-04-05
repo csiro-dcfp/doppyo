@@ -14,6 +14,7 @@ __all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_h
 # ===================================================================================================
 import numpy as np
 import xarray as xr
+import time
 
 
 # ===================================================================================================
@@ -178,6 +179,34 @@ def make_lon_positive(da):
     da = da.sortby('lon')
     
     return da
+
+
+# ===================================================================================================
+class timer(object):
+    '''
+        File name: timer
+
+        Description: class for timing code snippets 
+
+        Author: Dougie Squire
+        Date created: 21/03/2018
+        Python Version: 3.5
+
+        Usage:
+            with timer():
+                # do something
+    '''
+    
+    def __init__(self, name=None):
+        self.name = name
+
+    def __enter__(self):
+        self.tstart = time.time()
+
+    def __exit__(self, type, value, traceback):
+        if self.name:
+            print('   f{self.name}')
+        print(f'   Elapsed: {time.time() - self.tstart} sec')
 
 
 # ===================================================================================================
