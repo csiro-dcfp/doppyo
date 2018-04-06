@@ -7,7 +7,7 @@
 
 __all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_histogram',
            'calc_integral', 'calc_difference', 'calc_division', 'calc_boxavg_latlon',
-           'make_lon_positive', 'get_bin_edges', 'timer', 'find_other_dims']
+           'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 'timer', 'find_other_dims']
 
 # ===================================================================================================
 # Packages
@@ -169,6 +169,13 @@ def calc_boxavg_latlon(da,box):
     da = da.mean(dim=('lat','lon'))
     
     return da
+
+
+# ===================================================================================================
+def get_nearest_point(da, lat, lon):
+    """ Returns the nearest grid point to the specified lat/lon location """
+
+    return da.sel(lat=lat,lon=lon,method='nearest')
 
 
 # ===================================================================================================
