@@ -32,6 +32,9 @@ from pylatte import utils
 def compute_rank_histogram(fcst, obsv, indep_dims, ensemble_dim='ensemble'):
     """ Returns rank histogram """
     
+    if indep_dims == None:
+        raise ValueError('Cannot compute rank histogram with no independent dimensions')
+        
     # Rank the data -----
     da_ranked = utils.compute_rank(fcst, obsv, dim=ensemble_dim)
 
@@ -45,11 +48,6 @@ def compute_rank_histogram(fcst, obsv, indep_dims, ensemble_dim='ensemble'):
 # ===================================================================================================
 def compute_rps(fcst, obsv, bins, indep_dims, ensemble_dim):
     """ Returns the (continuous) ranked probability score """
-
-    if isinstance(indep_dims, str):
-            indep_dims = [indep_dims]
-    # fcst_hist_dims = tuple(indep_dims) + tuple([ensemble_dim])
-    # obsv_hist_dims = indep_dims
 
     # Initialise bins -----
     bin_edges = utils.get_bin_edges(bins)
@@ -150,10 +148,14 @@ def compute_roc(fcst_likelihood, obsv_logical, fcst_prob, indep_dims):
     fcst_prob_edges = fcst_prob[:-1]+dprob
 
     # Initialise first (0.0) probability bin -----
-    hit_rate = 0 * obsv_binary.sum(dim=indep_dims) + 1
+    if indep_dims == None:
+        all_ones = 0 * obsv_binary + 1
+    else:
+        all_ones = 0 * obsv_binary.mean(dim=indep_dims) + 1
+    hit_rate = all_ones
     hit_rate.coords['forecast_probability'] = 0.0
     hit_rate = hit_rate.expand_dims('forecast_probability')
-    false_alarm_rate = 0 * obsv_binary.sum(dim=indep_dims) + 1
+    false_alarm_rate = all_ones
     false_alarm_rate.coords['forecast_probability'] = 0.0
     false_alarm_rate = false_alarm_rate.expand_dims('forecast_probability')
 
@@ -161,7 +163,7 @@ def compute_roc(fcst_likelihood, obsv_logical, fcst_prob, indep_dims):
     for idx,fcst_prob_edge in enumerate(fcst_prob_edges):
 
         if fcst_prob_edge >= 1.0:
-            raise ValueError('fcst_probabilities cannot exceed 1.0')
+            raise ValueError('fcst_prob cannot exceed 1.0')
             
         category_edges = [-1000, fcst_prob_edge, 1000]
         contingency = compute_contingency_table(fcst_likelihood, obsv_binary, 
@@ -200,7 +202,7 @@ def compute_discrimination(fcst_likelihood, obsv_logical, fcst_prob, indep_dims)
                                               fcst_prob_edges, dims=indep_dims)
     hist_not_obsved = utils.compute_histogram(fcst_likelihood.where(obsv_logical == False) \
                                                                  .fillna(replace_val), 
-                                                  fcst_prob_edges, dims=indep_dims)
+                                              fcst_prob_edges, dims=indep_dims)
     
     # Package in dataset -----
     discrimination = hist_obsved.to_dataset(name='hist_obsved')
@@ -226,10 +228,13 @@ def compute_Brier_score(fcst_likelihood, obsv_logical, indep_dims, fcst_prob=Non
 
     # Calculate total Brier score -----
     N = 1
-    for indep_dim in indep_dims:
-        N = N*len(fcst_likelihood[indep_dim])
-    Brier = (1/N)*((fcst_likelihood - obsv_binary)**2).sum(dim=indep_dims).rename('Brier_score')
-
+    if indep_dims == None:
+        Brier = (1 / N) * ((fcst_likelihood - obsv_binary) ** 2).sum(dim=indep_dims).rename('Brier_score')
+    else: 
+        for indep_dim in indep_dims:
+            N = N * len(fcst_likelihood[indep_dim])
+        Brier = (1 / N) * ((fcst_likelihood - obsv_binary) ** 2).rename('Brier_score')
+        
     # Calculate components
     if fcst_prob is not None:
 
@@ -244,21 +249,34 @@ def compute_Brier_score(fcst_likelihood, obsv_logical, indep_dims, fcst_prob=Non
                       (fcst_likelihood < fcst_prob_edges[1])
 
         # Compute mean forecast probability -----
-        mean_fcst_likelihood = mean_fcst_likelihood.where(~fcst_in_bin) \
-                               .fillna(mean_fcst_likelihood.where(fcst_in_bin).mean(dim=indep_dims))
-        
+        if indep_dims == None:
+            mean_fcst_likelihood = mean_fcst_likelihood.where(~fcst_in_bin) \
+                                   .fillna(mean_fcst_likelihood.where(fcst_in_bin))
+        else:
+            mean_fcst_likelihood = mean_fcst_likelihood.where(~fcst_in_bin) \
+                                   .fillna(mean_fcst_likelihood.where(fcst_in_bin).mean(dim=indep_dims))
+                
         # Mean forecast probability within first probability bin -----
-        mean_fcst_prob = fcst_likelihood.where(fcst_in_bin,np.nan).mean(dim=indep_dims)
+        if indep_dims == None:
+            mean_fcst_prob = fcst_likelihood.where(fcst_in_bin,np.nan)
+        else:
+            mean_fcst_prob = fcst_likelihood.where(fcst_in_bin,np.nan).mean(dim=indep_dims)
         mean_fcst_prob.coords['forecast_probability'] = fcst_prob[0]
         mean_fcst_prob = mean_fcst_prob.expand_dims('forecast_probability')
 
         # Number of forecasts that fall within probability bin -----
-        fcst_number = fcst_in_bin.sum(dim=indep_dims)
+        if indep_dims == None:
+            fcst_number = fcst_in_bin
+        else:
+            fcst_number = fcst_in_bin.sum(dim=indep_dims)
         fcst_number.coords['forecast_probability'] = fcst_prob[0]
         fcst_number = fcst_number.expand_dims('forecast_probability')
 
         # Number of observed occurences where forecast likelihood is within probability bin -----
-        obsved_occur = ((fcst_in_bin == True) & (obsv_logical == True)).sum(dim=indep_dims)
+        if indep_dims == None:
+            obsved_occur = ((fcst_in_bin == True) & (obsv_logical == True))
+        else:
+            obsved_occur = ((fcst_in_bin == True) & (obsv_logical == True)).sum(dim=indep_dims)
         obsved_occur.coords['forecast_probability'] = fcst_prob[0]
         obsved_occur = obsved_occur.expand_dims('forecast_probability')
 
@@ -268,38 +286,58 @@ def compute_Brier_score(fcst_likelihood, obsv_logical, indep_dims, fcst_prob=Non
             del fcst_in_bin
             fcst_in_bin = (fcst_likelihood >= fcst_prob_edges[idx]) & \
                           (fcst_likelihood < fcst_prob_edges[idx+1])
-            mean_fcst_likelihood = mean_fcst_likelihood.where(~fcst_in_bin) \
+            if indep_dims == None:
+                mean_fcst_likelihood = mean_fcst_likelihood.where(~fcst_in_bin) \
+                                   .fillna(mean_fcst_likelihood.where(fcst_in_bin))
+            else:
+                mean_fcst_likelihood = mean_fcst_likelihood.where(~fcst_in_bin) \
                                    .fillna(mean_fcst_likelihood.where(fcst_in_bin).mean(dim=indep_dims))
             fcst_in_bin.coords['forecast_probability'] = fcst_prob[idx]
             
             # Mean forecast probability within current probability bin -----
-            mean_fcst_prob_temp = fcst_likelihood.where(fcst_in_bin,np.nan).mean(dim=indep_dims)
+            if indep_dims == None:
+                mean_fcst_prob_temp = fcst_likelihood.where(fcst_in_bin,np.nan)
+            else:
+                mean_fcst_prob_temp = fcst_likelihood.where(fcst_in_bin,np.nan).mean(dim=indep_dims)
             mean_fcst_prob_temp.coords['forecast_probability'] = fcst_prob[idx]
             mean_fcst_prob = xr.concat([mean_fcst_prob, mean_fcst_prob_temp],
                                        dim='forecast_probability')
 
             # Number of forecasts that fall within probability bin -----
-            fcst_number = xr.concat([fcst_number, fcst_in_bin.sum(dim=indep_dims)], 
-                                    dim='forecast_probability')
-
+            if indep_dims == None:
+                fcst_number = xr.concat([fcst_number, fcst_in_bin],dim='forecast_probability')
+            else:
+                fcst_number = xr.concat([fcst_number, fcst_in_bin.sum(dim=indep_dims)], \
+                                        dim='forecast_probability')
+        
             # Number of observed occurences where forecast likelihood is within probability bin -----
-            obsved_occur = xr.concat([obsved_occur, ((fcst_in_bin == True) \
-                                                     & (obsv_logical == True))
-                                      .sum(dim=indep_dims)],dim='forecast_probability')
+            if indep_dims == None:
+                obsved_occur = xr.concat([obsved_occur, ((fcst_in_bin == True) \
+                                                     & (obsv_logical == True))],dim='forecast_probability')
+            else:
+                obsved_occur = xr.concat([obsved_occur, ((fcst_in_bin == True) \
+                                                     & (obsv_logical == True)) \
+                                          .sum(dim=indep_dims)],dim='forecast_probability')
 
         # Compute Brier components -----
         base_rate = obsved_occur / fcst_number
         Brier_reliability = (1 / N) * (fcst_number*(mean_fcst_prob - base_rate) ** 2) \
                                        .sum(dim='forecast_probability',skipna=True)
-        sample_clim = obsv_binary.mean(dim=indep_dims)
+        if indep_dims == None:
+            sample_clim = obsv_binary
+        else:
+            sample_clim = obsv_binary.mean(dim=indep_dims)
         Brier_resolution = (1 / N) * (fcst_number*(base_rate - sample_clim) ** 2) \
                                       .sum(dim='forecast_probability',skipna=True)
         Brier_uncertainty = sample_clim * (1 - sample_clim)
         
         # When a binned approach is used, compute total Brier using binned probabilities -----
         # (This way Brier_total = Brier_reliability - Brier_resolution + Brier_uncertainty)
-        Brier_total = (1 / N) * ((mean_fcst_likelihood - obsv_binary) ** 2).sum(dim=indep_dims)
-
+        if indep_dims == None:
+            Brier_total = (1 / N) * ((mean_fcst_likelihood - obsv_binary) ** 2)
+        else:
+            Brier_total = (1 / N) * ((mean_fcst_likelihood - obsv_binary) ** 2).sum(dim=indep_dims)
+        
         # Package in dataset -----
         Brier = Brier_total.to_dataset(name='Brier_total')
         Brier.Brier_total.attrs['name'] = 'total Brier score'
@@ -322,11 +360,17 @@ def calc_contingency(fcst, obsv, category_edges, indep_dims):
     categories = range(1,len(category_edges))
     
     # Initialize first row -----
-    fcst_row = ((fcst == categories[0]) & (obsv == categories[0])).sum(dim=indep_dims)
+    if indep_dims == None:
+        fcst_row = ((fcst == categories[0]) & (obsv == categories[0]))
+    else:
+        fcst_row = ((fcst == categories[0]) & (obsv == categories[0])).sum(dim=indep_dims)
     fcst_row['observed_category'] = categories[0]
     fcst_row['forecast_category'] = categories[0]
     for obsv_category in categories[1:]:
-        fcst_row_temp = ((fcst == categories[0]) & (obsv == obsv_category)).sum(dim=indep_dims)
+        if indep_dims == None:
+            fcst_row_temp = ((fcst == categories[0]) & (obsv == obsv_category))
+        else:
+            fcst_row_temp = ((fcst == categories[0]) & (obsv == obsv_category)).sum(dim=indep_dims)
         fcst_row_temp['observed_category'] = obsv_category
         fcst_row_temp['forecast_category'] = categories[0]
         fcst_row = xr.concat([fcst_row, fcst_row_temp],'observed_category')
@@ -334,11 +378,17 @@ def calc_contingency(fcst, obsv, category_edges, indep_dims):
     
     # Compute other rows -----
     for fcst_category in categories[1:]:
-        fcst_row = ((fcst == fcst_category) & (obsv == categories[0])).sum(dim=indep_dims)
+        if indep_dims == None:
+            fcst_row = ((fcst == fcst_category) & (obsv == categories[0]))
+        else:
+            fcst_row = ((fcst == fcst_category) & (obsv == categories[0])).sum(dim=indep_dims)
         fcst_row['observed_category'] = categories[0]
         fcst_row['forecast_category'] = fcst_category
         for obsv_category in categories[1:]:
-            fcst_row_temp = ((fcst == fcst_category) & (obsv == obsv_category)).sum(dim=indep_dims)
+            if indep_dims == None:
+                fcst_row_temp = ((fcst == fcst_category) & (obsv == obsv_category))
+            else:
+                fcst_row_temp = ((fcst == fcst_category) & (obsv == obsv_category)).sum(dim=indep_dims)
             fcst_row_temp['observed_category'] = obsv_category
             fcst_row_temp['forecast_category'] = fcst_category
             fcst_row = xr.concat([fcst_row, fcst_row_temp], 'observed_category')
@@ -361,7 +411,8 @@ def compute_contingency_table(da_fcst, da_obsv, category_edges, indep_dims, ense
     else:
         contingency = fcst_categorized.groupby(ensemble_dim) \
                                       .apply(calc_contingency, obsv=obsv_categorized, \
-                                             category_edges=category_edges, indep_dims=indep_dims) \
+                                             category_edges=category_edges, 
+                                             indep_dims=indep_dims) \
                                       .sum(dim=ensemble_dim) \
                                       .rename('contingency')
 
@@ -661,10 +712,20 @@ def compute_mean_additive_bias(fcst, obsv, indep_dims, ensemble_dim=None):
     if isinstance(indep_dims, str):
         indep_dims = [indep_dims]
 
-    if ensemble_dim == None:
+    if (ensemble_dim == None) & (indep_dims == None):
         mean_additive_bias = fcst.to_dataset(name='mean_additive_bias') \
                                  .apply(utils.calc_difference, obsv=obsv) \
-                                 .mean(dim=indep_dims)['mean_additive_bias']
+                                 ['mean_additive_bias']
+    elif ensemble_dim == None:
+        mean_additive_bias = fcst.to_dataset(name='mean_additive_bias') \
+                                 .apply(utils.calc_difference, obsv=obsv) \
+                                 .mean(dim=indep_dims) \
+                                 ['mean_additive_bias']
+    elif indep_dims == None:
+        mean_additive_bias = fcst.groupby(ensemble_dim) \
+                                 .apply(utils.calc_difference, obsv=obsv) \
+                                 .mean(dim=ensemble_dim) \
+                                 .rename('mean_additive_bias')
     else:
         fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
         mean_additive_bias = fcst.groupby(ensemble_dim) \
@@ -680,14 +741,21 @@ def compute_mean_multiplicative_bias(fcst, obsv, indep_dims, ensemble_dim=None):
     
     if isinstance(indep_dims, str):
         indep_dims = [indep_dims]
-
-    if ensemble_dim == None:
-        fcst_mean_dims = indep_dims
+        
+    if (ensemble_dim == None) & (indep_dims == None):
+        mean_multiplicative_bias = (fcst / obsv).rename('mean_multiplicative_bias')
+    elif ensemble_dim == None:
+        mean_multiplicative_bias = (fcst.mean(dim=indep_dims) / obsv.mean(dim=indep_dims)) \
+                                   .rename('mean_multiplicative_bias')
+    elif indep_dims == None:
+        mean_multiplicative_bias = (fcst.mean(dim=ensemble_dim) / obsv) \
+                                   .rename('mean_multiplicative_bias')
     else:
         fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
+        mean_multiplicative_bias = (fcst.mean(dim=fcst_mean_dims) / obsv.mean(dim=indep_dims)) \
+                                   .rename('mean_multiplicative_bias')
 
-    return (fcst.mean(dim=fcst_mean_dims) / obsv.mean(dim=indep_dims)) \
-           .rename('mean_multiplicative_bias')
+    return mean_multiplicative_bias
 
     
 # ===================================================================================================
@@ -697,11 +765,21 @@ def compute_mean_absolute_error(fcst, obsv, indep_dims, ensemble_dim=None):
     if isinstance(indep_dims, str):
         indep_dims = [indep_dims]
 
-    if ensemble_dim == None:
+    if (ensemble_dim == None) & (indep_dims == None):
+        mean_absolute_error = ((fcst.to_dataset(name='mean_absolute_error') \
+                                    .apply(utils.calc_difference, obsv=obsv) \
+                                    ** 2) ** 0.5)['mean_absolute_error']
+    elif ensemble_dim == None:
         mean_absolute_error = ((fcst.to_dataset(name='mean_absolute_error') \
                                     .apply(utils.calc_difference, obsv=obsv) \
                                     ** 2) ** 0.5) \
                                     .mean(dim=indep_dims)['mean_absolute_error']
+    elif indep_dims == None:
+        mean_absolute_error = ((fcst.groupby(ensemble_dim) \
+                                    .apply(utils.calc_difference, obsv=obsv) \
+                                    ** 2) ** 0.5) \
+                                    .mean(dim=ensemble_dim) \
+                                    .rename('mean_absolute_error')
     else:
         fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
         mean_absolute_error = ((fcst.groupby(ensemble_dim) \
@@ -720,22 +798,23 @@ def compute_mean_squared_error(fcst, obsv, indep_dims, ensemble_dim=None):
     if isinstance(indep_dims, str):
         indep_dims = [indep_dims]
 
-    if ensemble_dim == None:
-        if indep_dims == None:
-            mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
+    if (ensemble_dim == None) & (indep_dims == None):
+        mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
                                   .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2)['mean_squared_error']
-        else:
-            mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
+    elif ensemble_dim == None:
+        mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
                                   .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \
                                   .mean(dim=indep_dims)['mean_squared_error']
+    elif indep_dims == None:
+        mean_squared_error = (fcst.groupby(ensemble_dim) \
+                                  .apply(utils.calc_difference, obsv=obsv) \
+                                  ** 2) \
+                                  .mean(dim=ensemble_dim) \
+                                  .rename('mean_squared_error')
     else:
-        if indep_dims == None:
-            fcst_mean_dims = ensemble_dim
-        else:
-            fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
-
+        fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
         mean_squared_error = (fcst.groupby(ensemble_dim) \
                                   .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \

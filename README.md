@@ -7,8 +7,9 @@ Contains codes/documents associated with the pyLatte package (name courtesy of V
 * utils.py - general support functions for the pyLatte package. 
 * **tests** - contains tests for various modules of the pyLatte package.
 * **tutorials** - contains tutorials on using the pyLatte package.
-
---------------------------
+* **requirements** - contains environment files and resources for running the pyLatte package.
+* **support** - contains scripts and resources supporting the pyLatte package.
+-------------------------
 #### To use the pyLatte package:
 **1)** Install anaconda if you have not already done so:
 
