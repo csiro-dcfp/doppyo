@@ -26,7 +26,7 @@ d) Check that anaconda python is now your default:
 
 `which python`
 
-**2)**   Clone the pyLatte Bitbucket repository to your local machine: 
+**2)**   Clone the pyLatte Bitbucket repository to your local machine. At the desired location: 
  
 `git clone https://<userid>@bitbucket.csiro.au/scm/df/pylatte.git`
  
