@@ -32,6 +32,7 @@ d) Check that anaconda python is now your default:
 `git clone https://<userid>@bitbucket.csiro.au/scm/df/pylatte.git`
  
 **3)**   Within your .bashrc (or equivalent), add the pyLatte location to your PYTHONPATH:
+
 `PYTHONPATH="${PYTHONPATH}:/location/of/pyLatte/clone"`
 
 `export PYTHONPATH`
