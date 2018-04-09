@@ -48,8 +48,8 @@ def compute_rps(fcst, obsv, bins, indep_dims, ensemble_dim):
 
     if isinstance(indep_dims, str):
             indep_dims = [indep_dims]
-    fcst_hist_dims = tuple(indep_dims) + tuple([ensemble_dim])
-    obsv_hist_dims = indep_dims
+    # fcst_hist_dims = tuple(indep_dims) + tuple([ensemble_dim])
+    # obsv_hist_dims = indep_dims
 
     # Initialise bins -----
     bin_edges = utils.get_bin_edges(bins)
@@ -58,7 +58,12 @@ def compute_rps(fcst, obsv, bins, indep_dims, ensemble_dim):
     cdf_fcst = utils.compute_cdf(fcst, bin_edges=bin_edges, dim=ensemble_dim)
     cdf_obsv = utils.compute_cdf(obsv, bin_edges=bin_edges, dim=None)
     
-    return utils.calc_integral((cdf_fcst - cdf_obsv) ** 2, dim='bins').mean(dim=indep_dims)
+    if indep_dims == None:
+        rps = utils.calc_integral((cdf_fcst - cdf_obsv) ** 2, dim='bins')
+    else:
+        rps = utils.calc_integral((cdf_fcst - cdf_obsv) ** 2, dim='bins').mean(dim=indep_dims)
+    
+    return rps
 
 
 # ===================================================================================================
@@ -716,18 +721,27 @@ def compute_mean_squared_error(fcst, obsv, indep_dims, ensemble_dim=None):
         indep_dims = [indep_dims]
 
     if ensemble_dim == None:
-        mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
+        if indep_dims == None:
+            mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
+                                  .apply(utils.calc_difference, obsv=obsv) \
+                                  ** 2)['mean_squared_error']
+        else:
+            mean_squared_error = (fcst.to_dataset(name='mean_squared_error') \
                                   .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \
                                   .mean(dim=indep_dims)['mean_squared_error']
     else:
-        fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
+        if indep_dims == None:
+            fcst_mean_dims = ensemble_dim
+        else:
+            fcst_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
+
         mean_squared_error = (fcst.groupby(ensemble_dim) \
                                   .apply(utils.calc_difference, obsv=obsv) \
                                   ** 2) \
                                   .mean(dim=fcst_mean_dims) \
                                   .rename('mean_squared_error')
-
+                    
     return mean_squared_error
 
 
