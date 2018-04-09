@@ -16,7 +16,7 @@ a) Make your own directory in '/OSM/CBR/OA_DCFP/apps/'
 
 `mkdir /OSM/CBR/OA_DCFP/apps/<userid>`
 
-b) A recent version of the anaconda install is available in '/OSM/CBR/OA_DCFP/apps/anaconda_installer'. Run this and follow the prompts to install anaconda in the directory you have just created.
+b) A recent version of the anaconda installer is available in '/OSM/CBR/OA_DCFP/apps/anaconda_installer'. Run this and follow the prompts to install anaconda in the directory you have just created.
 
 c) The anaconda installer will add the anaconda path to your .bashrc (or equivalent). You will need to source this for the changes to be made:
 
