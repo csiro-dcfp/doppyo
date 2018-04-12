@@ -239,7 +239,7 @@ def datetime_to_leadtime(data):
 
     data.coords['init_date'] = init_date
     
-    return prune(data)
+    return data
 
 
 # ===================================================================================================
@@ -288,11 +288,7 @@ def stack_by_init_date(data_in, init_dates, N_lead_steps, init_date_name='init_d
     # Initialize xarray object for first initialization date -----
     start_index = np.where(data_in.time == np.datetime64(init_dates[0]))[0].item()
     data_out = data_in.isel(time=range(start_index, start_index + N_lead_steps))
-    data_out.coords[init_date_name] = init_dates[0]
-    data_out = data_out.expand_dims(init_date_name)
-    data_out = data_out.rename({'time' : lead_time_name})
-    data_out[lead_time_name] = range(N_lead_steps)
-    data_out[lead_time_name].attrs['units'] = pd.infer_freq(data_in.time.values)
+    data_out = datetime_to_leadtime(data_out).expand_dims(init_date_name)
     
     # Loop over remaining initialization dates -----
     for init_date in init_dates[1:]:
@@ -300,9 +296,7 @@ def stack_by_init_date(data_in, init_dates, N_lead_steps, init_date_name='init_d
         data_temp = data_in.isel(time=range(start_index, start_index + N_lead_steps))
 
         # Concatenate along initialization date dimension/coordinate -----
-        data_temp = data_temp.rename({'time' : lead_time_name})
-        data_temp[lead_time_name] = range(N_lead_steps)
-        data_temp.coords[init_date_name] = init_date
+        data_temp = datetime_to_leadtime(data_temp)
         data_out = xr.concat([data_out, data_temp],init_date_name) 
     
     return data_out
