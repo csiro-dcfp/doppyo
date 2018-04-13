@@ -850,7 +850,11 @@ def did_event(da, event):
 def compute_likelihood(da_logical, ensemble_dim='ensemble'):
     """ Returns array of likelihoods computed along ensemble_dim from logical event data """
     
-    return da_logical.mean(dim=ensemble_dim).rename('likelihood')
+    if ensemble_dim == None:
+        likelihood = da_logical
+    else:
+        likelihood = da_logical.mean(dim=ensemble_dim).rename('likelihood')
+    return likelihood
 
 
 # ===================================================================================================
