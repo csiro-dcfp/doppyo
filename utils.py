@@ -6,10 +6,11 @@
 """
 
 __all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_histogram',
-           'calc_integral', 'calc_difference', 'calc_division', 'load_climatology', 'anomalize',
-           'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 'calc_boxavg_latlon',
-           'stack_by_init_date', 'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 
-           'get_lead_times', 'timer', 'find_other_dims']
+           'calc_integral', 'calc_difference', 'calc_division', 'load_climatology', 'anomalize', 
+           'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 
+           'datetime_to_leadtime', 'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 
+           'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 'get_lead_times', 
+           'timer', 'find_other_dims']
 
 # ===================================================================================================
 # Packages
@@ -156,8 +157,7 @@ def calc_division(fcst,obsv):
 # ===================================================================================================
 def load_climatology(clim, variable, freq):
     """ 
-    Returns pre-saved climatology at desired frequency 
-    Current frequency options are: daily ('D'); monthly ('M'); yearly ('Y')
+    Returns pre-saved climatology at desired frequency (greater than daily)
     """
     
     # Load specified dataset -----
@@ -171,24 +171,21 @@ def load_climatology(clim, variable, freq):
             
     else:
         raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016"')
-    
         
     if variable == 'precip':
-        clim = ds[variable].resample(freq=freq, dim='time', how='sum')
+        clim = ds[variable].resample(time=freq).sum(dim='time')
     else:
-        clim = ds[variable].resample(freq=freq, dim='time', how='mean')
+        clim = ds[variable].resample(time=freq).mean(dim='time')
         
-    clim['time'] = clim['time'].values.astype('<M8[' + freq + ']')
-
     return clim
 
 
 # ===================================================================================================
-def anomalize(data,clim):
+def anomalize(data, clim):
     """ Receives raw and climatology data at matched frequencies and returns the anomaly """
     
-    data_freq = pd.infer_freq(data.time.values)
-    clim_freq = pd.infer_freq(clim.time.values)
+    data_freq = infer_freq(data.time.values)
+    clim_freq = infer_freq(clim.time.values)
     
     if data_freq != clim_freq:
         raise ValueError('"data" and "clim" must have matched frequencies')
@@ -205,41 +202,98 @@ def anomalize(data,clim):
 # ===================================================================================================
 # IO tools
 # ===================================================================================================
-def leadtime_to_datetime(data):
-    """ Converts time information from init_date/lead_time dimension pair to single datetime dimension """
+def trunc_time(time, freq):
+    """ 
+    Truncates values in provided time array to provided frequency. E.g. 2018-01-15T12:00 with 
+    freq = 'M' becomes 2018-01-01. 
+    """
     
-    init_date = data.init_date.values
-    lead_time= list(map(int,data.lead_time.values))
-    freq = data.lead_time.attrs['units']
-
-    if freq == 'MS':
-        freq = 'M'
-
-    datetime = np.array([init_date.astype('<M8[' + freq + ']') + 
-                         np.timedelta64(ix, freq) for ix in lead_time]) \
-                         .astype('<M8[' + freq + ']')
-    
-    data = data.rename({'lead_time' : 'time'})
-    data['time'] = datetime
-    
-    return prune(data)
+    return time.astype('<M8[' + freq + ']')
 
 
 # ===================================================================================================
-def datetime_to_leadtime(data):
+def infer_freq(time):
+    """ 
+    Returns most likely frequency of provided time array 
+    """
+    
+    return pd.infer_freq(time)
+
+
+# ===================================================================================================
+def month_delta(date_in, delta, trunc_to_start=False):
+    """ Increments provided datetime64 array by delta months """
+    
+    date_mod = pd.Timestamp(date_in)
+    
+    m, y = (date_mod.month + delta) % 12, date_mod.year + ((date_mod.month) + delta - 1) // 12
+    if not m: m = 12
+    d = min(date_mod.day, [31,
+        29 if y % 4 == 0 and not y % 400 == 0 else 28,31,30,31,30,31,31,30,31,30,31][m - 1])
+    
+    if trunc_to_start:
+        date_out = utils.trunc_time(np.datetime64(date_mod.replace(day=d,month=m, year=y)),'M')
+    else:
+        date_out = np.datetime64(date_mod.replace(day=d,month=m, year=y))
+    return date_out
+
+
+# ===================================================================================================
+def year_delta(date_in, delta, trunc_to_start=False):
+    """ Increments provided datetime64 array by delta years """
+    
+    date_mod = month_delta(date_in, 12 * delta)
+    
+    if trunc_to_start:
+        date_out = utils.trunc_time(date_mod,'Y')
+    else: date_out = date_mod
+        
+    return date_out
+
+
+# ===================================================================================================
+def leadtime_to_datetime(data_in, lead_time_name='lead_time', init_date_name='init_date'):
+    """ Converts time information from lead time/initial date dimension pair to single datetime dimension """
+    
+    init_date = data_in[init_date_name].values
+    lead_times = list(map(int,data_in[lead_time_name].values))
+    freq = data_in[lead_time_name].attrs['units']
+    
+    # Split frequency into numbers and strings -----
+    incr_string = ''.join([i for i in freq if i.isdigit()])
+    freq_incr = [int(incr_string) if incr_string else 1][0]
+    freq_type = ''.join([i for i in freq if not i.isdigit()])
+
+    # Deal with special cases of monthly and yearly frequencies -----
+    if 'M' in freq_type:
+        datetimes = np.array([month_delta(init_date, freq_incr * ix) for ix in lead_times])
+    elif 'A' in freq_type:
+        datetimes = np.array([year_delta(init_date, freq_incr * ix) for ix in lead_times])
+    else:
+        datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
+    
+    data_out = data_in.drop(init_date_name)
+    data_out = data_out.rename({lead_time_name : 'time'})
+    data_out['time'] = datetimes
+    
+    return prune(data_out)
+
+
+# ===================================================================================================
+def datetime_to_leadtime(data_in):
     """ Converts time information from single datetime dimension to init_date/lead_time dimension pair """
     
-    init_date = data.time.values[0]
-    lead_times = range(len(data.time))
-    freq = pd.infer_freq(data.time.values)
+    init_date = data_in.time.values[0]
+    lead_times = range(len(data_in.time))
+    freq = infer_freq(data_in.time.values)
 
-    data = data.rename({'time' : 'lead_time'})
-    data['lead_time'] = lead_times
-    data['lead_time'].attrs['units'] = freq
+    data_out = data_in.rename({'time' : 'lead_time'})
+    data_out['lead_time'] = lead_times
+    data_out['lead_time'].attrs['units'] = freq
 
-    data.coords['init_date'] = init_date
+    data_out.coords['init_date'] = init_date
     
-    return data
+    return data_out
 
 
 # ===================================================================================================
@@ -285,19 +339,14 @@ def stack_by_init_date(data_in, init_dates, N_lead_steps, init_date_name='init_d
     Input Dataset/DataArray must span full range of times required for this operation
     """
 
-    # Initialize xarray object for first initialization date -----
-    start_index = np.where(data_in.time == np.datetime64(init_dates[0]))[0].item()
-    data_out = data_in.isel(time=range(start_index, start_index + N_lead_steps))
-    data_out = datetime_to_leadtime(data_out).expand_dims(init_date_name)
-    
-    # Loop over remaining initialization dates -----
-    for init_date in init_dates[1:]:
+    init_list = []
+    for init_date in init_dates:
         start_index = np.where(data_in.time == np.datetime64(init_date))[0].item()
-        data_temp = data_in.isel(time=range(start_index, start_index + N_lead_steps))
-
-        # Concatenate along initialization date dimension/coordinate -----
-        data_temp = datetime_to_leadtime(data_temp)
-        data_out = xr.concat([data_out, data_temp],init_date_name) 
+        init_list.append(
+                      datetime_to_leadtime(
+                          data_in.isel(time=range(start_index, start_index + N_lead_steps))))
+    
+    data_out = xr.concat(init_list, dim=init_date_name)
     
     return data_out
 
