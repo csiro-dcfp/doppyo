@@ -15,82 +15,62 @@ from pylatte import utils
 
 
 # ===================================================================================================
-def compute_nino3(da_sstanom,convert2monthly=False):
+def compute_nino3(da_sst_anom):
     ''' Returns nino3 index '''  
-    
-    # Convert to monthly average sst if more frequent -----
-    if convert2monthly:
-        da_sstanom = da_sstanom.resample(freq='1MS', dim='time', how='mean')
     
     box = (-5.0,5.0,360.0-150.0,360.0-90.0) # (lat_min,lat_max,lon_min,lon_max)
     
-    da_nino3 = utils.calc_boxavg_latlon(da_sstanom,box)
+    da_nino3 = utils.calc_boxavg_latlon(da_sst_anom,box)
     
     return da_nino3
 
 
 # ===================================================================================================
-def compute_nino34(da_sstanom,convert2monthly=False):
+def compute_nino34(da_sst_anom):
     ''' Returns nino3.4 index '''  
-    
-    # Convert to monthly average sst if more frequent -----
-    if convert2monthly:
-        da_sstanom = da_sstanom.resample(freq='1MS', dim='time', how='mean')
     
     box = (-5.0,5.0,360.0-170.0,360.0-120.0) # (lat_min,lat_max,lon_min,lon_max)
     
-    da_nino34 = utils.calc_boxavg_latlon(da_sstanom,box)
+    da_nino34 = utils.calc_boxavg_latlon(da_sst_anom,box)
     
     return da_nino34
 
 
 # ===================================================================================================
-def compute_nino4(da_sstanom,convert2monthly=False):
+def compute_nino4(da_sst_anom):
     ''' Returns nino4 index '''  
-    
-    # Convert to monthly average sst if more frequent -----
-    if convert2monthly:
-        da_sstanom = da_sstanom.resample(freq='1MS', dim='time', how='mean')
     
     box = (-5.0,5.0,360.0-160.0,360.0-150.0) # (lat_min,lat_max,lon_min,lon_max)
     
-    da_nino4 = utils.calc_boxavg_latlon(da_sstanom,box)
+    da_nino4 = utils.calc_boxavg_latlon(da_sst_anom,box)
     
     return da_nino4
 
 
 # ===================================================================================================
-def compute_emi(da_sstanom,convert2monthly=False):
+def compute_emi(da_sst_anom):
     ''' Returns EMI index ''' 
-    
-    # Convert to monthly average sst if more frequent -----
-    if convert2monthly:
-        da_sstanom = da_sstanom.resample(freq='1MS', dim='time', how='mean')
     
     boxA = (-10.0,10.0,360.0-165.0,360.0-140.0) # (lat_min,lat_max,lon_min,lon_max)
     boxB = (-15.0,5.0,360.0-110.0,360.0-70.0) # (lat_min,lat_max,lon_min,lon_max)
     boxC = (-10.0,20.0,125.0,145.0) # (lat_min,lat_max,lon_min,lon_max)
     
-    da_sstA = utils.calc_boxavg_latlon(da_sstanom,boxA)
-    da_sstB = utils.calc_boxavg_latlon(da_sstanom,boxB)
-    da_sstC = utils.calc_boxavg_latlon(da_sstanom,boxC)
+    da_sstA = utils.calc_boxavg_latlon(da_sst_anom,boxA)
+    da_sstB = utils.calc_boxavg_latlon(da_sst_anom,boxB)
+    da_sstC = utils.calc_boxavg_latlon(da_sst_anom,boxC)
     da_emi = da_sstA - 0.5*da_sstB - 0.5*da_sstC
     
     return da_emi
 
 # ===================================================================================================
-def compute_dmi(da_sstanom,convert2monthly=False):
+def compute_dmi(da_sst_anom):
     ''' Returns DMI index ''' 
-    
-    # Convert to monthly average sst if more frequent -----
-    if convert2monthly:
-        da_sstanom = da_sstanom.resample(freq='1MS', dim='time', how='mean')
     
     boxW = (-10.0,10.0,50.0,70.0) # (lat_min,lat_max,lon_min,lon_max)
     boxE = (-10.0,0.0,90.0,110.0) # (lat_min,lat_max,lon_min,lon_max)
     
-    da_W = utils.calc_boxavg_latlon(da_sstanom,boxW)
-    da_E = utils.calc_boxavg_latlon(da_sstanom,boxE)
+    da_W = utils.calc_boxavg_latlon(da_sst_anom,boxW)
+    da_E = utils.calc_boxavg_latlon(da_sst_anom,boxE)
     da_dmi = da_W - da_E
     
     return da_dmi

@@ -9,8 +9,8 @@ __all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_h
            'calc_integral', 'calc_difference', 'calc_division', 'load_climatology', 'anomalize', 
            'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 
            'datetime_to_leadtime', 'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 
-           'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 'get_lead_times', 
-           'timer', 'find_other_dims']
+           'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 'timer', 
+           'find_other_dims']
 
 # ===================================================================================================
 # Packages
@@ -25,7 +25,7 @@ import time
 # ===================================================================================================
 # Probability tools
 # ===================================================================================================
-def categorize(da,bin_edges):
+def categorize(da, bin_edges):
     """ 
     Returns the indices of the bins to which each value in input array belongs 
     Output indices are such that bin_edges[i-1] <= x < bin_edges[i]
@@ -63,18 +63,18 @@ def rank_gufunc(x):
     return ranks
 
 
-def compute_rank(fcst, obsv, dim): 
+def compute_rank(da_1, da_2, dim): 
     ''' Feeds forecast and observation data to ufunc that ranks data along specified dimension'''
     
     # Add 'ensemble' coord to obs if one does not exist -----
-    if dim not in obsv.coords:
-        obsv_pass = obsv.copy()
-        obsv_pass.coords[dim] = -1
-        obsv_pass = obsv_pass.expand_dims(dim)
+    if dim not in da_2.coords:
+        da_2_pass = da_2.copy()
+        da_2_pass.coords[dim] = -1
+        da_2_pass = da_2_pass.expand_dims(dim)
     else:
-        obsv_pass = obsv.copy()
+        da_2_pass = da_2.copy()
 
-    combined = xr.concat([obsv_pass, fcst], dim=dim)
+    combined = xr.concat([da_2_pass, da_1], dim=dim)
     
     return xr.apply_ufunc(rank_gufunc, combined,
                           input_core_dims=[[dim]],
@@ -139,17 +139,17 @@ def calc_integral(da, dim, method='trapz', cumulative=False):
     
 
 # ===================================================================================================
-def calc_difference(fcst,obsv):
+def calc_difference(data_1, data_2):
     """ Returns the difference of two fields """
     
-    return fcst - obsv
+    return data_1 - data_2
 
 
 # ===================================================================================================
-def calc_division(fcst,obsv):
+def calc_division(data_1, data_2):
     """ Returns the division of two fields """
     
-    return fcst / obsv
+    return data_1 / data_2
 
 
 # ===================================================================================================
@@ -160,10 +160,11 @@ def load_climatology(clim, variable, freq):
     Returns pre-saved climatology at desired frequency (greater than daily)
     """
     
+    data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/pylatte_climatologies/'
+    
     # Load specified dataset -----
     if clim == 'jra_1958-2016':
-        data_loc = '/OSM/CBR/OA_DCFP/data/intermediate_products/pylatte_climatologies/jra.55.isobaric.1958010100_2016123118.clim.nc'
-
+        data_loc = data_path + 'jra.55.isobaric.1958010100_2016123118.clim.nc'
         ds = xr.open_mfdataset(data_loc, autoclose=True)
         
         if variable not in ds.data_vars:
@@ -190,10 +191,12 @@ def anomalize(data, clim):
     if data_freq != clim_freq:
         raise ValueError('"data" and "clim" must have matched frequencies')
     
-    if (data_freq == 'M') | (data_freq == 'MS'):
+    if 'M' in data_freq:
         freq = 'time.month'
-    elif data_freq == 'D':
+    elif 'D' in data_freq:
         freq = 'time.day'
+    elif ('A' in data_freq) | ('Y' in data_freq):
+        freq = 'time.year'
         
     anom = data.groupby(freq) - clim.groupby(freq).mean()
     
@@ -227,14 +230,17 @@ def month_delta(date_in, delta, trunc_to_start=False):
     date_mod = pd.Timestamp(date_in)
     
     m, y = (date_mod.month + delta) % 12, date_mod.year + ((date_mod.month) + delta - 1) // 12
+    
     if not m: m = 12
+    
     d = min(date_mod.day, [31,
         29 if y % 4 == 0 and not y % 400 == 0 else 28,31,30,31,30,31,31,30,31,30,31][m - 1])
     
     if trunc_to_start:
-        date_out = utils.trunc_time(np.datetime64(date_mod.replace(day=d,month=m, year=y)),'M')
+        date_out = trunc_time(np.datetime64(date_mod.replace(day=d,month=m, year=y)),'M')
     else:
         date_out = np.datetime64(date_mod.replace(day=d,month=m, year=y))
+    
     return date_out
 
 
@@ -245,7 +251,7 @@ def year_delta(date_in, delta, trunc_to_start=False):
     date_mod = month_delta(date_in, 12 * delta)
     
     if trunc_to_start:
-        date_out = utils.trunc_time(date_mod,'Y')
+        date_out = trunc_time(date_mod,'Y')
     else: date_out = date_mod
         
     return date_out
@@ -256,7 +262,7 @@ def leadtime_to_datetime(data_in, lead_time_name='lead_time', init_date_name='in
     """ Converts time information from lead time/initial date dimension pair to single datetime dimension """
     
     init_date = data_in[init_date_name].values
-    lead_times = list(map(int,data_in[lead_time_name].values))
+    lead_times = list(map(int, data_in[lead_time_name].values))
     freq = data_in[lead_time_name].attrs['units']
     
     # Split frequency into numbers and strings -----
@@ -267,7 +273,7 @@ def leadtime_to_datetime(data_in, lead_time_name='lead_time', init_date_name='in
     # Deal with special cases of monthly and yearly frequencies -----
     if 'M' in freq_type:
         datetimes = np.array([month_delta(init_date, freq_incr * ix) for ix in lead_times])
-    elif 'A' in freq_type:
+    elif ('A' in freq_type) | ('Y' in freq_type):
         datetimes = np.array([year_delta(init_date, freq_incr * ix) for ix in lead_times])
     else:
         datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
@@ -305,12 +311,12 @@ def repeat_data(data, repeat_dim, repeat_dim_value=0):
 
     repeat_data = data.loc[{repeat_dim : repeat_dim_value}].drop(repeat_dim).squeeze()
     
-    return (0 * data).groupby(repeat_dim,squeeze=True).apply(calc_difference, obsv=-repeat_data)
+    return (0 * data).groupby(repeat_dim,squeeze=True).apply(calc_difference, data_2=-repeat_data)
 
 
 
 # ===================================================================================================
-def calc_boxavg_latlon(da,box):
+def calc_boxavg_latlon(da, box):
     '''
         Returns the average of a given quantity over a provide lat-lon region
         Note: longitudinal coordinates must be positive easterly
@@ -386,7 +392,7 @@ def make_lon_positive(da):
 
 # ===================================================================================================
 def get_bin_edges(bins):
-    ''' Returns bin edges '''
+    ''' Returns bin edges of provided bins '''
     
     dbin = np.diff(bins)/2
     bin_edges = np.concatenate(([bins[0]-dbin[0]], 
@@ -394,21 +400,6 @@ def get_bin_edges(bins):
                                  [bins[-1]+dbin[-1]]))
     
     return bin_edges
-
-
-# ===================================================================================================
-def get_lead_times(FCST_LENGTH, resample_freq):
-    """ 
-    Returns range() of the minimum number of time increments at resample_freq 
-    over the period of years, FCST_LENGTH
-    """
-
-    no_leap = 2001
-    n_incr = len(pd.date_range('1/1/' + str(no_leap),
-                               '12/1/' + str(no_leap+FCST_LENGTH-1),
-                               freq=resample_freq)) # number of lead_time increments
-    
-    return range(n_incr+1)
 
 
 # ===================================================================================================
