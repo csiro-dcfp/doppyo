@@ -82,25 +82,19 @@ def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, indep_dims, nans_
     for idx in range(len(cmp_prob_edges)-1):
         # Logical of comparisons that fall within probability bin -----
         cmp_in_bin = (cmp_likelihood >= cmp_prob_edges[idx]) & \
-                      (cmp_likelihood < cmp_prob_edges[idx+1])
+                     (cmp_likelihood < cmp_prob_edges[idx+1])
         
         # Number of comparisons that fall within probability bin -----
         if indep_dims is None:
-            cmp_number = cmp_in_bin*1
+            cmp_number_list.append(cmp_in_bin*1)
         else:
-            cmp_number = cmp_in_bin.sum(dim=indep_dims)    
-        
-        # Add to list -----
-        cmp_number_list.append(cmp_number)
+            cmp_number_list.append(cmp_in_bin.sum(dim=indep_dims))  
         
         # Number of reference occurences where comparison likelihood is within probability bin -----
         if indep_dims is None:
-            ref_occur = ((cmp_in_bin == True) & (ref_logical == True))*1
+            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True))*1)
         else:
-            ref_occur = ((cmp_in_bin == True) & (ref_logical == True)).sum(dim=indep_dims)
-            
-        # Add to list -----
-        ref_occur_list.append(ref_occur)
+            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)).sum(dim=indep_dims))
         
     # Concatenate lists -----
     cmp_number = xr.concat(cmp_number_list, dim='comparison_probability')
@@ -317,41 +311,31 @@ def calc_contingency(da_cmp, da_ref, category_edges, indep_dims):
     
     categories = range(1,len(category_edges))
     
-    # Initialize first row -----
-    if indep_dims == None:
-        cmp_row = ((da_cmp == categories[0]) & (da_ref == categories[0]))
-    else:
-        cmp_row = ((da_cmp == categories[0]) & (da_ref == categories[0])).sum(dim=indep_dims)
-    cmp_row['reference_category'] = categories[0]
-    cmp_row['comparison_category'] = categories[0]
-    for ref_category in categories[1:]:
-        if indep_dims == None:
-            cmp_row_temp = ((da_cmp == categories[0]) & (da_ref == ref_category))
-        else:
-            cmp_row_temp = ((da_cmp == categories[0]) & (da_ref == ref_category)).sum(dim=indep_dims)
-        cmp_row_temp['reference_category'] = ref_category
-        cmp_row_temp['comparison_category'] = categories[0]
-        cmp_row = xr.concat([cmp_row, cmp_row_temp],'reference_category')
-    contingency = cmp_row
-    
-    # Compute other rows -----
-    for cmp_category in categories[1:]:
-        if indep_dims == None:
-            cmp_row = ((da_cmp == cmp_category) & (da_ref == categories[0]))
-        else:
-            cmp_row = ((da_cmp == cmp_category) & (da_ref == categories[0])).sum(dim=indep_dims)
-        cmp_row['reference_category'] = categories[0]
-        cmp_row['comparison_category'] = cmp_category
-        for ref_category in categories[1:]:
+    # Loop over comparison categories -----
+    cmp_list = []
+    for cmp_category in categories:
+        
+        # Loop over reference categories -----
+        ref_list = []
+        for ref_category in categories:
+            
+            # Add to reference list -----
             if indep_dims == None:
-                cmp_row_temp = ((da_cmp == cmp_category) & (da_ref == ref_category))
+                ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)))
             else:
-                cmp_row_temp = ((da_cmp == cmp_category) & (da_ref == ref_category)).sum(dim=indep_dims)
-            cmp_row_temp['reference_category'] = ref_category
-            cmp_row_temp['comparison_category'] = cmp_category
-            cmp_row = xr.concat([cmp_row, cmp_row_temp], 'reference_category')
-        contingency = xr.concat([contingency, cmp_row], 'comparison_category')
-
+                ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)).sum(dim=indep_dims))
+        
+        # Concatenate reference categories -----
+        ref = xr.concat(ref_list, dim='reference_category')
+        ref['reference_category'] = categories
+        
+        # Add to comparison list -----
+        cmp_list.append(ref)
+        
+    # Concatenate comparison categories -----
+    contingency = xr.concat(cmp_list, dim='comparison_category')
+    contingency['comparison_category'] = categories
+    
     return contingency
 
 
@@ -363,19 +347,18 @@ def compute_contingency_table(da_cmp, da_ref, category_edges, indep_dims, ensemb
     
     if ensemble_dim == None:
         contingency = cmp_categorized.to_dataset(name='contingency') \
-                                      .apply(calc_contingency, da_ref=ref_categorized, \
-                                             category_edges=category_edges, \
-                                             indep_dims=indep_dims)['contingency']
+                                     .apply(calc_contingency, da_ref=ref_categorized, \
+                                            category_edges=category_edges, \
+                                            indep_dims=indep_dims)['contingency']
     else:
         contingency = cmp_categorized.groupby(ensemble_dim) \
-                                      .apply(calc_contingency, da_ref=ref_categorized, \
-                                             category_edges=category_edges, 
-                                             indep_dims=indep_dims) \
-                                      .sum(dim=ensemble_dim) \
-                                      .rename('contingency')
+                                     .apply(calc_contingency, da_ref=ref_categorized, \
+                                            category_edges=category_edges, 
+                                            indep_dims=indep_dims) \
+                                     .sum(dim=ensemble_dim) \
+                                     .rename('contingency')
 
     return contingency
-
 
 # ===================================================================================================
 def compute_accuracy_score(contingency):
@@ -427,49 +410,37 @@ def calc_Gerrity_S(a):
     categories = a.category.values
     K = len(categories)
 
-    # Initialize first row -----
-    i = categories[0]
-    j = categories[0]
-    ref_row = (1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') + \
-                        a.sel(category=range(j,K)).sum(dim='category'))
-    ref_row['reference_category'] = i
-    ref_row['comparison_category'] = j
-    for cmp_category in categories[1:]:
-        j = cmp_category
-        ref_row_temp = (1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') - \
-                                        (j - i) + a.sel(category=range(j,K)).sum(dim='category'))    
-        ref_row_temp['reference_category'] = i
-        ref_row_temp['comparison_category'] = j
-        ref_row = xr.concat([ref_row, ref_row_temp],'comparison_category')
-    S = ref_row
-
-    # Compute other rows -----
-    for ref_category in categories[1:]:
-        i = ref_category
-        j = categories[0]
-        if i > j:
-            ref_row = (1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category') - \
-                                       (i - j) + a.sel(category=range(i,K)).sum(dim='category'))
-        else:
-            ref_row = (1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') - \
-                                       (j - i) + a.sel(category=range(j,K)).sum(dim='category'))
-        ref_row['reference_category'] = i
-        ref_row['comparison_category'] = j
-        for cmp_category in categories[1:]:
+    # Loop over reference categories
+    ref_list = []
+    for ref_category in categories:
+        
+        # Loop over comparison categories
+        cmp_list = []
+        for cmp_category in categories:
+            
+            i = ref_category
             j = cmp_category
-            if ref_category == cmp_category:
-                ref_row_temp = (1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') + \
-                                                a.sel(category=range(j,K)).sum(dim='category'))
+            
+            if i == j:
+                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') + \
+                                                a.sel(category=range(j,K)).sum(dim='category')))
             elif i > j:
-                ref_row_temp = (1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category') - \
-                                                (i - j) + a.sel(category=range(i,K)).sum(dim='category'))
+                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category') - \
+                                                (i - j) + a.sel(category=range(i,K)).sum(dim='category')))
             else:
-                ref_row_temp = (1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') - \
-                                                (j - i) + a.sel(category=range(j,K)).sum(dim='category'))
-            ref_row_temp['reference_category'] = ref_category
-            ref_row_temp['comparison_category'] = cmp_category
-            ref_row = xr.concat([ref_row, ref_row_temp], 'comparison_category')
-        S = xr.concat([S, ref_row], 'reference_category')
+                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') - \
+                                                (j - i) + a.sel(category=range(j,K)).sum(dim='category')))
+    
+        # Concatenate comparison categories -----
+        cmp = xr.concat(cmp_list, dim='comparison_category')
+        cmp['comparison_category'] = categories
+        
+        # Add to reference list -----
+        ref_list.append(cmp)
+        
+    # Concatenate reference categories -----
+    S = xr.concat(ref_list, dim='reference_category')
+    S['reference_category'] = categories
         
     return S
 
@@ -728,7 +699,7 @@ def compute_mean_absolute_error(da_cmp, da_ref, indep_dims, ensemble_dim=None):
                                     ** 2) ** 0.5)['mean_absolute_error']
     elif ensemble_dim == None:
         mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
-                                    .apply(utils.calc_difference, data_2=da_ref \
+                                    .apply(utils.calc_difference, data_2=da_ref) \
                                     ** 2) ** 0.5) \
                                     .mean(dim=indep_dims)['mean_absolute_error']
     elif indep_dims == None:
