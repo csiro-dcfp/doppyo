@@ -29,48 +29,50 @@ from pylatte import utils
 # ===================================================================================================
 # Methods for probabilistic comparisons
 # ===================================================================================================
-def compute_rank_histogram(da_cmp, da_ref, indep_dims, ensemble_dim='ensemble'):
+def compute_rank_histogram(da_cmp, da_ref, over_dims, ensemble_dim='ensemble'):
     """ Returns rank histogram """
     
-    if indep_dims == None:
+    if over_dims is None:
         raise ValueError('Cannot compute rank histogram with no independent dimensions')
         
     # Rank the data -----
-    da_ranked = utils.compute_rank(da_cmp, da_ref, dim=ensemble_dim)
+    da_ranked = utils.compute_rank(da_cmp, da_ref, over_dims=ensemble_dim)
 
     # Initialise bins -----
     bins = range(1,len(da_cmp[ensemble_dim])+2)
     bin_edges = utils.get_bin_edges(bins)
     
-    return utils.compute_histogram(da_ranked, bin_edges, dims=indep_dims)
+    return utils.compute_histogram(da_ranked, bin_edges, over_dims=over_dims)
 
 
 # ===================================================================================================
-def compute_rps(da_cmp, da_ref, bins, indep_dims, ensemble_dim):
+def compute_rps(da_cmp, da_ref, bins, over_dims, ensemble_dim='ensemble'):
     """ Returns the (continuous) ranked probability score """
 
+    if over_dims is None:
+        over_dims = []
+    
     # Initialise bins -----
     bin_edges = utils.get_bin_edges(bins)
 
     # Compute cumulative density functions -----
-    cdf_cmp = utils.compute_cdf(da_cmp, bin_edges=bin_edges, dim=ensemble_dim)
-    cdf_ref = utils.compute_cdf(da_ref, bin_edges=bin_edges, dim=None)
+    cdf_cmp = utils.compute_cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
+    cdf_ref = utils.compute_cdf(da_ref, bin_edges=bin_edges, over_dims=None)
     
-    if indep_dims == None:
-        rps = utils.calc_integral((cdf_cmp - cdf_ref) ** 2, dim='bins')
-    else:
-        rps = utils.calc_integral((cdf_cmp - cdf_ref) ** 2, dim='bins').mean(dim=indep_dims)
-    
-    return rps
+
+    return utils.calc_integral((cdf_cmp - cdf_ref) ** 2, over_dim='bins').mean(dim=over_dims)
 
 
 # ===================================================================================================
-def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, indep_dims, nans_as_zeros=True):
+def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, over_dims, nans_as_zeros=True):
     """ 
     Computes the relative frequency of an event given the comparison likelihood and reference 
     logical event data 
     """
     
+    if over_dims is None:
+        over_dims = []
+        
     ref_binary = ref_logical.copy()*1
     
     # Initialise probability bins -----
@@ -85,16 +87,10 @@ def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, indep_dims, nans_
                      (cmp_likelihood < cmp_prob_edges[idx+1])
         
         # Number of comparisons that fall within probability bin -----
-        if indep_dims is None:
-            cmp_number_list.append(cmp_in_bin*1)
-        else:
-            cmp_number_list.append(cmp_in_bin.sum(dim=indep_dims))  
+        cmp_number_list.append((1 * cmp_in_bin).sum(dim=over_dims))  
         
         # Number of reference occurences where comparison likelihood is within probability bin -----
-        if indep_dims is None:
-            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True))*1)
-        else:
-            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)).sum(dim=indep_dims))
+        ref_occur_list.append((1 * ((cmp_in_bin == True) & (ref_logical == True))).sum(dim=over_dims))
         
     # Concatenate lists -----
     cmp_number = xr.concat(cmp_number_list, dim='comparison_probability')
@@ -122,11 +118,14 @@ def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, indep_dims, nans_
 
 
 # ===================================================================================================
-def compute_roc(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
+def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     """ 
     Computes the relative operating characteristic of an event given the comparison likelihood and 
     reference logical event data 
     """
+    
+    if over_dims is None:
+        over_dims = []
     
     ref_binary = ref_logical * 1
 
@@ -135,10 +134,7 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
     cmp_prob_edges = cmp_prob[:-1]+dprob
 
     # Fill first probability bins with ones -----
-    if indep_dims == None:
-        all_ones = 0 * ref_binary + 1
-    else:
-        all_ones = 0 * ref_binary.mean(dim=indep_dims) + 1
+    all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
     hit_rate_list = [all_ones]
     false_alarm_rate_list = [all_ones]
     
@@ -151,7 +147,7 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
         # Compute contingency table for current probability -----
         category_edges = [-np.inf, cmp_prob_edge, np.inf]
         contingency = compute_contingency_table(cmp_likelihood, ref_binary, 
-                                                category_edges, indep_dims=indep_dims)
+                                                category_edges, over_dims=over_dims)
         
         # Add hit rate and false alarm rate to lists -----
         hit_rate_list.append(compute_hit_rate(contingency,yes_category=2))
@@ -173,7 +169,7 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
 
 
 # ===================================================================================================
-def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
+def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     """ 
     Returns the histogram of comparison likelihood when references indicate the event has occurred 
     and has not occurred
@@ -185,9 +181,9 @@ def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
     # Compute histogram of comparison likelihoods when reference is True/False -----
     replace_val = 1000 * max(cmp_prob_edges) # Replace nans with a value not in any bin
     hist_event = utils.compute_histogram(cmp_likelihood.where(ref_logical == True).fillna(replace_val), 
-                                       cmp_prob_edges, dims=indep_dims)
+                                       cmp_prob_edges, over_dims=over_dims)
     hist_no_event = utils.compute_histogram(cmp_likelihood.where(ref_logical == False).fillna(replace_val), 
-                                           cmp_prob_edges, dims=indep_dims)
+                                           cmp_prob_edges, over_dims=over_dims)
     
     # Package in dataset -----
     discrimination = hist_event.to_dataset(name='hist_event')
@@ -199,25 +195,25 @@ def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, indep_dims):
 
 
 # ===================================================================================================
-def compute_Brier_score(cmp_likelihood, ref_logical, indep_dims, cmp_prob=None):
+def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
     """ 
     Computes the Brier score(s) of an event given the comparison likelihood and reference logical 
     event data. When comparison probability bins are also provided, also computes the reliability, 
     resolution and uncertainty components of the Brier score
     """
     
-    if isinstance(indep_dims, str):
-        indep_dims = [indep_dims]
-    
+    N = 1
+    if over_dims is None:
+        over_dims = []   
+    elif isinstance(over_dims, str):
+        over_dims = [over_dims]
+        for over_dim in over_dims:
+            N = N * len(cmp_likelihood[over_dim])
+
     ref_binary = ref_logical.copy()*1
 
     # Calculate total Brier score -----
-    N = 1
-    if indep_dims == None:
-        Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=indep_dims).rename('Brier_score')
-    else: 
-        N = [N * len(cmp_likelihood[indep_dim]) for indep_dim in indep_dims][0]
-        Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).rename('Brier_score')
+    Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims).rename('Brier_score')
         
     # Calculate components
     if cmp_prob is not None:
@@ -237,31 +233,21 @@ def compute_Brier_score(cmp_likelihood, ref_logical, indep_dims, cmp_prob=None):
             cmp_in_bin = (cmp_likelihood >= cmp_prob_edges[idx]) & \
                          (cmp_likelihood < cmp_prob_edges[idx+1])
             
-            if indep_dims == None:
-                # Mean comparison probability within current probability bin -----
-                mean_cmp_prob_list.append(cmp_likelihood.where(cmp_in_bin,np.nan))
-                
-                # Number of comparisons that fall within probability bin -----
-                cmp_number_list.append(cmp_in_bin)
-                
-                # Number of reference occurences where comparison likelihood is within probability bin -----
-                ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)))
-            else:
-                # Replace likelihood with mean likelihood (so that Brier components add to total) -----
-                mean_cmp_likelihood = mean_cmp_likelihood.where(~cmp_in_bin).fillna( \
-                                                         mean_cmp_likelihood.where(cmp_in_bin)
-                                                                            .mean(dim=indep_dims))
-                
-                # Mean comparison probability within current probability bin -----
-                mean_cmp_prob_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
-                                                        .mean(dim=indep_dims)) 
-                
-                # Number of comparisons that fall within probability bin -----
-                cmp_number_list.append(cmp_in_bin.sum(dim=indep_dims))
-                
-                # Number of reference occurences where comparison likelihood is within probability bin -----
-                ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)) \
-                                        .sum(dim=indep_dims)) 
+            # Replace likelihood with mean likelihood (so that Brier components add to total) -----
+            mean_cmp_likelihood = mean_cmp_likelihood.where(~cmp_in_bin).fillna( \
+                                                     mean_cmp_likelihood.where(cmp_in_bin)
+                                                                        .mean(dim=over_dims))
+
+            # Mean comparison probability within current probability bin -----
+            mean_cmp_prob_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
+                                                    .mean(dim=over_dims)) 
+
+            # Number of comparisons that fall within probability bin -----
+            cmp_number_list.append(cmp_in_bin.sum(dim=over_dims))
+
+            # Number of reference occurences where comparison likelihood is within probability bin -----
+            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)) \
+                                    .sum(dim=over_dims)) 
 
         # Concatenate lists -----
         mean_cmp_prob = xr.concat(mean_cmp_prob_list, dim='comparison_probability')
@@ -275,20 +261,15 @@ def compute_Brier_score(cmp_likelihood, ref_logical, indep_dims, cmp_prob=None):
         base_rate = ref_occur / cmp_number
         Brier_reliability = (1 / N) * (cmp_number*(mean_cmp_prob - base_rate) ** 2) \
                                        .sum(dim='comparison_probability',skipna=True)
-        if indep_dims == None:
-            sample_clim = ref_binary
-        else:
-            sample_clim = ref_binary.mean(dim=indep_dims)
+            
+        sample_clim = ref_binary.mean(dim=over_dims)
         Brier_resolution = (1 / N) * (cmp_number*(base_rate - sample_clim) ** 2) \
                                       .sum(dim='comparison_probability',skipna=True)
         Brier_uncertainty = sample_clim * (1 - sample_clim)
         
         # When a binned approach is used, compute total Brier using binned probabilities -----
         # (This way Brier_total = Brier_reliability - Brier_resolution + Brier_uncertainty)
-        if indep_dims == None:
-            Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2)
-        else:
-            Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2).sum(dim=indep_dims)
+        Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims)
         
         # Package in dataset -----
         Brier = Brier_total.to_dataset(name='Brier_total')
@@ -306,8 +287,11 @@ def compute_Brier_score(cmp_likelihood, ref_logical, indep_dims, cmp_prob=None):
 # ===================================================================================================
 # Methods for categorized comparisons
 # ===================================================================================================
-def calc_contingency(da_cmp, da_ref, category_edges, indep_dims):
+def calc_contingency(da_cmp, da_ref, category_edges, over_dims):
     """ Returns contingency table from categorized comparison and reference arrays """
+    
+    if over_dims is None:
+        over_dims = []
     
     categories = range(1,len(category_edges))
     
@@ -320,10 +304,7 @@ def calc_contingency(da_cmp, da_ref, category_edges, indep_dims):
         for ref_category in categories:
             
             # Add to reference list -----
-            if indep_dims == None:
-                ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)))
-            else:
-                ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)).sum(dim=indep_dims))
+            ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)).sum(dim=over_dims))
         
         # Concatenate reference categories -----
         ref = xr.concat(ref_list, dim='reference_category')
@@ -339,24 +320,16 @@ def calc_contingency(da_cmp, da_ref, category_edges, indep_dims):
     return contingency
 
 
-def compute_contingency_table(da_cmp, da_ref, category_edges, indep_dims, ensemble_dim=None):
+def compute_contingency_table(da_cmp, da_ref, category_edges, over_dims):
     """ Return contingency table for given categories """
     
     cmp_categorized = utils.categorize(da_cmp, category_edges)
     ref_categorized = utils.categorize(da_ref, category_edges)
     
-    if ensemble_dim == None:
-        contingency = cmp_categorized.to_dataset(name='contingency') \
-                                     .apply(calc_contingency, da_ref=ref_categorized, \
-                                            category_edges=category_edges, \
-                                            indep_dims=indep_dims)['contingency']
-    else:
-        contingency = cmp_categorized.groupby(ensemble_dim) \
-                                     .apply(calc_contingency, da_ref=ref_categorized, \
-                                            category_edges=category_edges, 
-                                            indep_dims=indep_dims) \
-                                     .sum(dim=ensemble_dim) \
-                                     .rename('contingency')
+    contingency = cmp_categorized.to_dataset(name='contingency') \
+                                 .apply(calc_contingency, da_ref=ref_categorized, \
+                                        category_edges=category_edges, \
+                                        over_dims=over_dims)['contingency']
 
     return contingency
 
@@ -634,132 +607,136 @@ def compute_odds_ratio_skill(contingency, yes_category=2):
 # ===================================================================================================
 # Methods for continuous variables
 # ===================================================================================================
-def compute_mean_additive_bias(da_cmp, da_ref, indep_dims, ensemble_dim=None):
+def compute_mean_additive_bias(da_cmp, da_ref, over_dims):
     """ Returns the additive bias between comparison and reference datasets """
     
-    if isinstance(indep_dims, str):
-        indep_dims = [indep_dims]
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+        
+    if over_dims == None:
+        over_dims = []
 
-    if (ensemble_dim == None) & (indep_dims == None):
-        mean_additive_bias = da_cmp.to_dataset(name='mean_additive_bias') \
-                                 .apply(utils.calc_difference, data_2=da_ref) \
-                                 ['mean_additive_bias']
-    elif ensemble_dim == None:
-        mean_additive_bias = da_cmp.to_dataset(name='mean_additive_bias') \
-                                 .apply(utils.calc_difference, data_2=da_ref) \
-                                 .mean(dim=indep_dims) \
-                                 ['mean_additive_bias']
-    elif indep_dims == None:
-        mean_additive_bias = da_cmp.groupby(ensemble_dim) \
-                                 .apply(utils.calc_difference, data_2=da_ref) \
-                                 .mean(dim=ensemble_dim) \
-                                 .rename('mean_additive_bias')
-    else:
-        cmp_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
-        mean_additive_bias = da_cmp.groupby(ensemble_dim) \
-                                 .apply(utils.calc_difference, data_2=da_ref) \
-                                 .mean(dim=cmp_mean_dims) \
-                                 .rename('mean_additive_bias')
+    mean_additive_bias = da_cmp.to_dataset(name='mean_additive_bias') \
+                             .apply(utils.calc_difference, data_2=da_ref) \
+                             .mean(dim=over_dims) \
+                             ['mean_additive_bias']
+
     return mean_additive_bias
 
 
 # ===================================================================================================
-def compute_mean_multiplicative_bias(da_cmp, da_ref, indep_dims, ensemble_dim=None):
+def compute_mean_multiplicative_bias(da_cmp, da_ref, over_dims):
     """ Returns the multiplicative bias between comparison and reference datasets """
     
-    if isinstance(indep_dims, str):
-        indep_dims = [indep_dims]
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
         
-    if (ensemble_dim == None) & (indep_dims == None):
-        mean_multiplicative_bias = (da_cmp / da_ref).rename('mean_multiplicative_bias')
-    elif ensemble_dim == None:
-        mean_multiplicative_bias = (da_cmp.mean(dim=indep_dims) / da_ref.mean(dim=indep_dims)) \
-                                   .rename('mean_multiplicative_bias')
-    elif indep_dims == None:
-        mean_multiplicative_bias = (da_cmp.mean(dim=ensemble_dim) / da_ref) \
-                                   .rename('mean_multiplicative_bias')
-    else:
-        cmp_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
-        mean_multiplicative_bias = (da_cmp.mean(dim=cmp_mean_dims) / da_ref.mean(dim=indep_dims)) \
-                                   .rename('mean_multiplicative_bias')
+    if over_dims == None:
+        over_dims = []  
+
+    mean_multiplicative_bias = (da_cmp / da_ref).mean(dim=over_dims) \
+                               .rename('mean_multiplicative_bias')
 
     return mean_multiplicative_bias
 
     
 # ===================================================================================================
-def compute_mean_absolute_error(da_cmp, da_ref, indep_dims, ensemble_dim=None):
+def compute_mean_absolute_error(da_cmp, da_ref, over_dims):
     """ Returns the mean absolute error between comparison and reference datasets """
     
-    if isinstance(indep_dims, str):
-        indep_dims = [indep_dims]
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
 
-    if (ensemble_dim == None) & (indep_dims == None):
-        mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
-                                    .apply(utils.calc_difference, data_2=da_ref) \
-                                    ** 2) ** 0.5)['mean_absolute_error']
-    elif ensemble_dim == None:
-        mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
-                                    .apply(utils.calc_difference, data_2=da_ref) \
-                                    ** 2) ** 0.5) \
-                                    .mean(dim=indep_dims)['mean_absolute_error']
-    elif indep_dims == None:
-        mean_absolute_error = ((da_cmp.groupby(ensemble_dim) \
-                                    .apply(utils.calc_difference, data_2=da_ref) \
-                                    ** 2) ** 0.5) \
-                                    .mean(dim=ensemble_dim) \
-                                    .rename('mean_absolute_error')
-    else:
-        cmp_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
-        mean_absolute_error = ((da_cmp.groupby(ensemble_dim) \
-                                    .apply(utils.calc_difference, data_2=da_ref) \
-                                    ** 2) ** 0.5) \
-                                    .mean(dim=cmp_mean_dims) \
-                                    .rename('mean_absolute_error')
+    if over_dims == None:
+        over_dims = []  
+    
+    mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
+                                  .apply(utils.calc_difference, data_2=da_ref) \
+                                  ** 2) ** 0.5) \
+                                  .mean(dim=over_dims)['mean_absolute_error']
     
     return mean_absolute_error
 
 
 # ===================================================================================================
-def compute_mean_squared_error(da_cmp, da_ref, indep_dims, ensemble_dim=None):
+def compute_mean_squared_error(da_cmp, da_ref, over_dims):
     """ Returns the mean sqaured error between comparison and reference datasets """
     
-    if isinstance(indep_dims, str):
-        indep_dims = [indep_dims]
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
 
-    if (ensemble_dim == None) & (indep_dims == None):
-        mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
-                                  .apply(utils.calc_difference, data_2=da_ref) \
-                                  ** 2)['mean_squared_error']
-    elif ensemble_dim == None:
-        mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
-                                  .apply(utils.calc_difference, data_2=da_ref) \
-                                  ** 2) \
-                                  .mean(dim=indep_dims)['mean_squared_error']
-    elif indep_dims == None:
-        mean_squared_error = (da_cmp.groupby(ensemble_dim) \
-                                  .apply(utils.calc_difference, data_2=da_ref) \
-                                  ** 2) \
-                                  .mean(dim=ensemble_dim) \
-                                  .rename('mean_squared_error')
-    else:
-        cmp_mean_dims = tuple(indep_dims) + tuple([ensemble_dim])
-        mean_squared_error = (da_cmp.groupby(ensemble_dim) \
-                                  .apply(utils.calc_difference, data_2=da_ref) \
-                                  ** 2) \
-                                  .mean(dim=cmp_mean_dims) \
-                                  .rename('mean_squared_error')
+    if over_dims == None:
+        over_dims = []  
+        
+    mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
+                                .apply(utils.calc_difference, data_2=da_ref) \
+                                ** 2) \
+                                .mean(dim=over_dims)['mean_squared_error']
                     
     return mean_squared_error
 
 
 # ===================================================================================================
-def compute_rms_error(da_cmp, da_ref, indep_dims, ensemble_dim=None):
+def compute_rms_error(da_cmp, da_ref, over_dims):
     """ Returns the mean sqaured error between comparison and reference datasets """
     
-    return ((compute_mean_squared_error(da_cmp, da_ref, indep_dims=indep_dims, ensemble_dim=ensemble_dim)) ** 0.5) \
+    return ((compute_mean_squared_error(da_cmp, da_ref, over_dims=over_dims)) ** 0.5) \
            .rename('root_mean_squared_error')
 
+
+# ===================================================================================================
+def Pearson_corr_gufunc(x, y, subtract_local_mean):
+    """ gu_func to return Pearson correlation coefficient """
     
+    if subtract_local_mean:
+        cov = ((x - x.mean(axis=-1, keepdims=True)) * 
+               (y - y.mean(axis=-1, keepdims=True))).mean(axis=-1)
+        norm = x.std(axis=-1) * y.std(axis=-1)
+    else:
+        cov = (x * y).mean(axis=-1)
+        norm = ((x ** 2).mean(axis=-1)) ** 0.5 * ((y ** 2).mean(axis=-1)) ** 0.5
+    return cov / norm
+
+
+def calc_Pearson_corrcoef(da_1, da_2, over_dims, subtract_local_mean):
+    """ Returns the Pearson correlation over the specified dimensions. """
+        
+    # Stack all over_dims together -----
+    da_1_stacked = da_1.stack(stacked=over_dims)
+    da_2_stacked = da_2.stack(stacked=over_dims)
+    
+    return xr.apply_ufunc(Pearson_corr_gufunc, 
+                          da_1_stacked, da_2_stacked, subtract_local_mean,
+                          input_core_dims=[['stacked'], ['stacked'], []],
+                          dask='allowed',
+                          output_dtypes=[float])
+
+
+def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True):
+    """ 
+    Returns the Pearson correlation over the specified dimensions. 
+    If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is computed
+    over all dimensions in over_dims that appear in both da_cmp and da_ref, and then averaged over any
+    remaining dimensions in over_dims
+    """
+    
+    if over_dims is None:
+        raise ValueError('Pearson correlation cannot be computed over 0 dimensions') 
+    elif isinstance(over_dims, str):
+        over_dims = [over_dims]
+        
+    # Find over_dims that appear in both da_cmp and da_ref, and those that don't -----
+    over_dims_in_cmp = [over_dim for over_dim in over_dims if over_dim in da_cmp.dims]
+    over_dims_in_ref = [over_dim for over_dim in over_dims if over_dim in da_ref.dims]
+    intersection_dims = list(set(over_dims_in_cmp).intersection(set(over_dims_in_ref)))
+    difference_dims = list(set(over_dims_in_cmp).difference(set(over_dims_in_ref)))
+    
+    return da_cmp.to_dataset(name='Pearson_corrcoef') \
+                 .apply(calc_Pearson_corrcoef, da_2=da_ref, over_dims=intersection_dims, 
+                        subtract_local_mean=subtract_local_mean)['Pearson_corrcoef'] \
+                 .mean(dim=difference_dims) 
+
+
 # ===================================================================================================
 # General verification functions
 # ===================================================================================================
@@ -775,13 +752,13 @@ def did_event(da, event):
 
 
 # ===================================================================================================
-def compute_likelihood(da_logical, ensemble_dim='ensemble'):
-    """ Returns array of likelihoods computed along ensemble_dim from logical event data """
+def compute_likelihood(da_logical, dim='ensemble'):
+    """ Returns array of likelihoods computed along dim from logical event data """
     
-    if ensemble_dim == None:
+    if dim == None:
         likelihood = da_logical
     else:
-        likelihood = da_logical.mean(dim=ensemble_dim).rename('likelihood')
+        likelihood = da_logical.mean(dim=dim).rename('likelihood')
     return likelihood
 
 

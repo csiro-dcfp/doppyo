@@ -35,21 +35,21 @@ def categorize(da, bin_edges):
 
 
 # ===================================================================================================
-def compute_pdf(da, bin_edges, dim):
+def compute_pdf(da, bin_edges, over_dims):
     """ Returns the probability distribution function along the specified dimensions"""
     
-    hist = compute_histogram(da, bin_edges, dim)
+    hist = compute_histogram(da, bin_edges, over_dims)
     
-    return hist / calc_integral(hist, dim='bins', method='rect')
+    return hist / calc_integral(hist, over_dim='bins', method='rect')
 
 
 # ===================================================================================================
-def compute_cdf(da, bin_edges, dim):
+def compute_cdf(da, bin_edges, over_dims):
     """ Returns the cumulative probability distribution function along the specified dimensions"""
     
-    pdf = compute_pdf(da, bin_edges, dim)
+    pdf = compute_pdf(da, bin_edges, over_dims)
     
-    return calc_integral(pdf, dim='bins', method='rect', cumulative=True)
+    return calc_integral(pdf, over_dim='bins', method='rect', cumulative=True)
 
 
 # ===================================================================================================
@@ -63,21 +63,21 @@ def rank_gufunc(x):
     return ranks
 
 
-def compute_rank(da_1, da_2, dim): 
+def compute_rank(da_1, da_2, over_dims): 
     ''' Feeds forecast and observation data to ufunc that ranks data along specified dimension'''
     
     # Add 'ensemble' coord to obs if one does not exist -----
-    if dim not in da_2.coords:
+    if over_dims not in da_2.coords:
         da_2_pass = da_2.copy()
-        da_2_pass.coords[dim] = -1
-        da_2_pass = da_2_pass.expand_dims(dim)
+        da_2_pass.coords[over_dims] = -1
+        da_2_pass = da_2_pass.expand_dims(over_dims)
     else:
         da_2_pass = da_2.copy()
 
-    combined = xr.concat([da_2_pass, da_1], dim=dim)
+    combined = xr.concat([da_2_pass, da_1], dim=over_dims)
     
     return xr.apply_ufunc(rank_gufunc, combined,
-                          input_core_dims=[[dim]],
+                          input_core_dims=[[over_dims]],
                           dask='allowed',
                           output_dtypes=[int]).rename('rank')
 
@@ -91,48 +91,48 @@ def make_histogram(da, bin_edges):
     return xr.DataArray(np.histogram(da.values, bins=bin_edges)[0], coords=[bins], dims='bins').rename('histogram')
 
 
-def compute_histogram(da, bin_edges, dims):
-    """ Returns the histogram of data along the specified dimensions"""
+def compute_histogram(da, bin_edges, over_dims):
+    """ Returns the histogram of data over the specified dimensions"""
     
-    other_dims = find_other_dims(da,dims)
+    other_dims = find_other_dims(da,over_dims)
     if other_dims == None:
-        hist = da.to_dataset(name='histogram').apply(make_histogram,bin_edges=bin_edges)['histogram']
+        hist = da.to_dataset(name='histogram').apply(make_histogram, bin_edges=bin_edges)['histogram']
     else:
         hist = da.stack(stacked=other_dims) \
                  .groupby('stacked') \
                  .apply(make_histogram,bin_edges=bin_edges) \
-                 .unstack('stacked')
-    return hist.rename('histogram')
+                 .unstack('stacked').rename('histogram')
+    return hist
 
 
 # ===================================================================================================
 # Operational tools
 # ===================================================================================================
-def calc_integral(da, dim, method='trapz', cumulative=False):
+def calc_integral(da, over_dim, method='trapz', cumulative=False):
     """ Returns trapezoidal/rectangular integration along specified dimension """
     
-    x = da[dim]
+    x = da[over_dim]
     if method == 'trapz':
-        dx = x - x.shift(**{dim:1})
+        dx = x - x.shift(**{over_dim:1})
         dx = dx.fillna(0.0)
 
         if cumulative:
-            integral = ((da.shift(**{dim:1}) + da) * dx / 2.0) \
+            integral = ((da.shift(**{over_dim:1}) + da) * dx / 2.0) \
                        .fillna(0.0) \
-                       .cumsum(dim)
+                       .cumsum(over_dim)
         else:
-            integral = ((da.shift(**{dim:1}) + da) * dx / 2.0) \
+            integral = ((da.shift(**{over_dim:1}) + da) * dx / 2.0) \
                        .fillna(0.0) \
-                       .sum(dim)
+                       .sum(over_dim)
     elif method == 'rect':
-        dx1 = x - x.shift(**{dim:1})
-        dx2 = -(x - x.shift(**{dim:-1}))
+        dx1 = x - x.shift(**{over_dim:1})
+        dx2 = -(x - x.shift(**{over_dim:-1}))
         dx = dx1.combine_first(dx2)
         
         if cumulative:
-            integral = (da * dx).cumsum(dim) 
+            integral = (da * dx).cumsum(over_dim) 
         else:
-            integral = (da * dx).sum(dim) 
+            integral = (da * dx).sum(over_dim) 
     else:
         raise ValueError(f'{method} is not a recognised integration method')
     return integral

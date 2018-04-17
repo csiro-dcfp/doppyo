@@ -62,6 +62,7 @@ def compute_emi(da_sst_anom):
     
     return da_emi
 
+
 # ===================================================================================================
 def compute_dmi(da_sst_anom):
     ''' Returns DMI index ''' 
@@ -74,5 +75,29 @@ def compute_dmi(da_sst_anom):
     da_dmi = da_W - da_E
     
     return da_dmi
+
+
+# ===================================================================================================
+def compute_soi(da_slp_anom):
+    ''' Returns SOI index as defined by NOAA '''  
+    
+    lat_Tahiti = 17.6509
+    lon_Tahiti = 149.4260
+
+    lat_Darwin = 12.4634
+    lon_Darwin = 130.8456
+
+    da_Tahiti_anom = utils.get_nearest_point(da_slp_anom, lat_Tahiti, lon_Tahiti)
+    da_Tahiti_std = da_Tahiti_anom.std(dim='lead_time')
+    da_Tahiti_stdzd = da_Tahiti_anom / da_Tahiti_std
+
+    da_Darwin_anom = utils.get_nearest_point(da_slp_anom, lat_Darwin, lon_Darwin)
+    da_Darwin_std = da_Darwin_anom.std(dim='lead_time')
+    da_Darwin_stdzd = da_Darwin_anom / da_Darwin_std
+
+    MSD = (da_Tahiti_stdzd - da_Darwin_stdzd).std(dim='lead_time')
+
+    return (da_Tahiti_stdzd - da_Darwin_stdzd) / MSD
+
 
 # ===================================================================================================
