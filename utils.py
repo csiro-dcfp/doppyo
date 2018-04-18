@@ -30,8 +30,11 @@ def categorize(da, bin_edges):
     Returns the indices of the bins to which each value in input array belongs 
     Output indices are such that bin_edges[i-1] <= x < bin_edges[i]
     """
-    
-    return da.to_dataset(name='categorized').apply(np.digitize,bins=bin_edges)['categorized']
+
+    return xr.apply_ufunc(np.digitize, da, bin_edges,
+                          input_core_dims=[[],[]],
+                          dask='allowed',
+                          output_dtypes=[int]).rename('categorized')
 
 
 # ===================================================================================================
@@ -63,46 +66,47 @@ def rank_gufunc(x):
     return ranks
 
 
-def compute_rank(da_1, da_2, over_dims): 
+def compute_rank(da_1, da_2, over_dim): 
     ''' Feeds forecast and observation data to ufunc that ranks data along specified dimension'''
     
     # Add 'ensemble' coord to obs if one does not exist -----
-    if over_dims not in da_2.coords:
+    if over_dim not in da_2.coords:
         da_2_pass = da_2.copy()
-        da_2_pass.coords[over_dims] = -1
-        da_2_pass = da_2_pass.expand_dims(over_dims)
+        da_2_pass.coords[over_dim] = -1
+        da_2_pass = da_2_pass.expand_dims(over_dim)
     else:
         da_2_pass = da_2.copy()
 
-    combined = xr.concat([da_2_pass, da_1], dim=over_dims)
+    combined = xr.concat([da_2_pass, da_1], dim=over_dim)
     
     return xr.apply_ufunc(rank_gufunc, combined,
-                          input_core_dims=[[over_dims]],
+                          input_core_dims=[[over_dim]],
                           dask='allowed',
                           output_dtypes=[int]).rename('rank')
 
 
 # ===================================================================================================
-def make_histogram(da, bin_edges):
-    """ Constructs histogram data along specified dimension """
+def unstack_and_count(da, dims):
+    """ Unstacks provided xarray object and returns the total number of elements along dims """
     
-    bins = (bin_edges[0:-1]+bin_edges[1:])/2
+    unstacked = da.unstack(da.dims[0])
     
-    return xr.DataArray(np.histogram(da.values, bins=bin_edges)[0], coords=[bins], dims='bins').rename('histogram')
+    return ((0 * unstacked) + 1).sum(dim = dims)
 
 
 def compute_histogram(da, bin_edges, over_dims):
-    """ Returns the histogram of data over the specified dimensions"""
+    """ Returns the histogram of data over the specified dimensions """
     
-    other_dims = find_other_dims(da,over_dims)
-    if other_dims == None:
-        hist = da.to_dataset(name='histogram').apply(make_histogram, bin_edges=bin_edges)['histogram']
-    else:
-        hist = da.stack(stacked=other_dims) \
-                 .groupby('stacked') \
-                 .apply(make_histogram,bin_edges=bin_edges) \
-                 .unstack('stacked').rename('histogram')
-    return hist
+    # To use groupby_bins, da must have a name -----
+    da = da.rename('data') 
+    
+    hist = da.groupby_bins(da,bins=bin_edges) \
+             .apply(unstack_and_count, dims=over_dims) \
+             .fillna(0) \
+             .rename({'data_bins' : 'bins'})
+    hist['bins'] = (bin_edges[0:-1]+bin_edges[1:])/2
+    
+    return hist.astype(int)
 
 
 # ===================================================================================================
@@ -155,7 +159,7 @@ def calc_division(data_1, data_2):
 # ===================================================================================================
 # Climatology tools
 # ===================================================================================================
-def load_climatology(clim, variable, freq):
+def load_mean_climatology(clim, variable, freq):
     """ 
     Returns pre-saved climatology at desired frequency (greater than daily)
     """
@@ -201,6 +205,7 @@ def anomalize(data, clim):
     anom = data.groupby(freq) - clim.groupby(freq).mean()
     
     return prune(anom)
+
 
 # ===================================================================================================
 # IO tools
@@ -312,7 +317,6 @@ def repeat_data(data, repeat_dim, repeat_dim_value=0):
     repeat_data = data.loc[{repeat_dim : repeat_dim_value}].drop(repeat_dim).squeeze()
     
     return (0 * data).groupby(repeat_dim,squeeze=True).apply(calc_difference, data_2=-repeat_data)
-
 
 
 # ===================================================================================================
