@@ -169,7 +169,14 @@ def load_mean_climatology(clim, variable, freq):
     # Load specified dataset -----
     if clim == 'jra_1958-2016':
         data_loc = data_path + 'jra.55.isobaric.1958010100_2016123118.clim.nc'
-        ds = xr.open_mfdataset(data_loc, autoclose=True)
+        ds = xr.open_dataset(data_loc, autoclose=True)
+        
+        if variable not in ds.data_vars:
+            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            
+    elif clim == 'HadISST_1870-2013':
+        data_loc = data_path + 'HadISST.1870010100_2013110100.clim.nc'
+        ds = xr.open_dataset(data_loc, autoclose=True)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
