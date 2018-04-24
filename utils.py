@@ -142,6 +142,7 @@ def calc_integral(da, over_dim, method='trapz', cumulative=False):
             integral = (da * dx).sum(over_dim) 
     else:
         raise ValueError(f'{method} is not a recognised integration method')
+        
     return integral
     
 

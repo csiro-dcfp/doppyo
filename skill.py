@@ -136,7 +136,7 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     cmp_prob_edges = cmp_prob[:-1]+dprob
 
     # Fill first probability bins with ones -----
-    all_ones = 0 * ref_binary.mean(dim=over_dims, skipna=True) + 1
+    all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
     hit_rate_list = [all_ones]
     false_alarm_rate_list = [all_ones]
     
@@ -764,7 +764,7 @@ def compute_likelihood(da_logical, dim='ensemble'):
     if dim == None:
         likelihood = da_logical
     else:
-        likelihood = da_logical.mean(dim=dim, skipna=True).rename('likelihood')
+        likelihood = da_logical.mean(dim=dim).rename('likelihood')
     return likelihood
 
 
