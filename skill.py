@@ -60,7 +60,8 @@ def compute_rps(da_cmp, da_ref, bins, over_dims, ensemble_dim='ensemble'):
     cdf_ref = utils.compute_cdf(da_ref, bin_edges=bin_edges, over_dims=None)
     
 
-    return utils.calc_integral((cdf_cmp - cdf_ref) ** 2, over_dim='bins').mean(dim=over_dims)
+    return utils.calc_integral((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
+                .mean(dim=over_dims, skipna=True)
 
 
 # ===================================================================================================
@@ -87,10 +88,11 @@ def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, over_dims, nans_a
                      (cmp_likelihood < cmp_prob_edges[idx+1])
         
         # Number of comparisons that fall within probability bin -----
-        cmp_number_list.append((1 * cmp_in_bin).sum(dim=over_dims))  
+        cmp_number_list.append((1 * cmp_in_bin).sum(dim=over_dims, skipna=True))  
         
         # Number of reference occurences where comparison likelihood is within probability bin -----
-        ref_occur_list.append((1 * ((cmp_in_bin == True) & (ref_logical == True))).sum(dim=over_dims))
+        ref_occur_list.append((1 * ((cmp_in_bin == True) & (ref_logical == True))) \
+                      .sum(dim=over_dims, skipna=True))
         
     # Concatenate lists -----
     cmp_number = xr.concat(cmp_number_list, dim='comparison_probability')
@@ -134,7 +136,7 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     cmp_prob_edges = cmp_prob[:-1]+dprob
 
     # Fill first probability bins with ones -----
-    all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
+    all_ones = 0 * ref_binary.mean(dim=over_dims, skipna=True) + 1
     hit_rate_list = [all_ones]
     false_alarm_rate_list = [all_ones]
     
@@ -213,7 +215,8 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
     ref_binary = ref_logical.copy()*1
 
     # Calculate total Brier score -----
-    Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims).rename('Brier_score')
+    Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims, skipna=True) \
+                                                          .rename('Brier_score')
         
     # Calculate components
     if cmp_prob is not None:
@@ -236,18 +239,18 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
             # Replace likelihood with mean likelihood (so that Brier components add to total) -----
             mean_cmp_likelihood = mean_cmp_likelihood.where(~cmp_in_bin).fillna( \
                                                      mean_cmp_likelihood.where(cmp_in_bin)
-                                                                        .mean(dim=over_dims))
+                                                                        .mean(dim=over_dims, skipna=True))
 
             # Mean comparison probability within current probability bin -----
             mean_cmp_prob_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
-                                                    .mean(dim=over_dims)) 
+                                                    .mean(dim=over_dims, skipna=True)) 
 
             # Number of comparisons that fall within probability bin -----
-            cmp_number_list.append(cmp_in_bin.sum(dim=over_dims))
+            cmp_number_list.append(cmp_in_bin.sum(dim=over_dims, skipna=True))
 
             # Number of reference occurences where comparison likelihood is within probability bin -----
             ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)) \
-                                    .sum(dim=over_dims)) 
+                                    .sum(dim=over_dims, skipna=True)) 
 
         # Concatenate lists -----
         mean_cmp_prob = xr.concat(mean_cmp_prob_list, dim='comparison_probability')
@@ -260,16 +263,17 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
         # Compute Brier components -----
         base_rate = ref_occur / cmp_number
         Brier_reliability = (1 / N) * (cmp_number*(mean_cmp_prob - base_rate) ** 2) \
-                                       .sum(dim='comparison_probability',skipna=True)
+                                       .sum(dim='comparison_probability', skipna=True)
             
-        sample_clim = ref_binary.mean(dim=over_dims)
+        sample_clim = ref_binary.mean(dim=over_dims, skipna=True)
         Brier_resolution = (1 / N) * (cmp_number*(base_rate - sample_clim) ** 2) \
-                                      .sum(dim='comparison_probability',skipna=True)
+                                      .sum(dim='comparison_probability', skipna=True)
         Brier_uncertainty = sample_clim * (1 - sample_clim)
         
         # When a binned approach is used, compute total Brier using binned probabilities -----
         # (This way Brier_total = Brier_reliability - Brier_resolution + Brier_uncertainty)
-        Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims)
+        Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2) \
+                      .sum(dim=over_dims, skipna=True)
         
         # Package in dataset -----
         Brier = Brier_total.to_dataset(name='Brier_total')
@@ -304,7 +308,8 @@ def calc_contingency(da_cmp, da_ref, category_edges, over_dims):
         for ref_category in categories:
             
             # Add to reference list -----
-            ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)).sum(dim=over_dims))
+            ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)) \
+                    .sum(dim=over_dims, skipna=True))
         
         # Concatenate reference categories -----
         ref = xr.concat(ref_list, dim='reference_category')
@@ -338,7 +343,7 @@ def compute_accuracy_score(contingency):
     """ Returns the accuracy score given a contingency table """
     
     hits = contingency.where(contingency.reference_category == contingency.comparison_category) \
-           .sum(dim=('reference_category','comparison_category'))
+           .sum(dim=('reference_category','comparison_category'), skipna=True)
     N = sum_contingency(contingency, 'total')
     
     return (hits / N).rename('accuracy_score')
@@ -349,10 +354,10 @@ def compute_Heidke_score(contingency):
     """ Returns the Heidke skill score given a contingency table """
     
     numer_1 = contingency.where(contingency.reference_category == contingency.comparison_category) \
-              .sum(dim=('reference_category','comparison_category')) / \
+              .sum(dim=('reference_category','comparison_category'), skipna=True) / \
               sum_contingency(contingency, 'total')
     numer_2 = (sum_contingency(contingency, 'reference') * \
-               sum_contingency(contingency, 'comparison')).sum('category') / \
+               sum_contingency(contingency, 'comparison')).sum(dim='category', skipna=True) / \
               (sum_contingency(contingency, 'total')**2)
     denom = 1 - numer_2
 
@@ -364,14 +369,14 @@ def compute_Peirce_score(contingency):
     """ Returns the Hanssen and Kuipers discriminant given a contingency table """
     
     numer_1 = contingency.where(contingency.reference_category == contingency.comparison_category) \
-              .sum(dim=('reference_category','comparison_category')) / \
+              .sum(dim=('reference_category','comparison_category'), skipna=True) / \
               sum_contingency(contingency, 'total')
 
     numer_2 = (sum_contingency(contingency, 'reference') * \
-               sum_contingency(contingency, 'comparison')).sum('category') / \
+               sum_contingency(contingency, 'comparison')).sum(dim='category', skipna=True) / \
               (sum_contingency(contingency, 'total')**2)
 
-    denom = 1 - (sum_contingency(contingency, 'reference')**2).sum('category') / \
+    denom = 1 - (sum_contingency(contingency, 'reference')**2).sum(dim='category', skipna=True) / \
                 (sum_contingency(contingency, 'total')**2)
 
     return ((numer_1 - numer_2) / denom).rename('Peirce_score')
@@ -395,14 +400,14 @@ def calc_Gerrity_S(a):
             j = cmp_category
             
             if i == j:
-                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') + \
-                                                a.sel(category=range(j,K)).sum(dim='category')))
+                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category', skipna=True) + \
+                                                a.sel(category=range(j,K)).sum(dim='category', skipna=True)))
             elif i > j:
-                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category') - \
-                                                (i - j) + a.sel(category=range(i,K)).sum(dim='category')))
+                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category', skipna=True) - \
+                                                (i - j) + a.sel(category=range(i,K)).sum(dim='category', skipna=True)))
             else:
-                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category') - \
-                                                (j - i) + a.sel(category=range(j,K)).sum(dim='category')))
+                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category', skipna=True) - \
+                                                (j - i) + a.sel(category=range(j,K)).sum(dim='category', skipna=True)))
     
         # Concatenate comparison categories -----
         cmp = xr.concat(cmp_list, dim='comparison_category')
@@ -424,12 +429,12 @@ def compute_Gerrity_score(contingency):
     # Compute 'a' -----
     sum_p = (sum_contingency(contingency, 'reference') / \
              sum_contingency(contingency, 'total'))
-    a = ((1 - sum_p.cumsum('category')) / sum_p.cumsum('category'))
+    a = ((1 - sum_p.cumsum('category', skipna=True)) / sum_p.cumsum('category', skipna=True))
     
     # Compute 'S' -----
     S = calc_Gerrity_S(a)
     
-    return ((contingency * S).sum(dim=('reference_category','comparison_category')) / \
+    return ((contingency * S).sum(dim=('reference_category','comparison_category'), skipna=True) / \
            sum_contingency(contingency, 'total')).rename('Gerrity_score')
 
 
@@ -618,7 +623,7 @@ def compute_mean_additive_bias(da_cmp, da_ref, over_dims):
 
     mean_additive_bias = da_cmp.to_dataset(name='mean_additive_bias') \
                              .apply(utils.calc_difference, data_2=da_ref) \
-                             .mean(dim=over_dims) \
+                             .mean(dim=over_dims, skipna=True) \
                              ['mean_additive_bias']
 
     return mean_additive_bias
@@ -634,7 +639,7 @@ def compute_mean_multiplicative_bias(da_cmp, da_ref, over_dims):
     if over_dims == None:
         over_dims = []  
 
-    mean_multiplicative_bias = (da_cmp / da_ref).mean(dim=over_dims) \
+    mean_multiplicative_bias = (da_cmp / da_ref).mean(dim=over_dims, skipna=True) \
                                .rename('mean_multiplicative_bias')
 
     return mean_multiplicative_bias
@@ -653,7 +658,7 @@ def compute_mean_absolute_error(da_cmp, da_ref, over_dims):
     mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
                                   .apply(utils.calc_difference, data_2=da_ref) \
                                   ** 2) ** 0.5) \
-                                  .mean(dim=over_dims)['mean_absolute_error']
+                                  .mean(dim=over_dims, skipna=True)['mean_absolute_error']
     
     return mean_absolute_error
 
@@ -671,7 +676,7 @@ def compute_mean_squared_error(da_cmp, da_ref, over_dims):
     mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
                                 .apply(utils.calc_difference, data_2=da_ref) \
                                 ** 2) \
-                                .mean(dim=over_dims)['mean_squared_error']
+                                .mean(dim=over_dims, skipna=True)['mean_squared_error']
                     
     return mean_squared_error
 
@@ -689,15 +694,13 @@ def Pearson_corr_gufunc(x, y, subtract_local_mean):
     """ gu_func to return Pearson correlation coefficient """
     
     if subtract_local_mean:
-        cov = ((x - x.mean(axis=-1, keepdims=True, skipna=True)) * 
-               (y - y.mean(axis=-1, keepdims=True, skipna=True))).mean(axis=-1, skipna=True)
-        norm = x.std(axis=-1, skipna=True) * y.std(axis=-1, skipna=True)
+        cov = np.nanmean(((x - np.nanmean(x, axis=-1, keepdims=True)) * 
+                          (y - np.nanmean(y, axis=-1, keepdims=True))), axis=-1)
+        norm = np.nanstd(x, axis=-1) * np.nanstd(y, axis=-1)
     else:
-        cov = (x * y).mean(axis=-1, skipna=True)
-        norm = ((x ** 2).mean(axis=-1, skipna=True)) ** 0.5 * ((y ** 2).mean(axis=-1, skipna=True)) ** 0.5
+        cov = np.nanmean((x * y), axis=-1)
+        norm = (np.nanmean((x ** 2), axis=-1)) ** 0.5 * (np.nanmean((y ** 2), axis=-1)) ** 0.5
         
-    print(cov)
-    print(norm)
     return cov / norm
 
 
@@ -737,7 +740,7 @@ def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True
     return da_cmp.to_dataset(name='Pearson_corrcoef') \
                  .apply(calc_Pearson_corrcoef, da_2=da_ref, over_dims=intersection_dims, 
                         subtract_local_mean=subtract_local_mean)['Pearson_corrcoef'] \
-                 .mean(dim=difference_dims) 
+                 .mean(dim=difference_dims, skipna=True) 
 
 
 # ===================================================================================================
@@ -761,7 +764,7 @@ def compute_likelihood(da_logical, dim='ensemble'):
     if dim == None:
         likelihood = da_logical
     else:
-        likelihood = da_logical.mean(dim=dim).rename('likelihood')
+        likelihood = da_logical.mean(dim=dim, skipna=True).rename('likelihood')
     return likelihood
 
 
@@ -770,11 +773,13 @@ def sum_contingency(contingency, category='total'):
     """ Returns sums of specified categories in contingency table """
     
     if category == 'total':
-        N = contingency.sum(dim=('reference_category','comparison_category'))
+        N = contingency.sum(dim=('reference_category','comparison_category'), skipna=True)
     elif category == 'reference':
-        N = contingency.sum(dim='comparison_category').rename({'reference_category' : 'category'})
+        N = contingency.sum(dim='comparison_category', skipna=True) \
+                       .rename({'reference_category' : 'category'})
     elif category == 'comparison':
-        N = contingency.sum(dim='reference_category').rename({'comparison_category' : 'category'})    
+        N = contingency.sum(dim='reference_category', skipna=True) \
+                       .rename({'comparison_category' : 'category'})    
     else: raise ValueError(f'"{category}" is not a recognised category')
         
     return N
