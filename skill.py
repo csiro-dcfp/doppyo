@@ -36,7 +36,7 @@ def compute_rank_histogram(da_cmp, da_ref, over_dims, ensemble_dim='ensemble'):
         raise ValueError('Cannot compute rank histogram with no independent dimensions')
         
     # Rank the data -----
-    da_ranked = utils.compute_rank(da_cmp, da_ref, over_dims=ensemble_dim)
+    da_ranked = utils.compute_rank(da_cmp, da_ref, over_dim=ensemble_dim)
 
     # Initialise bins -----
     bins = range(1,len(da_cmp[ensemble_dim])+2)
