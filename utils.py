@@ -304,7 +304,11 @@ def year_delta(date_in, delta, trunc_to_start=False):
 def leadtime_to_datetime(data_in, lead_time_name='lead_time', init_date_name='init_date'):
     """ Converts time information from lead time/initial date dimension pair to single datetime dimension """
     
-    init_date = data_in[init_date_name].values
+    try:
+        init_date = data_in[init_date_name].values[0]
+    except IndexError:
+        init_date = data_in[init_date_name].values
+        
     lead_times = list(map(int, data_in[lead_time_name].values))
     freq = data_in[lead_time_name].attrs['units']
     
@@ -390,9 +394,10 @@ def stack_by_init_date(data_in, init_dates, N_lead_steps, init_date_name='init_d
     init_list = []
     for init_date in init_dates:
         start_index = np.where(data_in.time == np.datetime64(init_date))[0].item()
+        end_index = min([start_index + N_lead_steps, len(data_in.time)])
         init_list.append(
                       datetime_to_leadtime(
-                          data_in.isel(time=range(start_index, start_index + N_lead_steps))))
+                          data_in.isel(time=range(start_index, end_index))))
     
     data_out = xr.concat(init_list, dim=init_date_name)
     

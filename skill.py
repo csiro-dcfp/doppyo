@@ -689,12 +689,15 @@ def Pearson_corr_gufunc(x, y, subtract_local_mean):
     """ gu_func to return Pearson correlation coefficient """
     
     if subtract_local_mean:
-        cov = ((x - x.mean(axis=-1, keepdims=True)) * 
-               (y - y.mean(axis=-1, keepdims=True))).mean(axis=-1)
-        norm = x.std(axis=-1) * y.std(axis=-1)
+        cov = ((x - x.mean(axis=-1, keepdims=True, skipna=True)) * 
+               (y - y.mean(axis=-1, keepdims=True, skipna=True))).mean(axis=-1, skipna=True)
+        norm = x.std(axis=-1, skipna=True) * y.std(axis=-1, skipna=True)
     else:
-        cov = (x * y).mean(axis=-1)
-        norm = ((x ** 2).mean(axis=-1)) ** 0.5 * ((y ** 2).mean(axis=-1)) ** 0.5
+        cov = (x * y).mean(axis=-1, skipna=True)
+        norm = ((x ** 2).mean(axis=-1, skipna=True)) ** 0.5 * ((y ** 2).mean(axis=-1, skipna=True)) ** 0.5
+        
+    print(cov)
+    print(norm)
     return cov / norm
 
 

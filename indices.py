@@ -70,7 +70,7 @@ def compute_dmi(da_sst_anom):
 
 
 # ===================================================================================================
-def compute_soi(da_slp_anom, std_dim='lead_time', n_rolling=None):
+def compute_soi(da_slp_anom, std_dim, n_rolling=None):
     ''' Returns SOI index as defined by NOAA '''  
     
     if std_dim is None:
