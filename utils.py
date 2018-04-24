@@ -20,7 +20,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import time
-
+import collections
+import itertools
+from scipy.interpolate import interp1d
+from scipy import ndimage
 
 # ===================================================================================================
 # Probability tools
@@ -174,6 +177,20 @@ def load_mean_climatology(clim, variable, freq):
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
+    elif clim == 'cafe_fcst_v1_atmos_2003-2021':
+        data_loc = data_path + 'cafe.fcst.v1.atmos.2003010112_2021063012.clim.nc'
+        ds = xr.open_dataset(data_loc, autoclose=True)
+        
+        if variable not in ds.data_vars:
+            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            
+    elif clim == 'cafe_fcst_v1_ocean_2003-2021':
+        data_loc = data_path + 'cafe.fcst.v1.ocean.2003010112_2021063012.clim.nc'
+        ds = xr.open_dataset(data_loc, autoclose=True)
+        
+        if variable not in ds.data_vars:
+            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+    
     elif clim == 'HadISST_1870-2013':
         data_loc = data_path + 'HadISST.1870010100_2013110100.clim.nc'
         ds = xr.open_dataset(data_loc, autoclose=True)
@@ -182,7 +199,7 @@ def load_mean_climatology(clim, variable, freq):
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     else:
-        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016"')
+        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "HadISST_1870-2013"')
         
     if variable == 'precip':
         clim = ds[variable].resample(time=freq).sum(dim='time')
@@ -196,20 +213,34 @@ def load_mean_climatology(clim, variable, freq):
 def anomalize(data, clim):
     """ Receives raw and climatology data at matched frequencies and returns the anomaly """
     
-    data_freq = infer_freq(data.time.values)
-    clim_freq = infer_freq(clim.time.values)
+    data_use = data.copy(deep=True)
+    clim_use = clim.copy(deep=True)
+    
+    data_freq = infer_freq(data_use.time.values)
+    clim_freq = infer_freq(clim_use.time.values)
     
     if data_freq != clim_freq:
         raise ValueError('"data" and "clim" must have matched frequencies')
     
-    if 'M' in data_freq:
+    if 'D' in data_freq:
+        time_keep = data_use.time
+
+        # Contruct month-day arrays -----
+        data_mon = np.array([str(i).zfill(2) + '-' for i in data_use.time.dt.month.values])
+        data_day = np.array([str(i).zfill(2)  for i in data_use.time.dt.day.values])
+        data_use['time'] = np.core.defchararray.add(data_mon, data_day)
+        clim_mon = np.array([str(i).zfill(2) + '-' for i in clim_use.time.dt.month.values])
+        clim_day = np.array([str(i).zfill(2)  for i in clim_use.time.dt.day.values])
+        clim_use['time'] = np.core.defchararray.add(clim_mon, clim_day)
+
+        anom = data_use.groupby('time') - clim_use.groupby('time',squeeze=False).mean(dim='time')
+        anom['time'] = time_keep
+    elif 'M' in data_freq:
         freq = 'time.month'
-    elif 'D' in data_freq:
-        freq = 'time.day'
+        anom = data_use.groupby(freq) - clim_use.groupby(freq,squeeze=False).mean(dim='time')
     elif ('A' in data_freq) | ('Y' in data_freq):
         freq = 'time.year'
-        
-    anom = data.groupby(freq) - clim.groupby(freq).mean()
+        anom = data_use.groupby(freq) - clim_use.groupby(freq,squeeze=False).mean(dim='time')
     
     return prune(anom)
 
@@ -464,5 +495,3 @@ def find_other_dims(da, dims_exclude):
             other_dims = None
         
     return other_dims
-
-
