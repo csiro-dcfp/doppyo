@@ -192,8 +192,8 @@ def load_mean_climatology(clim, variable, freq):
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
     
-    elif clim == 'HadISST_1870-2013':
-        data_loc = data_path + 'HadISST.1870010100_2013110100.clim.nc'
+    elif clim == 'HadISST_1870-2018':
+        data_loc = data_path + 'HadISST.1870011612_2018021612.clim.nc'
         ds = xr.open_dataset(data_loc, autoclose=True)
         
         if variable not in ds.data_vars:
