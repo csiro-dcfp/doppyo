@@ -163,7 +163,7 @@ def calc_division(data_1, data_2):
 # ===================================================================================================
 # Climatology tools
 # ===================================================================================================
-def load_mean_climatology(clim, variable, freq):
+def load_mean_climatology(clim, variable, freq, **kwargs):
     """ 
     Returns pre-saved climatology at desired frequency (greater than daily)
     """
@@ -173,34 +173,34 @@ def load_mean_climatology(clim, variable, freq):
     # Load specified dataset -----
     if clim == 'jra_1958-2016':
         data_loc = data_path + 'jra.55.isobaric.1958010100_2016123118.clim.nc'
-        ds = xr.open_dataset(data_loc, autoclose=True)
+        ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     elif clim == 'cafe_fcst_v1_atmos_2003-2021':
         data_loc = data_path + 'cafe.fcst.v1.atmos.2003010112_2021063012.clim.nc'
-        ds = xr.open_dataset(data_loc, autoclose=True)
+        ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     elif clim == 'cafe_fcst_v1_ocean_2003-2021':
         data_loc = data_path + 'cafe.fcst.v1.ocean.2003010112_2021063012.clim.nc'
-        ds = xr.open_dataset(data_loc, autoclose=True)
+        ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
     
     elif clim == 'HadISST_1870-2018':
         data_loc = data_path + 'HadISST.1870011612_2018021612.clim.nc'
-        ds = xr.open_dataset(data_loc, autoclose=True)
+        ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     else:
-        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "HadISST_1870-2013"')
+        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "HadISST_1870-2018"')
         
     if variable == 'precip':
         clim = ds[variable].resample(time=freq).sum(dim='time')
@@ -217,9 +217,14 @@ def anomalize(data, clim):
     data_use = data.copy(deep=True)
     clim_use = clim.copy(deep=True)
     
-    data_freq = infer_freq(data_use.time.values)
-    clim_freq = infer_freq(clim_use.time.values)
-    
+    # If only climatological time instance is given, assume this is annual average -----
+    if len(clim_use.time) > 1:
+        data_freq = infer_freq(data_use.time.values)
+        clim_freq = infer_freq(clim_use.time.values)
+    else:
+        data_freq = 'A'
+        clim_freq = 'A'
+
     if data_freq != clim_freq:
         raise ValueError('"data" and "clim" must have matched frequencies')
     
@@ -241,8 +246,8 @@ def anomalize(data, clim):
         anom = data_use.groupby(freq) - clim_use.groupby(freq,squeeze=False).mean(dim='time')
     elif ('A' in data_freq) | ('Y' in data_freq):
         freq = 'time.year'
-        anom = data_use.groupby(freq) - clim_use.groupby(freq,squeeze=False).mean(dim='time')
-    
+        anom = data_use - prune(clim_use.groupby(freq,squeeze=False).mean(dim='time').squeeze())
+        
     return prune(anom)
 
 
