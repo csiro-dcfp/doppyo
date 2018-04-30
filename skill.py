@@ -250,7 +250,7 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
 
             # Number of reference occurences where comparison likelihood is within probability bin -----
             ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)) \
-                                    .sum(dim=over_dims, skipna=True)) 
+                                    .sum(dim=over_dims)) 
 
         # Concatenate lists -----
         mean_cmp_prob = xr.concat(mean_cmp_prob_list, dim='comparison_probability')
@@ -309,7 +309,7 @@ def calc_contingency(da_cmp, da_ref, category_edges, over_dims):
             
             # Add to reference list -----
             ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)) \
-                    .sum(dim=over_dims, skipna=True))
+                    .sum(dim=over_dims))
         
         # Concatenate reference categories -----
         ref = xr.concat(ref_list, dim='reference_category')
