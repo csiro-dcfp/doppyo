@@ -42,7 +42,7 @@ def compute_rank_histogram(da_cmp, da_ref, over_dims, ensemble_dim='ensemble'):
     bins = range(1,len(da_cmp[ensemble_dim])+2)
     bin_edges = utils.get_bin_edges(bins)
     
-    return utils.compute_histogram(da_ranked, bin_edges, over_dims=over_dims)
+    return utils.compute_pdf(da_ranked, bin_edges, over_dims=over_dims)
 
 
 # ===================================================================================================
@@ -676,7 +676,7 @@ def compute_mean_squared_error(da_cmp, da_ref, over_dims):
     mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
                                 .apply(utils.calc_difference, data_2=da_ref) \
                                 ** 2) \
-                                .mean(dim=over_dims, skipna=True)['mean_squared_error']
+                                .mean(dim=over_dims,skipna=True)['mean_squared_error']
                     
     return mean_squared_error
 
@@ -730,17 +730,22 @@ def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True
         raise ValueError('Pearson correlation cannot be computed over 0 dimensions') 
     elif isinstance(over_dims, str):
         over_dims = [over_dims]
-        
+         
     # Find over_dims that appear in both da_cmp and da_ref, and those that don't -----
     over_dims_in_cmp = [over_dim for over_dim in over_dims if over_dim in da_cmp.dims]
     over_dims_in_ref = [over_dim for over_dim in over_dims if over_dim in da_ref.dims]
     intersection_dims = list(set(over_dims_in_cmp).intersection(set(over_dims_in_ref)))
     difference_dims = list(set(over_dims_in_cmp).difference(set(over_dims_in_ref)))
     
+    # Only keep instances that appear in both dataarrays (excluding the ensemble dim) -----
+    # aligned = xr.align(da_cmp, da_ref, join='inner', exclude=difference_dims)
+    # da_cmp_pass = aligned[0]
+    # da_ref_pass = aligned[0]
+    
     return da_cmp.to_dataset(name='Pearson_corrcoef') \
-                 .apply(calc_Pearson_corrcoef, da_2=da_ref, over_dims=intersection_dims, 
-                        subtract_local_mean=subtract_local_mean)['Pearson_corrcoef'] \
-                 .mean(dim=difference_dims, skipna=True) 
+                      .apply(calc_Pearson_corrcoef, da_2=da_ref, over_dims=intersection_dims, 
+                            subtract_local_mean=subtract_local_mean)['Pearson_corrcoef'] \
+                      .mean(dim=difference_dims, skipna=True) 
 
 
 # ===================================================================================================

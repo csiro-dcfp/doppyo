@@ -63,7 +63,7 @@ def rank_gufunc(x):
     ''' Returns ranked data along specified dimension '''
     
     import bottleneck
-    ranks = bottleneck.rankdata(x,axis=-1)
+    ranks = bottleneck.nanrankdata(x,axis=-1)
     ranks = ranks[...,0]
     
     return ranks
@@ -80,7 +80,9 @@ def compute_rank(da_1, da_2, over_dim):
     else:
         da_2_pass = da_2.copy()
 
-    combined = xr.concat([da_2_pass, da_1], dim=over_dim)
+    # Only keep and combine instances that appear in both dataarrays (excluding the ensemble dim) -----
+    aligned = xr.align(da_2_pass, da_1, join='inner', exclude=over_dim)
+    combined = xr.concat(aligned, dim=over_dim)
     
     return xr.apply_ufunc(rank_gufunc, combined,
                           input_core_dims=[[over_dim]],
@@ -179,14 +181,28 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     elif clim == 'cafe_fcst_v1_atmos_2003-2021':
-        data_loc = data_path + 'cafe.fcst.v1.atmos.2003010112_2021063012.clim.nc'
+        data_loc = data_path + 'cafe.fcst.v1.atmos_daily.1lev.2003010112_2021063012.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     elif clim == 'cafe_fcst_v1_ocean_2003-2021':
-        data_loc = data_path + 'cafe.fcst.v1.ocean.2003010112_2021063012.clim.nc'
+        data_loc = data_path + 'cafe.fcst.v1.ocean_daily.1lev.2003010112_2021063012.clim.nc'
+        ds = xr.open_dataset(data_loc, **kwargs)
+        
+        if variable not in ds.data_vars:
+            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            
+    elif clim == 'cafe_ctrl_v3_atmos_2003-2021':
+        data_loc = data_path + 'cafe.ctrl.v3.atmos_month.all.400-499.clim.nc'
+        ds = xr.open_dataset(data_loc, **kwargs)
+        
+        if variable not in ds.data_vars:
+            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            
+    elif clim == 'cafe_ctrl_v3_ocean_2003-2021':
+        data_loc = data_path + 'cafe.ctrl.v3.ocean_month.1lev.400-499.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
@@ -198,9 +214,16 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+    
+    elif clim == 'REMSS_2002-2018':
+        data_loc = data_path + 'REMSS.2002060112_2018041812.clim.nc'
+        ds = xr.open_dataset(data_loc, **kwargs)
+        
+        if variable not in ds.data_vars:
+            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     else:
-        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "HadISST_1870-2018"')
+        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "cafe_ctrl_v3_atmos_2003-2021", "cafe_ctrl_v3_ocean_2003-2021", "HadISST_1870-2018","REMSS_2002-2018"')
         
     if variable == 'precip':
         clim = ds[variable].resample(time=freq).sum(dim='time')
