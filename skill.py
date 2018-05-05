@@ -135,7 +135,7 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     dprob = np.diff(cmp_prob)/2
     cmp_prob_edges = cmp_prob[:-1]+dprob
 
-    # Fill first probability bins with ones -----
+    # Fill first probability bin with ones -----
     all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
     hit_rate_list = [all_ones]
     false_alarm_rate_list = [all_ones]
@@ -154,18 +154,26 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
         # Add hit rate and false alarm rate to lists -----
         hit_rate_list.append(compute_hit_rate(contingency,yes_category=2))
         false_alarm_rate_list.append(compute_false_alarm_rate(contingency,yes_category=2))
-        
+    
     # Concatenate lists -----
     hit_rate = xr.concat(hit_rate_list, dim='comparison_probability')
     hit_rate['comparison_probability'] = cmp_prob
     false_alarm_rate = xr.concat(false_alarm_rate_list, dim='comparison_probability')
     false_alarm_rate['comparison_probability'] = cmp_prob
     
+    # Calculate area under curve -----
+    dx = false_alarm_rate - false_alarm_rate.shift(**{'comparison_probability':1})
+    dx = dx.fillna(0.0)
+    area = abs(((hit_rate.shift(**{'comparison_probability':1}) + hit_rate) * dx / 2.0) \
+                 .fillna(0.0).sum(dim='comparison_probability'))
+    
     # Package in dataset -----
     roc = hit_rate.to_dataset(name='hit_rate')
     roc.hit_rate.attrs['name'] = 'hit rate'
     roc['false_alarm_rate'] = false_alarm_rate
     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
+    roc['area'] = area
+    roc.area.attrs['name'] = 'area under roc'
 
     return roc
 
@@ -183,9 +191,11 @@ def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     # Compute histogram of comparison likelihoods when reference is True/False -----
     replace_val = 1000 * max(cmp_prob_edges) # Replace nans with a value not in any bin
     hist_event = utils.compute_histogram(cmp_likelihood.where(ref_logical == True).fillna(replace_val), 
-                                       cmp_prob_edges, over_dims=over_dims)
+                                         cmp_prob_edges, over_dims=over_dims) \
+                                         / (ref_logical == True).sum(dim=over_dims)
     hist_no_event = utils.compute_histogram(cmp_likelihood.where(ref_logical == False).fillna(replace_val), 
-                                           cmp_prob_edges, over_dims=over_dims)
+                                            cmp_prob_edges, over_dims=over_dims) \
+                                            / (ref_logical == False).sum(dim=over_dims)
     
     # Package in dataset -----
     discrimination = hist_event.to_dataset(name='hist_event')
