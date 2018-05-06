@@ -181,14 +181,14 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     elif clim == 'cafe_fcst_v1_atmos_2003-2021':
-        data_loc = data_path + 'cafe.fcst.v1.atmos_daily.1lev.2003010112_2021063012.clim.nc'
+        data_loc = data_path + 'cafe.fcst.v1.atmos_daily.2003010112_2021063012.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     elif clim == 'cafe_fcst_v1_ocean_2003-2021':
-        data_loc = data_path + 'cafe.fcst.v1.ocean_daily.1lev.2003010112_2021063012.clim.nc'
+        data_loc = data_path + 'cafe.fcst.v1.ocean_daily.2003010112_2021063012.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
