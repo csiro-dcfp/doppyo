@@ -214,16 +214,12 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
     resolution and uncertainty components of the Brier score
     """
     
-    N = 1
     if over_dims is None:
         over_dims = []   
-    elif isinstance(over_dims, str):
-        over_dims = [over_dims]
-        for over_dim in over_dims:
-            N = N * len(cmp_likelihood[over_dim])
+    N = (0*cmp_likelihood + 1).sum(dim=over_dims, skipna=True)
 
     ref_binary = ref_logical.copy()*1
-
+    
     # Calculate total Brier score -----
     Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims, skipna=True) \
                                                           .rename('Brier_score')
