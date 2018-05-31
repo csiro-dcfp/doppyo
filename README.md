@@ -58,7 +58,7 @@ Alternatively, if updating an existing pylatte\_env environment, run:
 
 * Activate the pylatte\_env environment:
 
-``source activate pylatte_env_<os>``
+``source activate pylatte_env``
 
 * Install the pyLatte package. Within your cloned repository, run:
 
