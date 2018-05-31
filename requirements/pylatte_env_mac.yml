@@ -103,12 +103,5 @@ dependencies:
   - zlib=1.2.11=h470a237_3
   - pip:
     - cosima-cookbook==0.2
-    - cython==0.28.3
-    - msgpack==0.5.6
-    - pkginfo==1.4.2
-    - pylatte-cafe==0.0.3
-    - requests-toolbelt==0.8.0
-    - tqdm==4.23.4
-    - twine==1.11.0
 prefix: /Users/squ027/anaconda3/envs/pylatte_env_mac
 
