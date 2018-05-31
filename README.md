@@ -1,52 +1,66 @@
-# **Repository for pyLatte package** #
-### - A Python package for computing diagnostics and verifications using the CAFE system output 
+========
+pyLatte
+========
 
---------------------------
-Contains codes/documents associated with the pyLatte package (name courtesy of Vassili)
-* skill.py - functions for assessing one data set relative to another (usually model output relative to observation).
-* utils.py - general support functions for the pyLatte package. 
-* indices.py - functions for computing various indices in the ocean and atmosphere.
-* **tests** - contains tests for various modules of the pyLatte package.
-* **tutorials** - contains tutorials on using the pyLatte package.
-* **requirements** - contains environment files and resources for running the pyLatte package.
-* **support** - contains scripts and resources supporting the pyLatte package.
--------------------------
-#### To use the pyLatte package:
-**1)** Install anaconda if you have not already done so:
+pyLatte is a diagnostics/verification package for climate forecast systems. It is still in the very early stages of development.
 
-a) Make your own directory in '/OSM/CBR/OA_DCFP/apps/'
+Current functionality
+======================
 
-`mkdir /OSM/CBR/OA_DCFP/apps/<userid>`
+Three modules are currently available
 
-b) A recent version of the anaconda installer is available in '/OSM/CBR/OA_DCFP/apps/anaconda_installer'. Run this and follow the prompts to install anaconda in the directory you have just created.
+1. ``skill`` : functions for assessing one data set relative to another (usually model output relative to observation).
 
-c) The anaconda installer will add the anaconda path to your .bashrc (or equivalent). You will need to source this for the changes to be made:
+2. ``utils`` : general support functions for the pyLatte package. 
 
-`source ~/.bashrc`
+3. ``indices`` : functions for computing various indices in the ocean and atmosphere.
 
-d) Check that anaconda python is now your default:
+Some test modules are also avaliable in ``pylatte.test``. However, these are far from complete 
 
-`which python`
+Usage (CSIRO OA\_DCFP users only)
+==================================
 
-**2)**   Clone the pyLatte Bitbucket repository to your local machine. At the desired location, run: 
- 
-`git clone https://<userid>@bitbucket.csiro.au/scm/df/pylatte.git`
- 
-**3)**   Within your .bashrc (or equivalent), add the pyLatte location to your PYTHONPATH:
+1. Install anaconda if you have not already done so:
 
-`PYTHONPATH="${PYTHONPATH}:/location/of/pyLatte/clone"`
+* Make your own directory in '/OSM/CBR/OA\_DCFP/apps/'
 
-`export PYTHONPATH`
- 
-**4)**   Replicate the pylatte_env environment locally:
+``mkdir /OSM/CBR/OA_DCFP/apps/<userid>``
 
-In 'pyLatte/requirements' run `conda env create -f pylatte_env.yml`
+* A recent version of the anaconda installer is available in '/OSM/CBR/OA\_DCFP/apps/anaconda\_installer'. Run this and follow the prompts to install anaconda in the directory you have just created.
 
-Or, if updating existing pylatte_env, activate the environment, then in 'pyLatte/requirements' run `conda env update --file=pylatte_env.yml`
+* The anaconda installer will add the anaconda path to your .bashrc (or equivalent). You will need to source this for the changes to be made:
 
-**5)**   Activate the pylatte_env environment:
+``source ~/.bashrc``
 
-`source activate pylatte_env`
+* Check that anaconda python is now your default:
 
-Contact: Dougie Squire
+``which python``
+
+2. Install pylatte:
+
+* Clone the pyLatte Bitbucket repository to your local machine. At your desired location, run:
+
+``git clone https://<userid>@bitbucket.csiro.au/scm/df/pylatte.git``
+
+* Replicate the pyLatte environment locally. This will ensure that you have all libraries/packages required to run pyLatte. Within the 'requirements' folder in your cloned repository, run:  
+  
+``conda env create -f pylatte_env_linux.yml``  
+  
+or  
+  
+``conda env create -f pylatte_env_mac.yml``  
+  
+depending on your os.  
+  
+Alternatively, if updating an existing pylatte\_env environment, run:  
+
+``conda env update --file=pylatte_env_<os>.yml``
+
+* Activate the pylatte\_env environment:
+
+``source activate pylatte_env_<os>``
+
+* Install the pyLatte package. Within your cloned repository, run:
+
+``python setup.py install``
 
