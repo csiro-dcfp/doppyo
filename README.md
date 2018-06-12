@@ -11,9 +11,11 @@ Three modules are currently available
 
 1. ``skill`` : functions for assessing one data set relative to another (usually model output relative to observation).
 
-2. ``utils`` : general support functions for the pyLatte package. 
+2. ``diagnostic`` : functions for computing various atmospheric and oceanic diagnostics.
 
-3. ``indices`` : functions for computing various indices in the ocean and atmosphere.
+3. ``utils`` : general support functions for the pyLatte package. 
+
+4. ``indices`` : functions for computing various indices in the ocean and atmosphere.
 
 Some test modules are also avaliable in ``pylatte.test``. However, these are far from complete 
 

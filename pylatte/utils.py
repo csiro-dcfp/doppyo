@@ -167,7 +167,9 @@ def calc_division(data_1, data_2):
 # ===================================================================================================
 def load_mean_climatology(clim, variable, freq, **kwargs):
     """ 
-    Returns pre-saved climatology at desired frequency (greater than daily)
+    Returns pre-saved climatology at desired frequency (daily or longer).
+    
+    Currently available options are: "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "cafe_ctrl_v3_atmos_2003-2021", "cafe_ctrl_v3_ocean_2003-2021", "HadISST_1870-2018", "REMSS_2002-2018".
     """
     
     data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/pylatte_climatologies/'
