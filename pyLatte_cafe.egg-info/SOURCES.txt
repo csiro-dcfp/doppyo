@@ -7,7 +7,6 @@ pyLatte_cafe.egg-info/requires.txt
 pyLatte_cafe.egg-info/top_level.txt
 pylatte/__init__.py
 pylatte/diagnostic.py
-pylatte/indices.py
 pylatte/skill.py
 pylatte/utils.py
 pylatte/test/__init__.py

@@ -5,12 +5,12 @@
     Python Version: 3.6
 """
 
-__all__ = ['categorize','compute_pdf', 'compute_cdf', 'compute_rank', 'compute_histogram',
-           'calc_integral', 'calc_difference', 'calc_division', 'load_climatology', 'anomalize', 
-           'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 
-           'datetime_to_leadtime', 'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 
-           'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 'timer', 
-           'find_other_dims']
+__all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'compute_cdf', 'compute_rank', 
+           'compute_histogram', 'calc_gradient', 'calc_integral', 'calc_difference', 'calc_division', 
+           'load_climatology', 'anomalize', 'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 
+           'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 'calc_boxavg_latlon', 
+           'stack_by_init_date', 'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 
+           'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_pres_name']
 
 # ===================================================================================================
 # Packages
@@ -24,6 +24,92 @@ import collections
 import itertools
 from scipy.interpolate import interp1d
 from scipy import ndimage
+
+# ===================================================================================================
+# Classes
+# ===================================================================================================
+class timer(object):
+    '''
+        Class for timing code snippets 
+
+        Usage:
+            with timer():
+                # do something
+    '''
+    
+    def __init__(self, name=None):
+        self.name = name
+
+    def __enter__(self):
+        self.tstart = time.time()
+
+    def __exit__(self, type, value, traceback):
+        if self.name:
+            print('   f{self.name}')
+        print(f'   Elapsed: {time.time() - self.tstart} sec')
+        
+
+# ===================================================================================================
+def constant(f):
+    """ Decorator to make constants unmodifiable """
+    
+    def fset(self, value):
+        raise TypeError('Cannot overwrite constant values')
+    def fget(self):
+        return f()
+    return property(fget, fset)
+
+class constants(object):
+    """ Class of commonly used constants """
+    
+    @constant
+    def R_d():
+        return 287.04 # gas constant of dry air [J / (kg * degK)]
+    
+    @constant
+    def R_v():
+        return 461.50 # gas constant of water vapor [J / (kg * degK)]
+    
+    @constant
+    def C_vd():
+        return 719.0 # heat capacity of dry air at constant volume [J / (kg * degK)]
+    
+    @constant
+    def C_pd():
+        return 1005.7 # 'heat capacity of dry air at constant pressure [J / (kg * degK)]
+    
+    @constant
+    def C_vv():
+        return 1410.0 # heat capacity of water vapor at constant volume [J / (kg * degK)]
+    
+    @constant
+    def C_pv():
+        return 1870.0 # heat capacity of water vapor at constant pressure [J / (kg * degK)]
+    
+    @constant
+    def C_l():
+        return 4190.0 # heat capacity of liquid water [J / (kg * degK)] 
+    
+    @constant
+    def g():
+        return 9.81 # gravitational acceleration [m / s^2]
+    
+    @constant
+    def R_earth():
+        return 6.371e6 # radius of the earth ['m']
+    
+    @constant
+    def O():
+        return 2 * 7.2921e-5 # 2 x earth rotation rate [rad/s]
+    
+    @constant
+    def pi():
+        return 3.1415926535897932
+    
+    @constant
+    def Ce():
+        return 0.3098 # Eady constant
+
 
 # ===================================================================================================
 # Probability tools
@@ -116,6 +202,36 @@ def compute_histogram(da, bin_edges, over_dims):
 
 # ===================================================================================================
 # Operational tools
+# ===================================================================================================
+def calc_gradient(da, dim):
+    """
+        Returns the gradient computed using second order accurate central differences in the 
+        interior points and either first order accurate one-sided (forward or backwards) 
+        differences at the boundaries
+
+        See https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.gradient.html
+    """ 
+    
+    centre_chunk = range(len(da[dim])-2)
+
+    f_hd = da.shift(**{dim:-2})
+    f = da.shift(**{dim:-1})
+    f_hs = da
+    hs = da[dim].shift(**{dim:-1}) - da[dim]
+    hd = da[dim].shift(**{dim:-2}) - da[dim].shift(**{dim:-1})
+    c = (hs ** 2 * f_hd + (hd ** 2 - hs ** 2) * f - hd ** 2 * f_hs) / \
+        (hs * hd * (hd + hs)).isel(**{dim : centre_chunk})
+    c[dim] = da[dim][1:-1]
+
+    l = (da.shift(**{dim:-1}) - da).isel(**{dim : 0}) / \
+        (da[dim].shift(**{dim:-1}) - da[dim]).isel(**{dim : 0})
+
+    r = (-da.shift(**{dim:1}) + da).isel(**{dim : -1}) / \
+        (-da[dim].shift(**{dim:1}) + da[dim]).isel(**{dim : -1})
+
+    return xr.concat([l, c, r], dim=dim)
+
+
 # ===================================================================================================
 def calc_integral(da, over_dim, method='trapz', cumulative=False):
     """ Returns trapezoidal/rectangular integration along specified dimension """
@@ -481,34 +597,6 @@ def get_bin_edges(bins):
 
 
 # ===================================================================================================
-class timer(object):
-    '''
-        File name: timer
-
-        Description: class for timing code snippets 
-
-        Author: Dougie Squire
-        Date created: 21/03/2018
-        Python Version: 3.5
-
-        Usage:
-            with timer():
-                # do something
-    '''
-    
-    def __init__(self, name=None):
-        self.name = name
-
-    def __enter__(self):
-        self.tstart = time.time()
-
-    def __exit__(self, type, value, traceback):
-        if self.name:
-            print('   f{self.name}')
-        print(f'   Elapsed: {time.time() - self.tstart} sec')
-
-
-# ===================================================================================================
 # xarray processing tools
 # ===================================================================================================
 def find_other_dims(da, dims_exclude):
@@ -531,3 +619,41 @@ def find_other_dims(da, dims_exclude):
             other_dims = None
         
     return other_dims
+
+# ===================================================================================================
+def get_lon_name(da):
+    """ Returns name of longitude coordinate in da """
+    
+    if 'lon' in da.dims:
+        return 'lon'
+    elif 'lon_2' in da.dims:
+        return 'lon_2'
+    else:
+        print('Unable to determine longitude dimension')
+        pass
+
+
+# ===================================================================================================
+def get_lat_name(da):
+    """ Returns name of latitude coordinate in da """
+    
+    if 'lat' in da.dims:
+        return 'lat'
+    elif 'lat_2' in da.dims:
+        return 'lat_2'
+    else:
+        print('Unable to determine latitude dimension')
+        pass
+
+    
+# ===================================================================================================
+def get_pres_name(da):
+    """ Returns name of pressure coordinate in da """
+    
+    if 'pfull' in da.dims:
+        return 'pfull'
+    elif 'phalf' in da.dims:
+        return 'phalf'
+    else:
+        print('Unable to determine pressure dimension')
+        pass

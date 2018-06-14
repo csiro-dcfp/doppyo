@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='pyLatte_cafe',
-    version='0.0.4',
+    version='0.0.5',
     author='D. Squire',
     author_email='dougie.squire@csiro.au',
     packages=['pylatte', 'pylatte.test'],
@@ -23,7 +23,7 @@ setup(
         "numpy >= 1.13.3",
         "pandas >= 0.22.0",
         "pytest >= 3.5.0",
-        "xarray >= 0.10.0",
+        "xarray >= 0.10.7",
         "bottleneck >= 1.2.1",
         "cartopy >= 0.16.0",
         "scipy >= 1.0.0",    
