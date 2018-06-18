@@ -24,8 +24,6 @@ Description: ========
         
         3. ``utils`` : general support functions for the pyLatte package. 
         
-        4. ``indices`` : functions for computing various indices in the ocean and atmosphere.
-        
         Some test modules are also avaliable in ``pylatte.test``. However, these are far from complete 
         
         Usage (CSIRO OA\_DCFP users only)

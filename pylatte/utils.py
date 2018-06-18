@@ -292,39 +292,39 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
     
     # Load specified dataset -----
     if clim == 'jra_1958-2016':
-        data_loc = data_path + 'jra.55.isobaric.1958010100_2016123118.clim.nc'
+        data_loc = data_path + 'jra.isobaric.1958010100_2016123118.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            raise ValueError(f'"{variable}" is not available in {clim}')
             
-    elif clim == 'cafe_fcst_v1_atmos_2003-2021':
-        data_loc = data_path + 'cafe.fcst.v1.atmos_daily.2003010112_2021063012.clim.nc'
+    elif clim == 'cafe_f1_atmos_2003-2017':
+        data_loc = data_path + 'cafe.f1.atmos.2003010112_2017123112.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            raise ValueError(f'"{variable}" is not available in {clim}')
             
-    elif clim == 'cafe_fcst_v1_ocean_2003-2021':
-        data_loc = data_path + 'cafe.fcst.v1.ocean_daily.2003010112_2021063012.clim.nc'
+    elif clim == 'cafe_f1_ocean_2003-2017':
+        data_loc = data_path + 'cafe.f1.ocean.2003010112_2017123112.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            raise ValueError(f'"{variable}" is not available in {clim}')
             
-    elif clim == 'cafe_ctrl_v3_atmos_2003-2021':
-        data_loc = data_path + 'cafe.ctrl.v3.atmos_month.all.400-499.clim.nc'
+    elif clim == 'cafe_c2_atmos_400-499':
+        data_loc = data_path + 'cafe.c2.atmos.400_499.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            raise ValueError(f'"{variable}" is not available in {clim}')
             
-    elif clim == 'cafe_ctrl_v3_ocean_2003-2021':
-        data_loc = data_path + 'cafe.ctrl.v3.ocean_month.1lev.400-499.clim.nc'
+    elif clim == 'cafe_c2_ocean_400-499':
+        data_loc = data_path + 'cafe.c2.ocean.400_499.clim.nc'
         ds = xr.open_dataset(data_loc, **kwargs)
         
         if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
+            raise ValueError(f'"{variable}" is not available in {clim}')
     
     elif clim == 'HadISST_1870-2018':
         data_loc = data_path + 'HadISST.1870011612_2018021612.clim.nc'
@@ -341,7 +341,7 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     else:
-        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "cafe_ctrl_v3_atmos_2003-2021", "cafe_ctrl_v3_ocean_2003-2021", "HadISST_1870-2018","REMSS_2002-2018"')
+        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_ocean_400-499", "HadISST_1870-2018","REMSS_2002-2018"')
         
     if variable == 'precip':
         clim = ds[variable].resample(time=freq).sum(dim='time')

@@ -26,6 +26,7 @@ setup(
         "xarray >= 0.10.7",
         "bottleneck >= 1.2.1",
         "cartopy >= 0.16.0",
-        "scipy >= 1.0.0",    
+        "scipy >= 1.0.0",
+	"windspharm >= 1.6.0",    
     ],
 )
