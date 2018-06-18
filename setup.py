@@ -27,6 +27,7 @@ setup(
         "bottleneck >= 1.2.1",
         "cartopy >= 0.16.0",
         "scipy >= 1.0.0",
+	"pyspharm >= 1.0.9",
 	"windspharm >= 1.6.0",    
     ],
 )
