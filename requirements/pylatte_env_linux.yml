@@ -180,7 +180,6 @@ dependencies:
     - f90nml==1.0.2
     - mako==1.0.7
     - normality==0.6.1
-    - pylatte-cafe==0.0.4
     - python-editor==1.0.3
     - sqlalchemy==1.2.8
     - tqdm==4.23.4
