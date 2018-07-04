@@ -7,10 +7,10 @@
 
 __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'compute_cdf', 'compute_rank', 
            'compute_histogram', 'calc_gradient', 'calc_integral', 'calc_difference', 'calc_division', 
-           'load_climatology', 'anomalize', 'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 
-           'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 'calc_boxavg_latlon', 
-           'stack_by_init_date', 'prune', 'get_nearest_point', 'make_lon_positive', 'get_bin_edges', 
-           'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_pres_name']
+           'calc_average', 'calc_fft', 'load_climatology', 'anomalize', 'trunc_time', 'infer_freq', 
+           'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 
+           'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'make_lon_positive', 
+           'get_bin_edges', 'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_pres_name']
 
 # ===================================================================================================
 # Packages
@@ -24,6 +24,8 @@ import collections
 import itertools
 from scipy.interpolate import interp1d
 from scipy import ndimage
+import dask.array
+import copy
 
 # ===================================================================================================
 # Classes
@@ -203,7 +205,7 @@ def compute_histogram(da, bin_edges, over_dims):
 # ===================================================================================================
 # Operational tools
 # ===================================================================================================
-def calc_gradient(da, dim):
+def calc_gradient(da, dim, x=None):
     """
         Returns the gradient computed using second order accurate central differences in the 
         interior points and either first order accurate one-sided (forward or backwards) 
@@ -212,31 +214,41 @@ def calc_gradient(da, dim):
         See https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.gradient.html
     """ 
     
-    centre_chunk = range(len(da[dim])-2)
+    # Replace dimension values if specified -----
+    da_n = da.copy()
+    if x is not None:
+        da_n[dim] = x
+        
+    centre_chunk = range(len(da_n[dim])-2)
 
-    f_hd = da.shift(**{dim:-2})
-    f = da.shift(**{dim:-1})
-    f_hs = da
-    hs = da[dim].shift(**{dim:-1}) - da[dim]
-    hd = da[dim].shift(**{dim:-2}) - da[dim].shift(**{dim:-1})
+    f_hd = da_n.shift(**{dim:-2})
+    f = da_n.shift(**{dim:-1})
+    f_hs = da_n
+    hs = da_n[dim].shift(**{dim:-1}) - da_n[dim]
+    hd = da_n[dim].shift(**{dim:-2}) - da_n[dim].shift(**{dim:-1})
     c = (hs ** 2 * f_hd + (hd ** 2 - hs ** 2) * f - hd ** 2 * f_hs) / \
         (hs * hd * (hd + hs)).isel(**{dim : centre_chunk})
-    c[dim] = da[dim][1:-1]
+    c[dim] = da_n[dim][1:-1]
 
-    l = (da.shift(**{dim:-1}) - da).isel(**{dim : 0}) / \
-        (da[dim].shift(**{dim:-1}) - da[dim]).isel(**{dim : 0})
+    l = (da_n.shift(**{dim:-1}) - da_n).isel(**{dim : 0}) / \
+        (da_n[dim].shift(**{dim:-1}) - da_n[dim]).isel(**{dim : 0})
 
-    r = (-da.shift(**{dim:1}) + da).isel(**{dim : -1}) / \
-        (-da[dim].shift(**{dim:1}) + da[dim]).isel(**{dim : -1})
-
-    return xr.concat([l, c, r], dim=dim)
+    r = (-da_n.shift(**{dim:1}) + da_n).isel(**{dim : -1}) / \
+        (-da_n[dim].shift(**{dim:1}) + da_n[dim]).isel(**{dim : -1})
+    
+    grad = xr.concat([l, c, r], dim=dim)
+    grad[dim] = da[dim]
+    
+    return grad
 
 
 # ===================================================================================================
-def calc_integral(da, over_dim, method='trapz', cumulative=False):
+def calc_integral(da, over_dim, x=None, method='trapz', cumulative=False):
     """ Returns trapezoidal/rectangular integration along specified dimension """
     
-    x = da[over_dim]
+    if x is None:
+        x = da[over_dim]
+        
     if method == 'trapz':
         dx = x - x.shift(**{over_dim:1})
         dx = dx.fillna(0.0)
@@ -279,9 +291,130 @@ def calc_division(data_1, data_2):
 
 
 # ===================================================================================================
+def calc_average(da, dim=None, weights=None):
+    """
+        Returns the weighted average
+
+        Shape of weights must be broadcastable to shape of da
+    """
+
+    if weights is None:
+        return da.mean(dim)
+    else:
+        weights = (0 * da + 1) * weights
+        return (da * weights).sum(dim) / weights.sum(dim)
+
+
+# ===================================================================================================
+def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
+    """
+        Returns the sequentual ffts of the provided array along the specified dimensions
+
+        da : xarray.DataArray
+            Array from which compute the spectrum
+        dim : str or sequence
+            Dimensions along which to compute the fft
+        nfft : float or sequence, optional
+            Number of points in each dimensions=to use in the transformation. If None, the full length
+            of each dimension is used.
+        dx : float or sequence, optional
+            Define the spacing of the dimensions. If None, the spacing is computed directly from the 
+            coordinates associated with the dimensions.
+        twosided : bool, optional
+            When the DFT is computed for purely real input, the output is Hermitian-symmetric, 
+            meaning the negative frequency terms are just the complex conjugates of the corresponding 
+            positive-frequency terms, and the negative-frequency terms are therefore redundant.
+            If True, force the fft to include negative and positive frequencies, even if the input 
+            data is real.
+        shift : bool, optional
+            If True, the frequency axes are shifted to center the 0 frequency, otherwise negative 
+            frequencies follow positive frequencies as in numpy.fft.ftt
+
+        A real fft is performed over the first dimension, which is faster. The transforms over the 
+        remaining dimensions are then computed with the classic fft.
+
+        If the input array is complex, one must set twosided = True
+    """
+
+    if isinstance(dim, str):
+        dim = [dim]   
+    if nfft is not None and not hasattr(nfft, "__getitem__"):
+        nfft = [nfft]
+    if dx is not None and not hasattr(dx, "__getitem__"):
+        dx = [dx]
+
+    # Build nfft and dx into dictionaries -----
+    nfft_n = dict()
+    for i, di in enumerate(dim):
+        try:
+            nfft_n[di] = nfft[i]
+        except TypeError:
+            nfft_n[di] = len(da[di])
+    dx_n = dict()
+    for i, di in enumerate(dim):
+        try:
+            dx_n[di] = dx[i]
+        except TypeError:
+            diff = da[di].diff(di)
+            if np.all(diff == diff[0]):
+                if is_datetime(da[di].values):
+                    dx_n[di] = diff.values[0] / np.timedelta64(1, 's')
+                else:
+                    dx_n[di] = diff.values[0]
+            else:
+                raise ValueError(f'Coordinate {di} must be regularly spaced to compute fft')           
+    
+    # Initialise fft data, dimensions and coordinates -----
+    fft_array = da.data
+    fft_coords = dict()
+    fft_dims = tuple()
+    for di in da.dims:
+        if di not in dim:
+            fft_dims += (di,)
+            fft_coords[di] = da[di].values
+        else:
+            fft_dims += ('f_' + di,)
+
+    # Loop over dimensions and perform fft -----
+    chunks = copy.copy(fft_array.chunks)
+    first = True
+    for di in dim:
+        if di in da.dims:
+            axis_num = da.get_axis_num(di)
+
+            if first and not twosided:
+                # The first FFT is performed on real numbers: the use of rfft is faster -----
+                fft_coords['f_' + di] = np.fft.rfftfreq(nfft_n[di], dx_n[di])
+                fft_array = dask.array.fft.rfft(fft_array, n=nfft_n[di], axis=axis_num)
+                # Auto-rechunk -----
+                # fft_array = dask.array.fft.rfft(fft_array.rechunk({axis_num: nfft_n[di]}),
+                #                                 n=nfft_n[di],
+                #                                 axis=axis_num).rechunk({axis_num: chunks[axis_num][0]})
+            else:
+                # The successive FFTs are performed on complex numbers: need to use classic fft -----
+                fft_coords['f_' + di] = np.fft.fftfreq(nfft_n[di], dx_n[di])
+                fft_array = dask.array.fft.fft(fft_array, n=nfft_n[di], axis=axis_num)
+                # Auto-rechunk -----
+                # fft_array = dask.array.fft.fft(fft_array.rechunk({axis_num: nfft_n[di]}),
+                #                                n=nfft_n[di],
+                #                                axis=axis_num).rechunk({axis_num: chunks[axis_num][0]})
+
+                if shift is True:
+                    fft_coords['f_' + di] = np.fft.fftshift(fft_coords['f_' + di])
+                    fft_array = dask.array.fft.fftshift(fft_array, axes=axis_num)
+
+            first = False
+
+        else:
+            raise ValueError(f'Cannot find dimension {di} in DataArray')
+
+    return xr.DataArray(fft_array, coords=fft_coords, dims=fft_dims, name='fft')
+
+
+# ===================================================================================================
 # Climatology tools
 # ===================================================================================================
-def load_mean_climatology(clim, variable, freq, **kwargs):
+def load_mean_climatology(clim, variable, freq, chunks=None, **kwargs):
     """ 
     Returns pre-saved climatology at desired frequency (daily or longer).
     
@@ -293,49 +426,49 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
     # Load specified dataset -----
     if clim == 'jra_1958-2016':
         data_loc = data_path + 'jra.isobaric.1958010100_2016123118.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_f1_atmos_2003-2017':
         data_loc = data_path + 'cafe.f1.atmos.2003010112_2017123112.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_f1_ocean_2003-2017':
         data_loc = data_path + 'cafe.f1.ocean.2003010112_2017123112.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_c2_atmos_400-499':
         data_loc = data_path + 'cafe.c2.atmos.400_499.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_c2_ocean_400-499':
         data_loc = data_path + 'cafe.c2.ocean.400_499.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not available in {clim}')
     
     elif clim == 'HadISST_1870-2018':
         data_loc = data_path + 'HadISST.1870011612_2018021612.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
     
     elif clim == 'REMSS_2002-2018':
         data_loc = data_path + 'REMSS.2002060112_2018041812.clim.nc'
-        ds = xr.open_dataset(data_loc, **kwargs)
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
@@ -343,12 +476,18 @@ def load_mean_climatology(clim, variable, freq, **kwargs):
     else:
         raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_ocean_400-499", "HadISST_1870-2018","REMSS_2002-2018"')
         
-    if variable == 'precip':
-        clim = ds[variable].resample(time=freq).sum(dim='time')
-    else:
-        clim = ds[variable].resample(time=freq).mean(dim='time')
-        
-    return clim
+    da = ds[variable]
+    
+    # Resample if required -----    
+    load_freq = infer_freq(da['time'].values)
+    if load_freq != freq:
+        if variable == 'precip':
+            da = da.resample(time=freq).sum(dim='time')
+        else:
+            da = da.resample(time=freq).mean(dim='time')
+        da = da.chunk(chunks=chunks)
+
+    return da
 
 
 # ===================================================================================================
@@ -594,6 +733,13 @@ def get_bin_edges(bins):
                                  [bins[-1]+dbin[-1]]))
     
     return bin_edges
+
+
+# ===================================================================================================
+def is_datetime(value):
+    """ Return True or False depending on whether input is datetime64 or not """
+    
+    return pd.api.types.is_datetime64_dtype(value)
 
 
 # ===================================================================================================
