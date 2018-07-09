@@ -9,8 +9,8 @@ __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'comput
            'compute_histogram', 'calc_gradient', 'calc_integral', 'calc_difference', 'calc_division', 
            'calc_average', 'calc_fft', 'load_climatology', 'anomalize', 'trunc_time', 'infer_freq', 
            'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 
-           'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'make_lon_positive', 
-           'get_bin_edges', 'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_pres_name']
+           'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
+           'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_pres_name']
 
 # ===================================================================================================
 # Packages
@@ -460,14 +460,14 @@ def load_mean_climatology(clim, variable, freq, chunks=None, **kwargs):
             raise ValueError(f'"{variable}" is not available in {clim}')
     
     elif clim == 'HadISST_1870-2018':
-        data_loc = data_path + 'HadISST.1870011612_2018021612.clim.nc'
+        data_loc = data_path + 'hadisst.1870011612_2018021612.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
             raise ValueError(f'"{variable}" is not (yet) available in {clim}')
     
     elif clim == 'REMSS_2002-2018':
-        data_loc = data_path + 'REMSS.2002060112_2018041812.clim.nc'
+        data_loc = data_path + 'remss.2002060112_2018041812.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
         
         if variable not in ds.data_vars:
@@ -651,22 +651,9 @@ def repeat_data(data, repeat_dim, repeat_dim_value=0):
 def calc_boxavg_latlon(da, box):
     '''
         Returns the average of a given quantity over a provide lat-lon region
-        Note: longitudinal coordinates must be positive easterly
     '''
     
-    # Adjust longitudes to be positive -----
-    da = make_lon_positive(da) 
-
-    # Extract desired region -----
-    da = da.where(da['lat']>box[0],drop=True) \
-            .where(da['lat']<box[1],drop=True) \
-            .where(da['lon']>box[2],drop=True) \
-            .where(da['lon']<box[3],drop=True)
-
-    # Average over extracted region -----
-    da = da.mean(dim=('lat','lon'))
-    
-    return da
+    return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3])).mean(dim=['lat', 'lon'])
 
 
 # ===================================================================================================
@@ -711,16 +698,6 @@ def get_nearest_point(da, lat, lon):
     """ Returns the nearest grid point to the specified lat/lon location """
 
     return da.sel(lat=lat,lon=lon,method='nearest')
-
-
-# ===================================================================================================
-def make_lon_positive(da):
-    ''' Adjusts longitudes to be positive '''
-    
-    da['lon'] = np.where(da['lon'] < 0, da['lon'] + 360, da['lon']) 
-    da = da.sortby('lon')
-    
-    return da
 
 
 # ===================================================================================================

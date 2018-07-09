@@ -297,52 +297,26 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
 # ===================================================================================================
 # Methods for categorized comparisons
 # ===================================================================================================
-def calc_contingency(da_cmp, da_ref, category_edges, over_dims):
-    """ Returns contingency table from categorized comparison and reference arrays """
+def compute_contingency_table(da_cmp, da_ref, category_edges, over_dims):
+    """ Return contingency table for given categories """
     
     if over_dims is None:
         over_dims = []
     
-    categories = range(1,len(category_edges))
+    cmp_edges = [(category_edges_cmp[i], category_edges_cmp[i+1],i+1) for i in range(len(category_edges_cmp)-1)]
+    ref_edges = [(category_edges_ref[i], category_edges_ref[i+1],i+1) for i in range(len(category_edges_ref)-1)]
+    da_list = []
+    for category in itertools.product(cmp_edges, ref_edges):
+        da_temp = (((da_cmp >= category[0][0]) & (da_cmp < category[0][1])) & \
+                   ((da_ref >= category[1][0]) & (da_ref < category[1][1]))).sum(dim=over_dims)
+        da_temp.coords['comparison_category'] = category[0][2]
+        da_temp.coords['reference_category'] = category[1][2]
+        da_list.append(da_temp)
     
-    # Loop over comparison categories -----
-    cmp_list = []
-    for cmp_category in categories:
-        
-        # Loop over reference categories -----
-        ref_list = []
-        for ref_category in categories:
-            
-            # Add to reference list -----
-            ref_list.append(((da_cmp == cmp_category) & (da_ref == ref_category)) \
-                    .sum(dim=over_dims))
-        
-        # Concatenate reference categories -----
-        ref = xr.concat(ref_list, dim='reference_category')
-        ref['reference_category'] = categories
-        
-        # Add to comparison list -----
-        cmp_list.append(ref)
-        
-    # Concatenate comparison categories -----
-    contingency = xr.concat(cmp_list, dim='comparison_category')
-    contingency['comparison_category'] = categories
-    
-    return contingency
-
-
-def compute_contingency_table(da_cmp, da_ref, category_edges, over_dims):
-    """ Return contingency table for given categories """
-    
-    cmp_categorized = utils.categorize(da_cmp, category_edges)
-    ref_categorized = utils.categorize(da_ref, category_edges)
-    
-    contingency = cmp_categorized.to_dataset(name='contingency') \
-                                 .apply(calc_contingency, da_ref=ref_categorized, \
-                                        category_edges=category_edges, \
-                                        over_dims=over_dims)['contingency']
-
-    return contingency
+    if len(da_list) == 1:
+        return da_list[0]
+    else:
+        return xr.concat(da_list, dim='stack').set_index(stack=['comparison_category', 'reference_category']).unstack('stack')   
 
 # ===================================================================================================
 def compute_accuracy_score(contingency):
