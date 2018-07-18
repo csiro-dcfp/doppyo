@@ -182,23 +182,26 @@ def compute_rank(da_1, da_2, over_dim):
 def unstack_and_count(da, dims):
     """ Unstacks provided xarray object and returns the total number of elements along dims """
     
-    unstacked = da.unstack(da.dims[0])
-    
+    try:
+        unstacked = da.unstack(da.dims[0])
+    except ValueError:
+        unstacked = da
+
     return ((0 * unstacked) + 1).sum(dim = dims)
 
 
 def compute_histogram(da, bin_edges, over_dims):
     """ Returns the histogram of data over the specified dimensions """
-    
+
     # To use groupby_bins, da must have a name -----
     da = da.rename('data') 
-    
+
     hist = da.groupby_bins(da,bins=bin_edges) \
              .apply(unstack_and_count, dims=over_dims) \
              .fillna(0) \
              .rename({'data_bins' : 'bins'})
     hist['bins'] = (bin_edges[0:-1]+bin_edges[1:])/2
-    
+
     return hist.astype(int)
 
 
@@ -421,7 +424,7 @@ def load_mean_climatology(clim, variable, freq, chunks=None, **kwargs):
     Currently available options are: "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "cafe_ctrl_v3_atmos_2003-2021", "cafe_ctrl_v3_ocean_2003-2021", "HadISST_1870-2018", "REMSS_2002-2018".
     """
     
-    data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/pylatte_climatologies/'
+    data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/pyLatte/mean_climatologies/'
     
     # Load specified dataset -----
     if clim == 'jra_1958-2016':

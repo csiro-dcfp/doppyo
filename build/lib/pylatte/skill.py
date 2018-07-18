@@ -21,6 +21,7 @@ __all__ = ['compute_rank_histogram', 'compute_rps', 'compute_reliability', 'comp
 # ===================================================================================================
 import numpy as np
 import xarray as xr
+import itertools
 
 # Load cafepy packages -----
 from pylatte import utils
@@ -59,7 +60,6 @@ def compute_rps(da_cmp, da_ref, bins, over_dims, ensemble_dim='ensemble'):
     cdf_cmp = utils.compute_cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
     cdf_ref = utils.compute_cdf(da_ref, bin_edges=bin_edges, over_dims=None)
     
-
     return utils.calc_integral((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
                 .mean(dim=over_dims, skipna=True)
 
@@ -297,7 +297,7 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
 # ===================================================================================================
 # Methods for categorized comparisons
 # ===================================================================================================
-def compute_contingency_table(da_cmp, da_ref, category_edges, over_dims):
+def compute_contingency_table(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
     """ Return contingency table for given categories """
     
     if over_dims is None:
