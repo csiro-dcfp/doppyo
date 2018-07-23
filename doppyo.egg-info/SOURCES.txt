@@ -1,0 +1,13 @@
+README.md
+setup.py
+doppyo/__init__.py
+doppyo/diagnostic.py
+doppyo/skill.py
+doppyo/utils.py
+doppyo.egg-info/PKG-INFO
+doppyo.egg-info/SOURCES.txt
+doppyo.egg-info/dependency_links.txt
+doppyo.egg-info/requires.txt
+doppyo.egg-info/top_level.txt
+doppyo/test/__init__.py
+doppyo/test/test_utils.py

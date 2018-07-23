@@ -1,7 +1,7 @@
-# **Support repository for pyLatte package** #
+# **Support repository for doppyo package** #
 
 --------------------------
-Contains scripts and resources supporting PyLatte
+Contains scripts and resources supporting doppyo
 
 Contact: Dougie Squire
 

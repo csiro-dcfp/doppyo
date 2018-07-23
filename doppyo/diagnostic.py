@@ -1,5 +1,5 @@
 """
-    pyLatte functions for computing various climate diagnostics
+    doppyo functions for computing various climate diagnostics
     Author: Dougie Squire
     Date created: 04/04/2018
     Python Version: 3.6
@@ -12,12 +12,13 @@ __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws',
 # ===================================================================================================
 # Packages
 # ===================================================================================================
+import warnings
 import numpy as np
 import xarray as xr
 import windspharm as wsh
 
-# Load pyLatte packages -----
-from pylatte import utils
+# Load doppyo packages -----
+from doppyo import utils
 
 # ===================================================================================================
 # Flow field diagnostics
@@ -407,13 +408,16 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     """
         Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in 
         `Marques et al. 2011 Global diagnostic energetics of five state-of-the-art climate 
-        models. Climate Dynamics`. 
+        models. Climate Dynamics`. Note that this decomposition is in the space domain. A
+        space-time decomposition can also be carried out (though not in Fourier space, but 
+        this is not implemented here (see `Oort. 1964 On Estimates of the atmospheric energy 
+        cycle. Monthly Weather Review`).
 
         Inputs:
             terms : list of terms to compute. If None, returns all terms. Available options are:
-                        P0 : total available potential energy in the zonally averaged temperature
+                        Pz : total available potential energy in the zonally averaged temperature
                              distribution
-                        K0 : total kinetic energy in zonally averaged motion
+                        Kz : total kinetic energy in zonally averaged motion
                         Pe : total eddy available potential energy [= sum_n Pn for spectral=True]
                              (Note that for spectral=True, an additional term, Sn, quantifying the
                              rate of transfer of available potential energy to eddies of wavenumber 
@@ -422,15 +426,15 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                              (Note that for spectral=True, an additional term, Ln, quantifying the
                              rate of transfer of kinetic energy to eddies of wavenumber n from eddies 
                              of all other wavenumbers is also returned)
-                        C0 : rate of conversion of zonal available potential energy to zonal kinetic 
+                        Cz : rate of conversion of zonal available potential energy to zonal kinetic 
                              energy
                         Ca : rate of transfer of total available potential energy in the zonally 
-                             averaged temperature distribution (P0) to total eddy available potential 
+                             averaged temperature distribution (Pz) to total eddy available potential 
                              energy (Pe) [= sum_n Rn for spectral=True]
                         Ce : rate of transfer of total eddy available potential energy (Pe) to total 
                              eddy kinetic energy (Ke) [= sum_n Cn for spectral=True]
                         Ck : rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
-                             energy in zonally averaged motion (K0) [= sum_n Mn for spectral=True]
+                             energy in zonally averaged motion (Kz) [= sum_n Mn for spectral=True]
                         (Note that for spectral=True, two additional terms are )
             vgradz : if True, uses `v-grad-z` approach for computing terms relating to conversion
                 of potential energy to kinetic energy. Otherwise, defaults to using the 
@@ -473,7 +477,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     
     # Determine the stability parameter using Saltzman's approach -----
     kappa = utils.constants().R_d / utils.constants().C_pd
-    p_kap = (1 / (temp[pres] * 100)) ** kappa
+    p_kap = (1000 / temp[pres]) ** kappa
     theta_A = utils.calc_average(temp * p_kap, [lat, lon], weights=cos_lat)
     dtheta_Adp = utils.calc_gradient(theta_A, dim=pres, x=(theta_A[pres] * 100))
     gamma = - p_kap * (utils.constants().R_d) / ((temp[pres] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
@@ -482,43 +486,42 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     # Compute zonal terms
     # ========================
     
-    if ('P0' in terms) | (terms is None):
+    if ('Pz' in terms) | (terms is None):
     # Compute the total available potential energy in the zonally averaged temperature
-    # distribution, P0 [also commonly called Az] -----
+    # distribution, Pz [also commonly called Az] -----
         temp_A = utils.calc_average(temp, [lat, lon], weights=cos_lat)
         temp_Z = temp.mean(dim=lon)
         temp_Za = temp_Z - temp_A
-        P0_int = gamma * utils.constants().C_pd / 2 * temp_Za ** 2  # [J/kg]
-        energies['P0_int'] = P0_int
+        Pz_int = gamma * utils.constants().C_pd / 2 * temp_Za ** 2  # [J/kg]
+        energies['Pz_int'] = Pz_int
         if integrate:
-            P0 = int_over_atmos(P0_int, lat, lon, pres, lon_dim=temp[lon]) # [J/m^2]
-            energies['P0'] = P0
+            Pz = int_over_atmos(Pz_int, lat, lon, pres, lon_dim=temp[lon]) # [J/m^2]
+            energies['Pz'] = Pz
     
-    if ('K0' in terms) | (terms is None):
-    # Compute the total kinetic energy in zonally averaged motion, K0 [also commonly 
+    if ('Kz' in terms) | (terms is None):
+    # Compute the total kinetic energy in zonally averaged motion, Kz [also commonly 
     # called Kz] -----
         u_Z = u.mean(dim=lon)
         v_Z = v.mean(dim=lon)
-        K0_int = 0.5 * (u_Z ** 2 + v_Z ** 2) # [J/kg]
-        energies['K0_int'] = K0_int
+        Kz_int = 0.5 * (u_Z ** 2 + v_Z ** 2) # [J/kg]
+        energies['Kz_int'] = Kz_int
         if integrate:
-            K0 = int_over_atmos(K0_int, lat, lon, pres, lon_dim=u[lon]) # [J/m^2]
-            energies['K0'] = K0
-
+            Kz = int_over_atmos(Kz_int, lat, lon, pres, lon_dim=u[lon]) # [J/m^2]
+            energies['Kz'] = Kz
     
-    if ('C0' in terms) | (terms is None):
-    # Compute the rate of conversion of zonal available potential energy to zonal kinetic
-    # energy, C0 [also commonly called Cz] -----
+    if ('Cz' in terms) | (terms is None):
+    # Compute the rate of conversion of zonal available potential energy (Pz) to zonal kinetic
+    # energy (Kz), Cz [also commonly called Cz] -----
         if vgradz:
             if 'v_Z' not in locals():
                 v_Z = v.mean(dim=lon)
             gh_Z = gh.mean(dim=lon)
             dghdlat = utils.calc_gradient(gh_Z, dim=lat, x=(gh_Z[lat] * degtorad))
-            C0_int = - (utils.constants().g / utils.constants().R_earth) * v_Z * dghdlat # [W/kg]
-            energies['C0_int'] = C0_int
+            Cz_int = - (utils.constants().g / utils.constants().R_earth) * v_Z * dghdlat # [W/kg]
+            energies['Cz_int'] = Cz_int
             if integrate:
-                C0 = int_over_atmos(C0_int, lat, lon, pres, lon_dim=gh[lon]) # [W/m^2]
-                energies['C0'] = C0
+                Cz = int_over_atmos(Cz_int, lat, lon, pres, lon_dim=gh[lon]) # [W/m^2]
+                energies['Cz'] = Cz
         else:
             if 'temp_Za' not in locals():
                 temp_A = utils.calc_average(temp, [lat, lon], weights=cos_lat)
@@ -527,19 +530,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             omega_A = utils.calc_average(omega, [lat, lon], weights=cos_lat)
             omega_Z = omega.mean(dim=lon)
             omega_Za = omega_Z - omega_A
-            C0_int = - (utils.constants().R_d / (omega[pres] * 100)) * omega_Za * temp_Za # [W/kg]
-            energies['C0_int'] = C0_int
+            Cz_int = - (utils.constants().R_d / (temp[pres] * 100)) * omega_Za * temp_Za # [W/kg]
+            energies['Cz_int'] = Cz_int
             if integrate:
-                C0 = int_over_atmos(C0_int, lat, lon, pres, lon_dim=omega[lon]) # [W/m^2]
-                energies['C0'] = C0
-    
-    # Compute the rate of generation of zonal available potential energy due to the zonally
-    # averaged heating, G0 [also commonly called Gz] -----
-    # NOT YET IMPLEMENTED - TO BE CALCULATED AS RESIDUALS OF THE OTHER TERMS
-    
-    # Compute the rate of viscous dissipation of zonal kinetic energy, D0 [also commonly 
-    # called Dz] -----
-    # NOT YET IMPLEMENTED - TO BE CALCULATED AS RESIDUALS OF THE OTHER TERMS
+                Cz = int_over_atmos(Cz_int, lat, lon, pres, lon_dim=omega[lon]) # [W/m^2]
+                energies['Cz'] = Cz
     
     # Compute eddy terms in Fourier space if spectral=True
     # ==========================================================
@@ -702,7 +697,8 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                 On = flip_n(O)
 
             dtemp_Zdlat = utils.calc_gradient(temp_Z, dim=lat, x=(temp_Z[lat] * degtorad))
-            theta_Z = omega.mean(dim=lon)
+            theta = temp * p_kap
+            theta_Z = theta.mean(dim=lon)
             theta_Za = theta_Z - theta_A
             dtheta_Zadp = utils.calc_gradient(theta_Za, dim=pres, x=(theta_Za[pres] * 100))
             Rn_int = gamma * utils.constants().C_pd * ((dtemp_Zdlat / utils.constants().R_earth) * (Vp * Bn + Vn * Bp) + 
@@ -806,13 +802,19 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                 Mn = abs(int_over_atmos(Mn_int, lat, lon, pres, lon_dim=u[lon])) # [W/m^2]
                 energies['Mn'] = Mn
         
-        # Compute the rate of generation of zonal available potential energy of wavenumber 
+        if ('Ge' in terms) | (terms is None):
+        # Compute the rate of generation of eddy available potential energy of wavenumber 
         # n due to nonadiabatic heating, Gn -----
-        # NOT YET IMPLEMENTED - TO BE CALCULATED AS RESIDUALS OF THE OTHER TERMS
+            raise ValueError('Rate of generation of eddy available potential energy is computed as ' +
+                             'a residual and cannot be computed in Fourier space. Please set spectral' +
+                             '=False')
         
+        if ('De' in terms) | (terms is None):
         # Compute the rate of dissipation of the kinetic energy of eddies of wavenumber n, 
         # Dn -----
-        # NOT YET IMPLEMENTED - TO BE CALCULATED AS RESIDUALS OF THE OTHER TERMS
+            raise ValueError('Rate of viscous dissipation of eddy kinetic energy is computed as a ' +
+                             'residual and cannot be computed in Fourier space. Please set spectral' +
+                             '=False')
         
     else:
         
@@ -822,42 +824,148 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             if 'temp_Z' not in locals():
                 temp_Z = temp.mean(dim=lon)
             temp_z = temp - temp_Z
-            Pe_int = gamma * utils.constants().C_pd / 2 * temp_z ** 2  # [J/kg]
+            Pe_int = gamma * utils.constants().C_pd / 2 * (temp_z ** 2).mean(dim=lon)  # [J/kg]
             energies['Pe_int'] = Pe_int
             if integrate:
-                Pe = int_over_atmos(Pe_int, lat, lon, pres) # [J/m^2]
+                Pe = int_over_atmos(Pe_int, lat, lon, pres, lon_dim=temp[lon]) # [J/m^2]
                 energies['Pe'] = Pe
         
         if ('Ke' in terms) | (terms is None):
         # Compute the total eddy kinetic energy, Ke -----
-            # NOT YET IMPLEMENTED
-            pass
-            
+            if 'u_Z' not in locals():
+                    u_Z = u.mean(dim=lon)
+            if 'v_Z' not in locals():
+                    v_Z = v.mean(dim=lon)
+            u_z = u - u_Z
+            v_z = v - v_Z
+            Ke_int = 0.5 * (u_z ** 2 + v_z ** 2).mean(dim=lon) # [J/kg]
+            energies['Ke_int'] = Ke_int
+            if integrate:
+                Ke = int_over_atmos(Ke_int, lat, lon, pres, lon_dim=u[lon]) # [J/m^2]
+                energies['Ke'] = Ke
+                
         if ('Ca' in terms) | (terms is None):
         # Compute the rate of transfer of total available potential energy in the zonally 
-        # averaged temperature distribution (P0) to total eddy available potential energy 
+        # averaged temperature distribution (Pz) to total eddy available potential energy 
         # (Pe), Ca -----
-            # NOT YET IMPLEMENTED
-            pass
-        
+            if 'v_Z' not in locals():
+                v_Z = v.mean(dim=lon)
+            if 'temp_Z' not in locals():
+                temp_Z = temp.mean(dim=lon)
+            if 'omega_Z' not in locals():
+                omega_Z = omega.mean(dim=lon)
+            if 'theta_Z' not in locals():
+                theta = temp * p_kap
+                theta_Z = theta.mean(dim=lon)
+            if 'dtemp_Zdlat' not in locals():
+                dtemp_Zdlat = utils.calc_gradient(temp_Z, dim=lat, x=(temp_Z[lat] * degtorad))
+            v_z = v - v_Z
+            temp_z = temp - temp_Z
+            omega_z = omega - omega_Z
+            oT_Z = (omega_z * temp_z).mean(dim=lon)
+            oT_A = utils.calc_average(omega_z * temp_z, [lat, lon], weights=cos_lat)
+            oT_Za = oT_Z - oT_A
+            theta_Za = theta_Z - theta_A
+            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=pres, x=(theta_Za[pres] * 100))
+            Ca_int = - gamma * utils.constants().C_pd * \
+                           (((v_z * temp_z).mean(dim=lon) * dtemp_Zdlat / utils.constants().R_earth) + \
+                            (p_kap * oT_Za * dtheta_Zadp)) # [W/kg]
+            energies['Ca_int'] = Ca_int
+            if integrate:
+                Ca = int_over_atmos(Ca_int, lat, lon, pres, lon_dim=v[lon]) # [W/m^2]
+                energies['Ca'] = Ca
+            
         if ('Ce' in terms) | (terms is None):
         # Compute the rate of transfer of total eddy available potential energy (Pe) to 
         # total eddy kinetic energy (Ke), Ce -----
-            # NOT YET IMPLEMENTED
-            pass
+            if 'temp_Z' not in locals():
+                temp_Z = temp.mean(dim=lon)
+            if 'omega_Z' not in locals():
+                omega_Z = omega.mean(dim=lon)
+            temp_z = temp - temp_Z
+            omega_z = omega - omega_Z
+            Ce_int = - (utils.constants().R_d / (temp[pres] * 100)) * \
+                           (omega_z * temp_z).mean(dim=lon) # [W/kg]  
+            energies['Ce_int'] = Ce_int
+            if integrate:
+                Ce = int_over_atmos(Ce_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+                energies['Ce'] = Ce
         
         if ('Ck' in terms) | (terms is None):
         # Compute the rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
-        # energy in zonally averaged motion (K0), Ck -----
-            # NOT YET IMPLEMENTED
-            pass
-        
-        # Compute the rate of generation of eddy available potential energy (Ae), Ge -----
-        # NOT YET IMPLEMENTED - TO BE CALCULATED AS RESIDUALS OF THE OTHER TERMS
-        
-        # Compute the rate of dissipation of eddy kinetic energy (Ke), De -----
-        # NOT YET IMPLEMENTED - TO BE CALCULATED AS RESIDUALS OF THE OTHER TERMS
-        
+        # energy in zonally averaged motion (Kz), Ck -----
+            if 'u_Z' not in locals():
+                    u_Z = u.mean(dim=lon)
+            if 'v_Z' not in locals():
+                    v_Z = v.mean(dim=lon)
+            if 'omega_Z' not in locals():
+                omega_Z = omega.mean(dim=lon)
+            u_z = u - u_Z
+            v_z = v - v_Z
+            omega_z = omega - omega_Z
+            du_Zndlat = utils.calc_gradient(u_Z / cos_lat, dim=lat, x=(u_Z[lat] * degtorad))
+            dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v_Z[lat] * degtorad))
+            du_Zdp = utils.calc_gradient(u_Z, dim=pres, x=(u_Z[pres] * 100))
+            dv_Zdp = utils.calc_gradient(v_Z, dim=pres, x=(v_Z[pres] * 100))
+            Ck_int = (u_z * v_z).mean(dim=lon)  * cos_lat * du_Zndlat / utils.constants().R_earth + \
+                     (u_z * omega_z).mean(dim=lon) * du_Zdp + \
+                     (v_z ** 2).mean(dim=lon) * dv_Zdlat / utils.constants().R_earth + \
+                     (v_z * omega_z).mean(dim=lon) * dv_Zdp - \
+                     (u_z ** 2).mean(dim=lon) * v_Z * tan_lat / utils.constants().R_earth
+            energies['Ck_int'] = Ck_int
+            if integrate:
+                Ck = int_over_atmos(Ck_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+                energies['Ck'] = Ck
+                
+    if ('Gz' in terms) | (terms is None):
+    # Compute the rate of generation of zonal available potential energy due to the zonally
+    # averaged heating, Gz -----
+        if ('Cz' not in terms) | ('Ca' not in terms):
+            raise ValueError('The rate of generation of zonal available potential energy, Gz, is ' +
+                             'computed from the residual of Cz and Ca. Please add these to the list, ' +
+                             'terms=[<terms>].')
+        Gz_int = Cz_int + Ca_int
+        energies['Gz_int'] = Gz_int
+        if integrate:
+            Gz = int_over_atmos(Gz_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            energies['Gz'] = Gz
+
+    if ('Ge' in terms) | (terms is None):
+    # Compute the rate of generation of eddy available potential energy (Ae), Ge -----
+        if ('Ce' not in terms) | ('Ca' not in terms):
+            raise ValueError('The rate of generation of eddy available potential energy, Ge, is ' +
+                             'computed from the residual of Ce and Ca. Please add these to the list, ' +
+                             'terms=[<terms>].')
+        Ge_int = Ce_int - Ca_int
+        energies['Ge_int'] = Ge_int
+        if integrate:
+            Ge = int_over_atmos(Ge_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            energies['Ge'] = Ge
+    
+    if ('Dz' in terms) | (terms is None):
+    # Compute the rate of viscous dissipation of zonal kinetic energy, Dz -----
+        if ('Cz' not in terms) | ('Ck' not in terms):
+            raise ValueError('The rate of viscous dissipation of zonal kinetic energy, Dz, is ' +
+                             'computed from the residual of Cz and Ck. Please add these to the ' +
+                             'list, terms=[<terms>].')
+        Dz_int = Cz_int - Ck_int
+        energies['Dz_int'] = Dz_int
+        if integrate:
+            Dz = int_over_atmos(Dz_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            energies['Dz'] = Dz
+
+    if ('De' in terms) | (terms is None):
+    # Compute the rate of dissipation of eddy kinetic energy (Ke), De -----
+        if ('Ce' not in terms) | ('Ck' not in terms):
+            raise ValueError('The rate of viscous dissipation of eddy kinetic energy, De, is ' +
+                             'computed from the residual of Ce and Ck. Please add these to the ' +
+                             'list, terms=[<terms>].')
+        De_int = Ce_int - Ck_int
+        energies['De_int'] = De_int
+        if integrate:
+            De = int_over_atmos(De_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            energies['De'] = De
+    
     return energies
         
 

@@ -1,5 +1,5 @@
 """
-    General support functions for the pyLatte package
+    General support functions for the doppyo package
     Author: Dougie Squire
     Date created: 04/04/2018
     Python Version: 3.6
@@ -424,7 +424,7 @@ def load_mean_climatology(clim, variable, freq, chunks=None, **kwargs):
     Currently available options are: "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "cafe_ctrl_v3_atmos_2003-2021", "cafe_ctrl_v3_ocean_2003-2021", "HadISST_1870-2018", "REMSS_2002-2018".
     """
     
-    data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/pyLatte/mean_climatologies/'
+    data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/doppyo/mean_climatologies/'
     
     # Load specified dataset -----
     if clim == 'jra_1958-2016':

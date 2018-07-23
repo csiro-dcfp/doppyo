@@ -1,5 +1,5 @@
 """
-    pyLatte functions for assessing one data-set relative to another (usually model output to observation)
+    doppyo functions for assessing one data-set relative to another (usually model output to observation)
     Author: Dougie Squire
     Date created: 04/04/2018
     Python Version: 3.6
@@ -23,8 +23,8 @@ import numpy as np
 import xarray as xr
 import itertools
 
-# Load cafepy packages -----
-from pylatte import utils
+# Load doppyo packages -----
+from doppyo import utils
 
 
 # ===================================================================================================

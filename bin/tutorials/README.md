@@ -1,7 +1,7 @@
-# **Tutorials repository for pyLatte package** #
+# **Tutorials repository for doppyo package** #
 
 --------------------------
-Contains tutorials for the pyLatte package
+Contains tutorials for the doppyo package
 
 Contact: Dougie Squire
 

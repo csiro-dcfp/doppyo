@@ -2,11 +2,11 @@ from setuptools import setup
 #from distutils.core import setup
 
 setup(
-    name='pyLatte_cafe',
-    version='0.0.5',
+    name='doppyo',
+    version='0.0.1',
     author='D. Squire',
     author_email='dougie.squire@csiro.au',
-    packages=['pylatte', 'pylatte.test'],
+    packages=['doppyo', 'doppyo.test'],
     # url=''
     license='LICENSE.txt',
     description='Diagnostics and verification package.',
