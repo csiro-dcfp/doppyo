@@ -10,7 +10,8 @@ __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'comput
            'calc_average', 'calc_fft', 'load_climatology', 'anomalize', 'trunc_time', 'infer_freq', 
            'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 
            'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
-           'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_pres_name']
+           'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
+           'get_pres_name', 'cftime_to_datetime64']
 
 # ===================================================================================================
 # Packages
@@ -101,8 +102,8 @@ class constants(object):
         return 6.371e6 # radius of the earth ['m']
     
     @constant
-    def O():
-        return 2 * 7.2921e-5 # 2 x earth rotation rate [rad/s]
+    def Omega():
+        return 7.2921e-5 # earth rotation rate [rad/s]
     
     @constant
     def pi():
@@ -417,11 +418,12 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
 # ===================================================================================================
 # Climatology tools
 # ===================================================================================================
-def load_mean_climatology(clim, variable, freq, chunks=None, **kwargs):
+def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
     """ 
     Returns pre-saved climatology at desired frequency (daily or longer).
     
-    Currently available options are: "jra_1958-2016", "cafe_fcst_v1_atmos_2003-2021", "cafe_fcst_v1_ocean_2003-2021", "cafe_ctrl_v3_atmos_2003-2021", "cafe_ctrl_v3_ocean_2003-2021", "HadISST_1870-2018", "REMSS_2002-2018".
+    Currently available options are: "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", 
+    "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", cafe_c2_ocean_400-499", "HadISST_1870-2018", "REMSS_2002-2018".
     """
     
     data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/doppyo/mean_climatologies/'
@@ -430,67 +432,54 @@ def load_mean_climatology(clim, variable, freq, chunks=None, **kwargs):
     if clim == 'jra_1958-2016':
         data_loc = data_path + 'jra.isobaric.1958010100_2016123118.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_f1_atmos_2003-2017':
         data_loc = data_path + 'cafe.f1.atmos.2003010112_2017123112.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_f1_ocean_2003-2017':
         data_loc = data_path + 'cafe.f1.ocean.2003010112_2017123112.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not available in {clim}')
             
     elif clim == 'cafe_c2_atmos_400-499':
         data_loc = data_path + 'cafe.c2.atmos.400_499.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not available in {clim}')
+    
+    elif clim == 'cafe_c2_atmos_500-549':
+        data_loc = data_path + 'cafe.c2.atmos.500_549.clim.nc'
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
             
     elif clim == 'cafe_c2_ocean_400-499':
         data_loc = data_path + 'cafe.c2.ocean.400_499.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not available in {clim}')
     
     elif clim == 'HadISST_1870-2018':
         data_loc = data_path + 'hadisst.1870011612_2018021612.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
     
     elif clim == 'REMSS_2002-2018':
         data_loc = data_path + 'remss.2002060112_2018041812.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
-        if variable not in ds.data_vars:
-            raise ValueError(f'"{variable}" is not (yet) available in {clim}')
             
     else:
-        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_ocean_400-499", "HadISST_1870-2018","REMSS_2002-2018"')
+        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", "cafe_c2_ocean_400-499", "HadISST_1870-2018","REMSS_2002-2018"')
         
-    da = ds[variable]
+    if variable is not None:
+        try:
+            ds = ds[variable]
+        except KeyError:
+            raise ValueError(f'"{variable}" is not a variable in "{clim}"')
     
     # Resample if required -----    
-    load_freq = infer_freq(da['time'].values)
+    load_freq = infer_freq(ds['time'].values)
     if load_freq != freq:
         if variable == 'precip':
-            da = da.resample(time=freq).sum(dim='time')
+            ds = ds.resample(time=freq).sum(dim='time')
         else:
-            da = da.resample(time=freq).mean(dim='time')
-        da = da.chunk(chunks=chunks)
+            ds = ds.resample(time=freq).mean(dim='time')
+        ds = ds.chunk(chunks=chunks)
 
-    return da
+    return ds
 
 
 # ===================================================================================================
@@ -502,8 +491,8 @@ def anomalize(data, clim):
     
     # If only climatological time instance is given, assume this is annual average -----
     if len(clim_use.time) > 1:
-        data_freq = infer_freq(data_use.time.values)
-        clim_freq = infer_freq(clim_use.time.values)
+        data_freq = infer_freq(data_use.time.values[:3])
+        clim_freq = infer_freq(clim_use.time.values[:3])
     else:
         data_freq = 'A'
         clim_freq = 'A'
@@ -755,7 +744,7 @@ def get_lon_name(da):
     elif 'lon_2' in da.dims:
         return 'lon_2'
     else:
-        print('Unable to determine longitude dimension')
+        raise KeyError('Unable to determine longitude dimension')
         pass
 
 
@@ -768,9 +757,22 @@ def get_lat_name(da):
     elif 'lat_2' in da.dims:
         return 'lat_2'
     else:
-        print('Unable to determine latitude dimension')
+        raise KeyError('Unable to determine latitude dimension')
         pass
 
+    
+# ===================================================================================================
+def get_level_name(da):
+    """ Returns name of pressure level coordinate in da """
+    
+    if 'level' in da.dims:
+        return 'level'
+    elif 'plev' in da.dims:
+        return 'plev'
+    else:
+        raise KeyError('Unable to determine pressure dimension')
+        pass
+    
     
 # ===================================================================================================
 def get_pres_name(da):
@@ -781,5 +783,21 @@ def get_pres_name(da):
     elif 'phalf' in da.dims:
         return 'phalf'
     else:
-        print('Unable to determine pressure dimension')
+        raise KeyError('Unable to determine pressure dimension')
         pass
+
+
+# ===================================================================================================
+def cftime_to_datetime64(time,shift_year=0):
+    """ 
+    Convert cftime object to datetime64 object
+    
+    Assumes times are sequential
+    """
+
+    if (time.values[0].timetuple()[0]+shift_year < 1678) | (time.values[-1].timetuple()[0]+shift_year > 2261):
+        raise ValueError('Cannot create datetime64 object for years outside on 1678-2262')
+        
+    return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
+                                                 .strftime(), 'ns') \
+                                                 for i in range(len(time))])

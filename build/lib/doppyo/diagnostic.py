@@ -6,8 +6,9 @@
 """
 
 __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
-           'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_atmos_energy_cycle',
-           'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
+           'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
+           'compute_atmos_energy_cycle', 'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 
+           'compute_dmi']
 
 # ===================================================================================================
 # Packages
@@ -33,28 +34,14 @@ def compute_velocitypotential(u, v):
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
 
-    # The windspharm package is iffy with arrays larger than 3D. Stack accordingly -----
     if not u.coords.to_dataset().equals(v.coords.to_dataset()):
         raise ValueError('u and v coordinates do not match')
-    stacked = False
-    stack_dims = utils.find_other_dims(u, [lat_name, lon_name])
-    if stack_dims is not None:
-        u_stack = u.stack(stacked=stack_dims)
-        v_stack = v.stack(stacked=stack_dims)
-        stacked = True
-    else:
-        u_stack = u
-        v_stack = v
-        
+
     # Create a VectorWind instance -----
-    w = wsh.xarray.VectorWind(u_stack, v_stack)
+    w = wsh.xarray.VectorWind(u, v)
 
     # Compute the velocity potential -----
     phi = w.velocitypotential()
-    
-    # Unstack the stacked dimensions -----
-    if stacked:
-        phi = phi.unstack('stacked')
         
     return phi
 
@@ -70,28 +57,14 @@ def compute_streamfunction(u, v):
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
 
-    # The windspharm package is iffy with arrays larger than 3D. Stack accordingly -----
     if not u.coords.to_dataset().equals(v.coords.to_dataset()):
         raise ValueError('u and v coordinates do not match')
-    stacked = False
-    stack_dims = utils.find_other_dims(u, [lat_name, lon_name])
-    if stack_dims is not None:
-        u_stack = u.stack(stacked=stack_dims)
-        v_stack = v.stack(stacked=stack_dims)
-        stacked = True
-    else:
-        u_stack = u
-        v_stack = v
         
     # Create a VectorWind instance -----
-    w = wsh.xarray.VectorWind(u_stack, v_stack)
+    w = wsh.xarray.VectorWind(u, v)
 
     # Compute the streamfunction -----
     psi = w.streamfunction()
-    
-    # Unstack the stacked dimensions -----
-    if stacked:
-        psi = psi.unstack('stacked')
         
     return psi
 
@@ -107,21 +80,11 @@ def compute_rws(u, v):
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
 
-    # The windspharm package is iffy with arrays larger than 3D. Stack accordingly -----
     if not u.coords.to_dataset().equals(v.coords.to_dataset()):
         raise ValueError('u and v coordinates do not match')
-    stacked = False
-    stack_dims = utils.find_other_dims(u, [lat_name, lon_name])
-    if stack_dims is not None:
-        u_stack = u.stack(stacked=stack_dims)
-        v_stack = v.stack(stacked=stack_dims)
-        stacked = True
-    else:
-        u_stack = u
-        v_stack = v
         
     # Create a VectorWind instance -----
-    w = wsh.xarray.VectorWind(u_stack, v_stack)
+    w = wsh.xarray.VectorWind(u, v)
 
     # Compute components of Rossby wave source -----
     eta = w.absolutevorticity() # absolute vorticity
@@ -133,10 +96,6 @@ def compute_rws(u, v):
     rws = 1e11 * (-eta * div - (uchi * etax + vchi * etay)).rename('rws')
     rws.attrs['units'] = '1e-11/s^2'
     rws.attrs['long_name'] = 'Rossby wave source'
-
-    # Unstack the stacked dimensions -----
-    if stacked:
-        rws = rws.unstack('stacked')
     
     return rws
 
@@ -152,31 +111,20 @@ def compute_divergent(u, v):
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
 
-    # The windspharm package is iffy with arrays larger than 3D. Stack accordingly -----
     if not u.coords.to_dataset().equals(v.coords.to_dataset()):
         raise ValueError('u and v coordinates do not match')
-    stacked = False
-    stack_dims = utils.find_other_dims(u, [lat_name, lon_name])
-    if stack_dims is not None:
-        u_stack = u.stack(stacked=stack_dims)
-        v_stack = v.stack(stacked=stack_dims)
-        stacked = True
-    else:
-        u_stack = u
-        v_stack = v
             
     # Create a VectorWind instance -----
-    w = wsh.xarray.VectorWind(u_stack, v_stack)
+    w = wsh.xarray.VectorWind(u, v)
 
     # Compute the irrotational components -----
     uchi, vchi = w.irrotationalcomponent()
     
-    # Unstack the stacked dimensions -----
-    if stacked:
-        uchi = uchi.unstack('stacked')
-        vchi = vchi.unstack('stacked')
-        
-    return uchi, vchi
+    # Combine into dataset -----
+    div = uchi.to_dataset()
+    div['vchi'] = vchi
+    
+    return div
 
 
 # ===================================================================================================
@@ -190,71 +138,53 @@ def compute_waf(psi_anom, u, v, p_lev=None):
         psi_anom, u and v must have at least latitude and longitude dimensions with standard naming
         Pressure level(s) [hPa] are extracted from the psi_anom/u/v coordinate, or, in the absence 
         of such a coordinate, are provided by p_lev, The pressure coordinate, when supplied, must 
-        use standard naming conventions, 'pfull' or 'phalf'
+        use standard naming conventions, 'level' or 'plev'
     """
     
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
-    pres_name = utils.get_pres_name(u)
 
-    # The windspharm package is iffy with arrays larger than 3D. Stack accordingly -----
     if not (u.coords.to_dataset().equals(v.coords.to_dataset()) & \
             u.coords.to_dataset().equals(psi_anom.coords.to_dataset())):
         raise ValueError('psi_anom, u and v coordinates must match')
-    stacked = False
-    stack_dims = utils.find_other_dims(u, [lat_name, lon_name])
-    if stack_dims is not None:
-        u_stack = u.stack(stacked=stack_dims)
-        v_stack = v.stack(stacked=stack_dims)
-        psi_stack = psi_anom.stack(stacked=stack_dims)
-        stacked = True
-        try:
-            pres = u_stack['stacked'][pres_name] / 1000 # Takaya and Nakmura p.610
-        except KeyError:
-            if p_lev is None:
-                raise TypeError('Cannot determine pressure level(s) of provided data. This should' +
-                                'be stored as a coordinate, "pfull" or "phalf" in the provided' +
-                                'objects. Alternatively, for single level computations, the' + 
-                                'pressure can be provided using the p_lev argument')
-            else:
-                pres = p_lev / 1000 # Takaya and Nakmura p.610
-    else:
-        u_stack = u
-        v_stack = v
-        psi_stack = psi_anom
+    
+    # Get plev from dimension if it exists -----
+    try:
+        plev_name = utils.get_level_name(u)
+        plev = u[plev_name] / 1000 # Takaya and Nakmura p.610
+    except KeyError:
         if p_lev is None:
             raise TypeError('Cannot determine pressure level(s) of provided data. This should' +
-                            'be stored as a coordinate, "pfull" or "phalf" in the provided' +
+                            'be stored as a coordinate, "level" or "plev" in the provided' +
                             'objects. Alternatively, for single level computations, the' + 
                             'pressure can be provided using the p_lev argument')
         else:
-            pres = p_lev / 1000 # Takaya and Nakmura p.610
-
+            plev = p_lev / 1000 # Takaya and Nakmura p.610
+    
     # Create a VectorWind instance (use gradient function) -----
-    w = wsh.xarray.VectorWind(u_stack, v_stack)
+    w = wsh.xarray.VectorWind(u, v)
     
     # Compute the various streamfunction gradients required -----
-    psi_x, psi_y = w.gradient(psi_stack)
+    psi_x, psi_y = w.gradient(psi_anom)
     psi_xx, psi_xy = w.gradient(psi_x)
     psi_yx, psi_yy = w.gradient(psi_y)
     
     # Compute the wave activity flux -----
-    vel = (u_stack * u_stack + v_stack * v_stack) ** 0.5
-    uwaf = (0.5 * pres * (u_stack * (psi_x * psi_x - psi_stack * psi_xx) + 
-                          v_stack * (psi_x * psi_y - 0.5 * psi_stack * (psi_xy + psi_yx))) / vel).rename('uwaf')
+    vel = (u * u + v * v) ** 0.5
+    uwaf = (0.5 * plev * (u * (psi_x * psi_x - psi_anom * psi_xx) + 
+                          v * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('uwaf')
     uwaf.attrs['units'] = 'm^2/s^2'
     uwaf.attrs['long_name'] = 'Zonal Rossby wave activity flux'
-    vwaf = (0.5 * pres * (v_stack * (psi_y * psi_y - psi_stack * psi_yy) + 
-                          u_stack * (psi_x * psi_y - 0.5 * psi_stack * (psi_xy + psi_yx))) / vel).rename('vwaf')
+    vwaf = (0.5 * plev * (v * (psi_y * psi_y - psi_anom * psi_yy) + 
+                          u * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('vwaf')
     vwaf.attrs['units'] = 'm^2/s^2'
     vwaf.attrs['long_name'] = 'Meridional Rossby wave activity flux'
+        
+    # Combine into dataset -----
+    waf = uwaf.to_dataset()
+    waf['vwaf'] = vwaf
     
-    # Unstack the stacked dimensions -----
-    if stacked:
-        uwaf = uwaf.unstack('stacked')
-        vwaf = vwaf.unstack('stacked')
-    
-    return uwaf, vwaf
+    return waf
 
 
 # ===================================================================================================
@@ -269,9 +199,9 @@ def compute_BruntVaisala(temp):
     Cp = utils.constants().C_pd
     g = utils.constants().g
 
-    p_name = utils.get_pres_name(temp)
-    dTdp = utils.calc_gradient(temp, p_name)
-    pdR = temp[p_name] / R
+    plev_name = utils.get_level_name(temp)
+    dTdp = utils.calc_gradient(temp, plev_name)
+    pdR = temp[plev_name] / R
 
     nsq = ((-dTdp * pdR + (temp / Cp)) / (temp / g) ** 2).rename('nsq')
     nsq.attrs['long_name']='Brunt-Vaisala frequency squared'
@@ -291,34 +221,18 @@ def compute_ks2(u, v, u_clim):
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
 
-    # The windspharm package is iffy with arrays larger than 3D. Stack accordingly -----
     if not u.coords.to_dataset().equals(v.coords.to_dataset()):
         raise ValueError('u and v coordinates do not match')
-    stacked = False
-    stack_dims = utils.find_other_dims(u, [lat_name, lon_name])
-    if stack_dims is not None:
-        u_stack = u.stack(stacked=stack_dims)
-        uc_stack = u_clim.stack(stacked=stack_dims)
-        v_stack = v.stack(stacked=stack_dims)
-        stacked = True
-    else:
-        u_stack = u
-        uc_stack = u_clim
-        v_stack = v
 
     # Create a VectorWind instance -----
-    w = wsh.xarray.VectorWind(u_stack, v_stack)
+    w = wsh.xarray.VectorWind(u, v)
 
     # Compute the absolute vorticity gradient -----
     etau, etav = w.gradient(w.absolutevorticity())
     
     # Compute the stationary wave number -----
     ks2 = (xr.ufuncs.cos(etav[lat_name] / 180 * utils.constants().pi)**2 * \
-                    (etav * utils.constants().R_earth ** 2) / uc_stack).rename('ks2')
-    
-    # Unstack the stacked dimensions -----
-    if stacked:
-        ks2 = ks2.unstack('stacked')
+                    (etav * utils.constants().R_earth ** 2) / u_clim).rename('ks2')
     ks2.attrs['units'] = 'real number'
     ks2.attrs['long_name'] = 'Square of Rossby stationary wavenumber'
         
@@ -335,12 +249,14 @@ def compute_Eady(u, v, gh, nsq):
         Data must be saved on pressure levels
     """
     
+    degtorad = utils.constants().pi / 180
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
+    plev_name = utils.get_level_name(u)
     
-    f = utils.constants().O * xr.ufuncs.sin(gh[lat_name] / 180 * utils.constants().pi)
-    eady2 = ((utils.constants().Ce * f) * (utils.calc_gradient((u ** 2 + v ** 2) ** 0.5, 'pfull') / \
-            utils.calc_gradient(gh, 'pfull'))) ** 2 / nsq
+    f = 2 * utils.constants().Omega * xr.ufuncs.sin(gh[lat_name] * degtorad)
+    eady2 = ((utils.constants().Ce * f) * (utils.calc_gradient((u ** 2 + v ** 2) ** 0.5, dim=plev_name) / \
+            utils.calc_gradient(gh, dim=plev_name))) ** 2 / nsq
     eady2.attrs['units'] = 's^-2'
     eady2.attrs['long_name'] = 'Square of Eady growth rate'
     
@@ -348,8 +264,53 @@ def compute_Eady(u, v, gh, nsq):
 
 
 # ===================================================================================================
+def compute_thermal_wind(gh, plev_lower, plev_upper):
+    """ 
+        Returns the thermal wind, (u_tw, v_tw) = 1/f x k x grad(thickness), where f = 2*Omega*sin(lat)
+        
+        *_lower and *_upper refer to the value of pressure, not height
+        
+        gh must have at least latitude and longitude dimensions and two pressure levels with 
+        standard naming. plev_lower and plev_upper must be available levels in the pressure
+        level dimension.
+    """
+    
+    degtorad = utils.constants().pi / 180
+    lat_name = utils.get_lat_name(gh)
+    plev_name = utils.get_level_name(gh)
+    
+    # Compute the thickness -----
+    upper = gh.sel({plev_name : plev_lower})
+    upper[plev_name] = (plev_lower + plev_upper) / 2
+    lower = gh.sel({plev_name : plev_upper})
+    lower[plev_name] = (plev_lower + plev_upper) / 2
+    thickness = upper - lower
+    
+    # Compute the gradient -----
+    # utils.calc_gradient(thickness, dim=lat_name, x=(thickness[lat_name] * degtorad))
+    w = wsh.xarray.VectorWind(thickness, thickness)
+    
+    # Compute the thickness gradient -----
+    u_tmp, v_tmp = w.gradient(thickness)
+    
+    # k x (u_tw,v_tw) -> (-v_tw, u_tw) -----
+    u_tw = -v_tmp / (2 * utils.constants().Omega * xr.ufuncs.sin(thickness[lat_name] * degtorad))
+    v_tw = u_tmp / (2 * utils.constants().Omega * xr.ufuncs.sin(thickness[lat_name] * degtorad))
+    
+    # Combine into dataset -----
+    tw = u_tw.to_dataset('u_tw')
+    tw['v_tw'] = v_tw
+    
+    return tw
+
+
+# ===================================================================================================
 def int_over_atmos(da, lat_n, lon_n, pres_n, lon_dim=None):
-    """ Returns integral of da over the mass of the atmosphere """
+    """ 
+        Returns integral of da over the mass of the atmosphere 
+        
+        If a longitudinal dimension does not exist, this must be provided as lon_dim
+    """
     
     degtorad = utils.constants().pi / 180
     
@@ -469,7 +430,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     # Initialize some things -----
     lat = utils.get_lat_name(temp)
     lon = utils.get_lon_name(temp)
-    pres = utils.get_pres_name(temp)
+    plev = utils.get_level_name(temp)
     
     degtorad = utils.constants().pi / 180
     tan_lat = xr.ufuncs.tan(temp[lat] * degtorad)
@@ -477,10 +438,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     
     # Determine the stability parameter using Saltzman's approach -----
     kappa = utils.constants().R_d / utils.constants().C_pd
-    p_kap = (1000 / temp[pres]) ** kappa
+    p_kap = (1000 / temp[plev]) ** kappa
     theta_A = utils.calc_average(temp * p_kap, [lat, lon], weights=cos_lat)
-    dtheta_Adp = utils.calc_gradient(theta_A, dim=pres, x=(theta_A[pres] * 100))
-    gamma = - p_kap * (utils.constants().R_d) / ((temp[pres] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
+    dtheta_Adp = utils.calc_gradient(theta_A, dim=plev, x=(theta_A[plev] * 100))
+    gamma = - p_kap * (utils.constants().R_d) / ((temp[plev] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
     energies = gamma.rename('gamma').to_dataset()
     
     # Compute zonal terms
@@ -495,7 +456,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         Pz_int = gamma * utils.constants().C_pd / 2 * temp_Za ** 2  # [J/kg]
         energies['Pz_int'] = Pz_int
         if integrate:
-            Pz = int_over_atmos(Pz_int, lat, lon, pres, lon_dim=temp[lon]) # [J/m^2]
+            Pz = int_over_atmos(Pz_int, lat, lon, plev, lon_dim=temp[lon]) # [J/m^2]
             energies['Pz'] = Pz
     
     if ('Kz' in terms) | (terms is None):
@@ -506,7 +467,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         Kz_int = 0.5 * (u_Z ** 2 + v_Z ** 2) # [J/kg]
         energies['Kz_int'] = Kz_int
         if integrate:
-            Kz = int_over_atmos(Kz_int, lat, lon, pres, lon_dim=u[lon]) # [J/m^2]
+            Kz = int_over_atmos(Kz_int, lat, lon, plev, lon_dim=u[lon]) # [J/m^2]
             energies['Kz'] = Kz
     
     if ('Cz' in terms) | (terms is None):
@@ -520,7 +481,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             Cz_int = - (utils.constants().g / utils.constants().R_earth) * v_Z * dghdlat # [W/kg]
             energies['Cz_int'] = Cz_int
             if integrate:
-                Cz = int_over_atmos(Cz_int, lat, lon, pres, lon_dim=gh[lon]) # [W/m^2]
+                Cz = int_over_atmos(Cz_int, lat, lon, plev, lon_dim=gh[lon]) # [W/m^2]
                 energies['Cz'] = Cz
         else:
             if 'temp_Za' not in locals():
@@ -530,10 +491,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             omega_A = utils.calc_average(omega, [lat, lon], weights=cos_lat)
             omega_Z = omega.mean(dim=lon)
             omega_Za = omega_Z - omega_A
-            Cz_int = - (utils.constants().R_d / (temp[pres] * 100)) * omega_Za * temp_Za # [W/kg]
+            Cz_int = - (utils.constants().R_d / (temp[plev] * 100)) * omega_Za * temp_Za # [W/kg]
             energies['Cz_int'] = Cz_int
             if integrate:
-                Cz = int_over_atmos(Cz_int, lat, lon, pres, lon_dim=omega[lon]) # [W/m^2]
+                Cz = int_over_atmos(Cz_int, lat, lon, plev, lon_dim=omega[lon]) # [W/m^2]
                 energies['Cz'] = Cz
     
     # Compute eddy terms in Fourier space if spectral=True
@@ -551,7 +512,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             Pn_int = (gamma * utils.constants().C_pd * abs(Bp) ** 2)
             energies['Pn_int'] = Pn_int
             if integrate:
-                Pn = int_over_atmos(Pn_int, lat, lon, pres, lon_dim=temp[lon]) # [J/m^2]
+                Pn = int_over_atmos(Pn_int, lat, lon, plev, lon_dim=temp[lon]) # [J/m^2]
                 energies['Pn'] = Pn
 
         # Compute the rate of transfer of available potential energy to eddies of 
@@ -574,8 +535,8 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                 
             dBpdlat = utils.calc_gradient(Bp, dim=lat, x=(Bp[lat] * degtorad))
             dBndlat = utils.calc_gradient(Bn, dim=lat, x=(Bn[lat] * degtorad))
-            dBpdp = utils.calc_gradient(Bp, dim=pres, x=(Bp[pres] * 100))
-            dBndp = utils.calc_gradient(Bn, dim=pres, x=(Bn[pres] * 100))
+            dBpdp = utils.calc_gradient(Bp, dim=plev, x=(Bp[plev] * 100))
+            dBndp = utils.calc_gradient(Bn, dim=plev, x=(Bn[plev] * 100))
 
             BpBnUp = triple_terms(Bp, Bn, Up)
             BpBpUn = triple_terms(Bp, Bp, Un)
@@ -592,11 +553,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                      gamma * utils.constants().C_pd / utils.constants().R_earth * \
                          (BpglBnVp + BpglBpVn) + \
                      gamma * utils.constants().C_pd * (BpgpBnOp + BpgpBpOn) + \
-                     gamma * utils.constants().R_d / Bp[pres] * \
+                     gamma * utils.constants().R_d / Bp[plev] * \
                          (BpBnOp + BpBpOn)
             energies['Sn_int'] = Sn_int
             if integrate:
-                Sn = abs(int_over_atmos(Sn_int, lat, lon, pres, lon_dim=temp[lon])) # [W/m^2]
+                Sn = abs(int_over_atmos(Sn_int, lat, lon, plev, lon_dim=temp[lon])) # [W/m^2]
                 energies['Sn'] = Sn
                 
         if ('Ke' in terms) | (terms is None):
@@ -617,7 +578,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             Kn_int = abs(Up) ** 2 + abs(Vp) ** 2
             energies['Kn_int'] = Kn_int
             if integrate:
-                Kn = int_over_atmos(Kn_int, lat, lon, pres, lon_dim=u[lon]) # [J/m^2]
+                Kn = int_over_atmos(Kn_int, lat, lon, plev, lon_dim=u[lon]) # [J/m^2]
                 energies['Kn'] = Kn
 
         # Compute the rate of transfer of kinetic energy to eddies of wavenumber n from 
@@ -629,10 +590,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                 Op = O
                 On = flip_n(O)
                 
-            dUpdp = utils.calc_gradient(Up, dim=pres, x=(Up[pres] * 100))
-            dVpdp = utils.calc_gradient(Vp, dim=pres, x=(Vp[pres] * 100))
-            dOpdp = utils.calc_gradient(Op, dim=pres, x=(Op[pres] * 100))
-            dOndp = utils.calc_gradient(On, dim=pres, x=(On[pres] * 100))
+            dUpdp = utils.calc_gradient(Up, dim=plev, x=(Up[plev] * 100))
+            dVpdp = utils.calc_gradient(Vp, dim=plev, x=(Vp[plev] * 100))
+            dOpdp = utils.calc_gradient(Op, dim=plev, x=(Op[plev] * 100))
+            dOndp = utils.calc_gradient(On, dim=plev, x=(On[plev] * 100))
             dVpcdl = utils.calc_gradient(Vp * cos_lat, dim=lat, x=(Vp[lat] * degtorad))
             dVncdl = utils.calc_gradient(Vn * cos_lat, dim=lat, x=(Vn[lat] * degtorad))
             dUpdl = utils.calc_gradient(Up, dim=lat, x=(Up[lat] * degtorad))
@@ -669,7 +630,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                          (glUpUnglVpc + glUpUpglVnc + glVpVnglVpc + glVpVpglVnc)
             energies['Ln_int'] = Ln_int
             if integrate:
-                Ln = abs(int_over_atmos(Ln_int, lat, lon, pres, lon_dim=u[lon])) # [W/m^2]
+                Ln = abs(int_over_atmos(Ln_int, lat, lon, plev, lon_dim=u[lon])) # [W/m^2]
                 energies['Ln'] = Ln
         
         if ('Ca' in terms) | (terms is None):
@@ -700,12 +661,12 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             theta = temp * p_kap
             theta_Z = theta.mean(dim=lon)
             theta_Za = theta_Z - theta_A
-            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=pres, x=(theta_Za[pres] * 100))
+            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=plev, x=(theta_Za[plev] * 100))
             Rn_int = gamma * utils.constants().C_pd * ((dtemp_Zdlat / utils.constants().R_earth) * (Vp * Bn + Vn * Bp) + 
                                                        (p_kap * dtheta_Zadp) * (Op * Bn + On * Bp)) # [W/kg]
             energies['Rn_int'] = Rn_int
             if integrate:
-                Rn = abs(int_over_atmos(Rn_int, lat, lon, pres, lon_dim=temp[lon])) # [W/m^2]
+                Rn = abs(int_over_atmos(Rn_int, lat, lon, plev, lon_dim=temp[lon])) # [W/m^2]
                 energies['Rn'] = Rn
 
         if ('Ce' in terms) | (terms is None):
@@ -740,7 +701,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                                 (dApdlat * Vn + dAndlat * Vp)) # [W/kg]
                 energies['Cn_int'] = Cn_int
                 if integrate:
-                    Cn = abs(int_over_atmos(Cn_int, lat, lon, pres, lon_dim=u[lon])) # [W/m^2]
+                    Cn = abs(int_over_atmos(Cn_int, lat, lon, plev, lon_dim=u[lon])) # [W/m^2]
                     energies['Cn'] = Cn
             else:
                 if 'O' not in locals():
@@ -755,10 +716,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                     B = B.rename({'f_' + lon : 'n'})
                     Bp = B
                     Bn = flip_n(B)
-                Cn_int = - (utils.constants().R_d / (omega[pres] * 100)) * (Op * Bn + On * Bp) # [W/kg]
+                Cn_int = - (utils.constants().R_d / (omega[plev] * 100)) * (Op * Bn + On * Bp) # [W/kg]
                 energies['Cn_int'] = Cn_int
                 if integrate:
-                    Cn = abs(int_over_atmos(Cn_int, lat, lon, pres, lon_dim=temp[lon])) # [W/m^2]
+                    Cn = abs(int_over_atmos(Cn_int, lat, lon, plev, lon_dim=temp[lon])) # [W/m^2]
                     energies['Cn'] = Cn
     
         if ('Ck' in terms) | (terms is None):
@@ -789,8 +750,8 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v[lat] * degtorad))
             du_Zndlat = utils.calc_gradient(u_Z / xr.ufuncs.cos(u[lat] * degtorad), 
                                             dim=lat, x=(u[lat] * degtorad))
-            dv_Zdp = utils.calc_gradient(v_Z, dim=pres, x=(v[pres] * 100))
-            du_Zdp = utils.calc_gradient(u_Z, dim=pres, x=(u[pres] * 100))
+            dv_Zdp = utils.calc_gradient(v_Z, dim=plev, x=(v[plev] * 100))
+            du_Zdp = utils.calc_gradient(u_Z, dim=plev, x=(u[plev] * 100))
 
             Mn_int = (-2 * Up * Un * v_Z * tan_lat / utils.constants().R_earth) + \
                      (2 * Vp * Vn * dv_Zdlat / utils.constants().R_earth + (Vp * On + Vn * Op) * dv_Zdp) + \
@@ -799,7 +760,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                          utils.constants().R_earth * du_Zndlat) # [W/kg]
             energies['Mn_int'] = Mn_int
             if integrate:
-                Mn = abs(int_over_atmos(Mn_int, lat, lon, pres, lon_dim=u[lon])) # [W/m^2]
+                Mn = abs(int_over_atmos(Mn_int, lat, lon, plev, lon_dim=u[lon])) # [W/m^2]
                 energies['Mn'] = Mn
         
         if ('Ge' in terms) | (terms is None):
@@ -827,7 +788,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             Pe_int = gamma * utils.constants().C_pd / 2 * (temp_z ** 2).mean(dim=lon)  # [J/kg]
             energies['Pe_int'] = Pe_int
             if integrate:
-                Pe = int_over_atmos(Pe_int, lat, lon, pres, lon_dim=temp[lon]) # [J/m^2]
+                Pe = int_over_atmos(Pe_int, lat, lon, plev, lon_dim=temp[lon]) # [J/m^2]
                 energies['Pe'] = Pe
         
         if ('Ke' in terms) | (terms is None):
@@ -841,7 +802,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             Ke_int = 0.5 * (u_z ** 2 + v_z ** 2).mean(dim=lon) # [J/kg]
             energies['Ke_int'] = Ke_int
             if integrate:
-                Ke = int_over_atmos(Ke_int, lat, lon, pres, lon_dim=u[lon]) # [J/m^2]
+                Ke = int_over_atmos(Ke_int, lat, lon, plev, lon_dim=u[lon]) # [J/m^2]
                 energies['Ke'] = Ke
                 
         if ('Ca' in terms) | (terms is None):
@@ -866,13 +827,13 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             oT_A = utils.calc_average(omega_z * temp_z, [lat, lon], weights=cos_lat)
             oT_Za = oT_Z - oT_A
             theta_Za = theta_Z - theta_A
-            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=pres, x=(theta_Za[pres] * 100))
+            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=plev, x=(theta_Za[plev] * 100))
             Ca_int = - gamma * utils.constants().C_pd * \
                            (((v_z * temp_z).mean(dim=lon) * dtemp_Zdlat / utils.constants().R_earth) + \
                             (p_kap * oT_Za * dtheta_Zadp)) # [W/kg]
             energies['Ca_int'] = Ca_int
             if integrate:
-                Ca = int_over_atmos(Ca_int, lat, lon, pres, lon_dim=v[lon]) # [W/m^2]
+                Ca = int_over_atmos(Ca_int, lat, lon, plev, lon_dim=v[lon]) # [W/m^2]
                 energies['Ca'] = Ca
             
         if ('Ce' in terms) | (terms is None):
@@ -884,11 +845,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                 omega_Z = omega.mean(dim=lon)
             temp_z = temp - temp_Z
             omega_z = omega - omega_Z
-            Ce_int = - (utils.constants().R_d / (temp[pres] * 100)) * \
+            Ce_int = - (utils.constants().R_d / (temp[plev] * 100)) * \
                            (omega_z * temp_z).mean(dim=lon) # [W/kg]  
             energies['Ce_int'] = Ce_int
             if integrate:
-                Ce = int_over_atmos(Ce_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+                Ce = int_over_atmos(Ce_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
                 energies['Ce'] = Ce
         
         if ('Ck' in terms) | (terms is None):
@@ -905,8 +866,8 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             omega_z = omega - omega_Z
             du_Zndlat = utils.calc_gradient(u_Z / cos_lat, dim=lat, x=(u_Z[lat] * degtorad))
             dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v_Z[lat] * degtorad))
-            du_Zdp = utils.calc_gradient(u_Z, dim=pres, x=(u_Z[pres] * 100))
-            dv_Zdp = utils.calc_gradient(v_Z, dim=pres, x=(v_Z[pres] * 100))
+            du_Zdp = utils.calc_gradient(u_Z, dim=plev, x=(u_Z[plev] * 100))
+            dv_Zdp = utils.calc_gradient(v_Z, dim=plev, x=(v_Z[plev] * 100))
             Ck_int = (u_z * v_z).mean(dim=lon)  * cos_lat * du_Zndlat / utils.constants().R_earth + \
                      (u_z * omega_z).mean(dim=lon) * du_Zdp + \
                      (v_z ** 2).mean(dim=lon) * dv_Zdlat / utils.constants().R_earth + \
@@ -914,7 +875,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                      (u_z ** 2).mean(dim=lon) * v_Z * tan_lat / utils.constants().R_earth
             energies['Ck_int'] = Ck_int
             if integrate:
-                Ck = int_over_atmos(Ck_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+                Ck = int_over_atmos(Ck_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
                 energies['Ck'] = Ck
                 
     if ('Gz' in terms) | (terms is None):
@@ -927,7 +888,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         Gz_int = Cz_int + Ca_int
         energies['Gz_int'] = Gz_int
         if integrate:
-            Gz = int_over_atmos(Gz_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            Gz = int_over_atmos(Gz_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
             energies['Gz'] = Gz
 
     if ('Ge' in terms) | (terms is None):
@@ -939,7 +900,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         Ge_int = Ce_int - Ca_int
         energies['Ge_int'] = Ge_int
         if integrate:
-            Ge = int_over_atmos(Ge_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            Ge = int_over_atmos(Ge_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
             energies['Ge'] = Ge
     
     if ('Dz' in terms) | (terms is None):
@@ -951,7 +912,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         Dz_int = Cz_int - Ck_int
         energies['Dz_int'] = Dz_int
         if integrate:
-            Dz = int_over_atmos(Dz_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            Dz = int_over_atmos(Dz_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
             energies['Dz'] = Dz
 
     if ('De' in terms) | (terms is None):
@@ -963,7 +924,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         De_int = Ce_int - Ck_int
         energies['De_int'] = De_int
         if integrate:
-            De = int_over_atmos(De_int, lat, lon, pres, lon_dim=temp[lon]) # [W/m^2]
+            De = int_over_atmos(De_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
             energies['De'] = De
     
     return energies
