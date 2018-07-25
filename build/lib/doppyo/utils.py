@@ -20,6 +20,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 import xarray as xr
+from xarray.core.duck_array_ops import dask_array_type
 import time
 import collections
 import itertools
@@ -338,6 +339,8 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
         remaining dimensions are then computed with the classic fft.
 
         If the input array is complex, one must set twosided = True
+        
+        If dx is a time array, frequencies are computed in Hz
     """
 
     if isinstance(dim, str):
@@ -360,13 +363,16 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             dx_n[di] = dx[i]
         except TypeError:
             diff = da[di].diff(di)
+            if utils.is_datetime(da[di].values):
+                # Drop differences on leap days so that still works with 'noleap' calendars -----
+                diff = diff.where((diff.time.dt.month != 3) & (diff.time.dt.day != 1), drop=True)
             if np.all(diff == diff[0]):
                 if is_datetime(da[di].values):
                     dx_n[di] = diff.values[0] / np.timedelta64(1, 's')
                 else:
                     dx_n[di] = diff.values[0]
             else:
-                raise ValueError(f'Coordinate {di} must be regularly spaced to compute fft')           
+                raise ValueError(f'Coordinate {di} must be regularly spaced to compute fft')    
     
     # Initialise fft data, dimensions and coordinates -----
     fft_array = da.data
@@ -380,7 +386,8 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             fft_dims += ('f_' + di,)
 
     # Loop over dimensions and perform fft -----
-    chunks = copy.copy(fft_array.chunks)
+    # Auto-rechunk -----
+    # chunks = copy.copy(fft_array.chunks)
     first = True
     for di in dim:
         if di in da.dims:
@@ -389,7 +396,10 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             if first and not twosided:
                 # The first FFT is performed on real numbers: the use of rfft is faster -----
                 fft_coords['f_' + di] = np.fft.rfftfreq(nfft_n[di], dx_n[di])
-                fft_array = dask.array.fft.rfft(fft_array, n=nfft_n[di], axis=axis_num)
+                if isinstance(fft_array, dask_array_type):
+                    fft_array = dask.array.fft.rfft(fft_array, n=nfft_n[di], axis=axis_num)
+                else:
+                    fft_array = np.fft.rfft(fft_array, n=nfft_n[di], axis=axis_num)
                 # Auto-rechunk -----
                 # fft_array = dask.array.fft.rfft(fft_array.rechunk({axis_num: nfft_n[di]}),
                 #                                 n=nfft_n[di],
@@ -397,7 +407,10 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             else:
                 # The successive FFTs are performed on complex numbers: need to use classic fft -----
                 fft_coords['f_' + di] = np.fft.fftfreq(nfft_n[di], dx_n[di])
-                fft_array = dask.array.fft.fft(fft_array, n=nfft_n[di], axis=axis_num)
+                if isinstance(fft_array, dask_array_type):
+                    fft_array = dask.array.fft.fft(fft_array, n=nfft_n[di], axis=axis_num)
+                else:
+                    fft_array = np.fft.fft(fft_array, n=nfft_n[di], axis=axis_num)
                 # Auto-rechunk -----
                 # fft_array = dask.array.fft.fft(fft_array.rechunk({axis_num: nfft_n[di]}),
                 #                                n=nfft_n[di],
