@@ -363,7 +363,7 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             dx_n[di] = dx[i]
         except TypeError:
             diff = da[di].diff(di)
-            if utils.is_datetime(da[di].values):
+            if is_datetime(da[di].values):
                 # Drop differences on leap days so that still works with 'noleap' calendars -----
                 diff = diff.where((diff.time.dt.month != 3) & (diff.time.dt.day != 1), drop=True)
             if np.all(diff == diff[0]):
