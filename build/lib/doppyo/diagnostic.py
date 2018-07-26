@@ -7,8 +7,8 @@
 
 __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
            'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
-           'compute_atmos_energy_cycle', 'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 
-           'compute_dmi']
+           'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 'compute_nino3', 
+           'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
 
 # ===================================================================================================
 # Packages
@@ -929,6 +929,112 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     
     return energies
         
+
+# ===================================================================================================
+def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
+    """
+        Compute the (cross) power spectral density along dimension dim using welch's method
+
+        nwindow is the length of the signal segments, and overlap is the overlap [%] of the segments
+
+        For consistency between spatial and temporal dim, spectra is computed relative to
+        a "frequency", f = 1/dx, where dx is the spacing along dim, e.g.:
+            - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
+            - for spatial dim in meters, f = 1/meters = k/(2*pi) 
+            - for spatial dim in degrees, f = 1/degrees = k/360
+        If converting the "frequency" to wavenumber, for example, one must also adjust the spectra 
+        magnitude so that the integral remains equal to the variance, e.g. for spatial spectra:
+            k = f*(2*pi)  ->  phi_new = phi_old/(2*pi)
+    """
+
+    # Force nwindow to be even -----
+    if nwindow % 2 != 0:
+        nwindow = nwindow - 1
+        
+    if not da1.coords.to_dataset().equals(da2.coords.to_dataset()):
+            raise ValueError('da1 and da2 coordinates do not match')
+
+    # Determine dx if not provided -----
+    if dx is None:
+        diff = da1[dim].diff(dim)
+        if utils.is_datetime(da1[dim].values):
+            # Drop differences on leap days so that still works with 'noleap' calendars -----
+            diff = diff.where((diff[dim].dt.month != 3) & (diff[dim].dt.day != 1), drop=True)
+        if np.all(diff == diff[0]):
+            if utils.is_datetime(da1[dim].values):
+                dx = diff.values[0] / np.timedelta64(1, 's')
+            else:
+                dx = diff.values[0]
+        else:
+            raise ValueError(f'Coordinate {dim} must be regularly spaced to compute fft')
+
+    # Use rolling operator to break into overlapping windows -----
+    stride = int(((100-overlap) / 100) * nwindow)
+    da1_windowed = da1.rolling(**{dim:nwindow}, center=True).construct('fft_dim', stride=stride)
+    da2_windowed = da2.rolling(**{dim:nwindow}, center=True).construct('fft_dim', stride=stride)
+    
+    # Only keep completely filled windows -----
+    if nwindow == len(da1[dim]):
+        da1_windowed = da1
+        da1_windowed = da1_windowed.expand_dims('n')
+        da2_windowed = da2
+        da2_windowed = da2_windowed.expand_dims('n')
+    else:
+        da1_windowed = da1_windowed.isel({dim : range(max([int(np.floor(nwindow / stride / 2)), 1]),
+                                                      len(da1_windowed[dim]) - 
+                                                          max([int(np.floor(nwindow / stride / 2)), 1]))}) \
+                                   .rename({dim : 'n'})
+        da2_windowed = da2_windowed.isel({dim : range(max([int(np.floor(nwindow / stride / 2)), 1]),
+                                                      len(da2_windowed[dim]) - 
+                                                          max([int(np.floor(nwindow / stride / 2)), 1]))}) \
+                                   .rename({dim : 'n'})
+        da1_windowed['fft_dim'] = da1[dim][:len(da1_windowed['fft_dim'])].values
+        da1_windowed = da1_windowed.rename({'fft_dim' : dim})
+        da2_windowed['fft_dim'] = da2[dim][:len(da2_windowed['fft_dim'])].values
+        da2_windowed = da2_windowed.rename({'fft_dim' : dim})
+
+    # Apply weight to windows if specified -----
+    if hanning:
+        hwindow = xr.DataArray(np.hanning(nwindow), coords={dim : da1_windowed[dim]}, dims=[dim])
+        weight_numer = (da1_windowed * da2_windowed).mean(dim)
+        da1_windowed = hwindow * da1_windowed
+        da2_windowed = hwindow * da2_windowed
+        weight_denom = (da1_windowed * da2_windowed).mean(dim)
+        weight = weight_numer / weight_denom # Account for effect of Hanning window on energy (8/3 in theory)
+    else:
+        weight = 1
+
+    # Compute the spectral density -----
+    da1_fft = utils.calc_fft(da1_windowed, dim=dim)
+    da2_fftc = xr.ufuncs.conj(utils.calc_fft(da2_windowed, dim=dim))
+
+    return (weight * 2 * dx * (da1_fft * da2_fftc).mean('n') / nwindow).real
+
+
+# ===================================================================================================
+def compute_inband_variance(da, dim, bounds, nwindow, overlap=50):
+    """ 
+        Compute the in-band variance along dimension dim.
+        
+        For consistency between spatial and temporal dim, spectra is computed relative to
+        a "frequency", f = 1/dx, where dx is the spacing along dim, e.g.:
+            - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
+            - for spatial dim in meters, f = 1/meters = k/(2*pi) 
+            - for spatial dim in degrees, f = 1/degrees = k/360
+        bounds must be provided in a way consistent with this, e.g.:
+            - for temporal dim, bounds = 1 / (60*60*24*[d1, d2, d3]), where d# are numbers 
+              of days
+            - for spatial dim, bounds = 1 / [l1, l2, l3], where l# are numbers of meters, 
+              degrees, etc
+    """
+    
+    bounds = np.sort(bounds)
+    spectra = pwelch(da, da, dim=dim, nwindow=nwindow, overlap=overlap)
+    dx = spectra['f_'+dim].diff('f_'+dim).values[0]
+    bands = spectra.groupby_bins('f_'+dim, bounds, right=False)
+    
+    return bands.apply(utils.calc_integral, over_dim='f_'+dim, dx=dx)
+
 
 # ===================================================================================================
 # Indices
