@@ -7,7 +7,7 @@
 
 __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
            'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
-           'compute_eofs', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
+           'compute_eofs', 'compute_mmms', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
            'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
 
 # ===================================================================================================
@@ -386,7 +386,29 @@ def compute_eofs(da, sample_dim='time', weight=None, n_modes=20):
     
 
 # ===================================================================================================
-def int_over_atmos(da, lat_n, lon_n, pres_n, lon_dim=None):
+def compute_mmms(v):
+    """
+        Returns the mean meridional mass streamfunction averaged over all provided longitudes
+        
+        Pressures must be in hPa
+    """
+    
+    degtorad = utils.constants().pi / 180
+
+    lat = utils.get_lat_name(v)
+    lon = utils.get_lon_name(v)
+    level = utils.get_level_name(v)
+    cos_lat = xr.ufuncs.cos(v[lat] * degtorad) 
+
+    v_Z = v.mean(dim=lon)
+    
+    return (2 * utils.constants().pi * utils.constants().R_earth * cos_lat * \
+                utils.calc_integral(v_Z, over_dim=level, x=(v_Z[level] * 100), cumulative=True) \
+                / utils.constants().g)
+
+
+# ===================================================================================================
+def int_over_atmos(da, lat_n, lon_n, level_n, lon_dim=None):
     """ 
         Returns integral of da over the mass of the atmosphere 
         
@@ -408,7 +430,7 @@ def int_over_atmos(da, lat_n, lon_n, pres_n, lon_dim=None):
     lat_m = c / 360
     lon_m = c * np.cos(da[lat_n] * degtorad) / 360
 
-    da_z = utils.calc_integral(da, over_dim=pres_n, x=(da[pres_n] * 100) / utils.constants().g)
+    da_z = utils.calc_integral(da, over_dim=level_n, x=(da[level_n] * 100) / utils.constants().g)
     if lon_dim is None:
         da_zx = utils.calc_integral(da_z, over_dim=lon_n, x=da[lon_n] * lon_m)
     else:
