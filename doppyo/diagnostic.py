@@ -7,16 +7,18 @@
 
 __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
            'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
-           'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 'compute_nino3', 
-           'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
+           'compute_eofs', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
+           'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
 
 # ===================================================================================================
 # Packages
 # ===================================================================================================
 import warnings
+import collections
 import numpy as np
 import xarray as xr
 import windspharm as wsh
+from scipy.sparse import linalg
 
 # Load doppyo packages -----
 from doppyo import utils
@@ -121,7 +123,7 @@ def compute_divergent(u, v):
     uchi, vchi = w.irrotationalcomponent()
     
     # Combine into dataset -----
-    div = uchi.to_dataset()
+    div = uchi.rename('uchi').to_dataset()
     div['vchi'] = vchi
     
     return div
@@ -303,6 +305,85 @@ def compute_thermal_wind(gh, plev_lower, plev_upper):
     
     return tw
 
+
+# ===================================================================================================
+def compute_eofs(da, sample_dim='time', weight=None, n_modes=20):
+    """
+        Returns the empirical orthogonal functions (EOFs), and associated principle component 
+        timeseries (PCs) and explained variances of da. When da is a list of xarray objects, 
+        returns the joint EOFs associated with each object. In this case, all xarray objects 
+        in da must have sample_dim dimensions of equal length.
+        
+        All dimensions other than sample_dim are treated as sensor dimensions.
+        weight=None uses cos(lat)^2 weighting. If weight is specified, it must be the same 
+        length as da with each element broadcastable onto each element of da
+        
+        Follows notation used in "Bjornsson H. and Venegas S. A. A Manual for EOF and SVD 
+        analyses of Climatic Data"
+
+        Note that the approach implemented here is non-lazy. I'm am not sure if there is a 
+        good way to do this in a lazy way.
+    """
+    
+    if isinstance(da, xr.core.dataarray.DataArray):
+        da = [da]
+    if isinstance(weight, xr.core.dataarray.DataArray):
+        weight = [weight]
+
+    # Apply weights -----
+    if weight is None:
+        degtorad = utils.constants().pi / 180
+        weight = [xr.ufuncs.cos(da[idx][utils.get_lat_name(da[idx])] * degtorad) ** 0.5
+                  for idx in range(len(da))]
+    
+    if len(weight) != len(da):
+        raise ValueError('da and weight must be of equal length')
+    da = [weight[idx].fillna(0) * da[idx] for idx in range(len(da))]
+    
+    # Stack along everything but the sample dimension -----
+    sensor_dims = [utils.find_other_dims(d, sample_dim) for d in da]
+    da = [d.stack(sensor_dim=sensor_dims[idx])
+           .transpose(*[sample_dim, 'sensor_dim'])  for idx, d in enumerate(da)]
+    sensor_segs = np.cumsum([0] + [len(d.sensor_dim) for d in da])
+    
+    # Load and concatenate each object in da -----
+    try: 
+        data = np.concatenate(da, axis=1)
+    except ValueError:
+        raise ValueError('sample_dim must be equal length for all data in da')
+    
+    # First dimension must be sample dimension -----
+    phi, sqrt_lambdas, eofs = linalg.svds(data, k=n_modes)
+    pcs = phi * sqrt_lambdas
+    lambdas = sqrt_lambdas ** 2
+    
+    # n_modes largest modes are ordered from smallest to largest -----
+    pcs = np.flip(pcs, axis=1)
+    lambdas = np.flip(lambdas, axis=0)
+    eofs = np.flip(eofs, axis=0)
+
+    # Compute the sum of the lambdas -----
+    sum_of_lambdas = np.trace(np.dot(data,data.T))
+
+    # Restructure back into xarray object -----
+    dims_eof = ['mode', 'sensor_dim']
+    dims_pc = [sample_dim, 'mode']
+    dims_lambda = ['mode']
+    EOF = []
+    for idx in range(len(sensor_segs)-1):
+        data_vars = {'EOFs' : (tuple(dims_eof), eofs[:, sensor_segs[idx]:sensor_segs[idx+1]]),
+                     'PCs' : (tuple(dims_pc), pcs),
+                     'lambdas' : (tuple(dims_lambda), lambdas),
+                     'explained_var' : (tuple(dims_lambda), lambdas / sum_of_lambdas)}
+        coords = dict(da[idx].coords.items())
+        coords['mode'] = np.arange(1, n_modes+1)
+        EOF.append(xr.Dataset(data_vars,coords).unstack('sensor_dim'))
+    
+    if len(EOF) == 1:
+        return EOF[0]
+    else:
+        return EOF
+    
 
 # ===================================================================================================
 def int_over_atmos(da, lat_n, lon_n, pres_n, lon_dim=None):

@@ -108,7 +108,7 @@ class constants(object):
     
     @constant
     def pi():
-        return 3.1415926535897932
+        return 2*np.arccos(0)
     
     @constant
     def Ce():
@@ -508,7 +508,7 @@ def anomalize(data, clim):
     data_use = data.copy(deep=True)
     clim_use = clim.copy(deep=True)
     
-    # If only climatological time instance is given, assume this is annual average -----
+    # If only one climatological time instance is given, assume this is annual average -----
     if len(clim_use.time) > 1:
         data_freq = infer_freq(data_use.time.values[:3])
         clim_freq = infer_freq(clim_use.time.values[:3])
