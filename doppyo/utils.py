@@ -418,8 +418,10 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
 
                 if shift is True:
                     fft_coords['f_' + di] = np.fft.fftshift(fft_coords['f_' + di])
-                    fft_array = dask.array.fft.fftshift(fft_array, axes=axis_num)
-
+                    if isinstance(fft_array, dask_array_type):
+                        fft_array = dask.array.fft.fftshift(fft_array, axes=axis_num)
+                    else:
+                        fft_array = np.fft.fft(fft_array, axis=axis_num)
             first = False
 
         else:
@@ -782,6 +784,8 @@ def get_level_name(da):
         return 'level'
     elif 'plev' in da.dims:
         return 'plev'
+    elif 'pfull' in da.dims:
+        return 'pfull'
     else:
         raise KeyError('Unable to determine pressure dimension')
         pass
