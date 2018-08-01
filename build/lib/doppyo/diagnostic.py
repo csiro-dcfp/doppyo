@@ -7,16 +7,18 @@
 
 __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
            'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
-           'compute_atmos_energy_cycle', 'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 
-           'compute_dmi']
+           'compute_eofs', 'compute_mmms', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
+           'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
 
 # ===================================================================================================
 # Packages
 # ===================================================================================================
 import warnings
+import collections
 import numpy as np
 import xarray as xr
 import windspharm as wsh
+from scipy.sparse import linalg
 
 # Load doppyo packages -----
 from doppyo import utils
@@ -121,7 +123,7 @@ def compute_divergent(u, v):
     uchi, vchi = w.irrotationalcomponent()
     
     # Combine into dataset -----
-    div = uchi.to_dataset()
+    div = uchi.rename('uchi').to_dataset()
     div['vchi'] = vchi
     
     return div
@@ -305,7 +307,108 @@ def compute_thermal_wind(gh, plev_lower, plev_upper):
 
 
 # ===================================================================================================
-def int_over_atmos(da, lat_n, lon_n, pres_n, lon_dim=None):
+def compute_eofs(da, sample_dim='time', weight=None, n_modes=20):
+    """
+        Returns the empirical orthogonal functions (EOFs), and associated principle component 
+        timeseries (PCs) and explained variances of da. When da is a list of xarray objects, 
+        returns the joint EOFs associated with each object. In this case, all xarray objects 
+        in da must have sample_dim dimensions of equal length.
+        
+        All dimensions other than sample_dim are treated as sensor dimensions.
+        weight=None uses cos(lat)^2 weighting. If weight is specified, it must be the same 
+        length as da with each element broadcastable onto each element of da
+        
+        Follows notation used in "Bjornsson H. and Venegas S. A. A Manual for EOF and SVD 
+        analyses of Climatic Data"
+
+        Note that the approach implemented here is non-lazy. I'm am not sure if there is a 
+        good way to do this in a lazy way.
+    """
+    
+    if isinstance(da, xr.core.dataarray.DataArray):
+        da = [da]
+    if isinstance(weight, xr.core.dataarray.DataArray):
+        weight = [weight]
+
+    # Apply weights -----
+    if weight is None:
+        degtorad = utils.constants().pi / 180
+        weight = [xr.ufuncs.cos(da[idx][utils.get_lat_name(da[idx])] * degtorad) ** 0.5
+                  for idx in range(len(da))]
+    
+    if len(weight) != len(da):
+        raise ValueError('da and weight must be of equal length')
+    da = [weight[idx].fillna(0) * da[idx] for idx in range(len(da))]
+    
+    # Stack along everything but the sample dimension -----
+    sensor_dims = [utils.find_other_dims(d, sample_dim) for d in da]
+    da = [d.stack(sensor_dim=sensor_dims[idx])
+           .transpose(*[sample_dim, 'sensor_dim'])  for idx, d in enumerate(da)]
+    sensor_segs = np.cumsum([0] + [len(d.sensor_dim) for d in da])
+    
+    # Load and concatenate each object in da -----
+    try: 
+        data = np.concatenate(da, axis=1)
+    except ValueError:
+        raise ValueError('sample_dim must be equal length for all data in da')
+    
+    # First dimension must be sample dimension -----
+    phi, sqrt_lambdas, eofs = linalg.svds(data, k=n_modes)
+    pcs = phi * sqrt_lambdas
+    lambdas = sqrt_lambdas ** 2
+    
+    # n_modes largest modes are ordered from smallest to largest -----
+    pcs = np.flip(pcs, axis=1)
+    lambdas = np.flip(lambdas, axis=0)
+    eofs = np.flip(eofs, axis=0)
+
+    # Compute the sum of the lambdas -----
+    sum_of_lambdas = np.trace(np.dot(data,data.T))
+
+    # Restructure back into xarray object -----
+    dims_eof = ['mode', 'sensor_dim']
+    dims_pc = [sample_dim, 'mode']
+    dims_lambda = ['mode']
+    EOF = []
+    for idx in range(len(sensor_segs)-1):
+        data_vars = {'EOFs' : (tuple(dims_eof), eofs[:, sensor_segs[idx]:sensor_segs[idx+1]]),
+                     'PCs' : (tuple(dims_pc), pcs),
+                     'lambdas' : (tuple(dims_lambda), lambdas),
+                     'explained_var' : (tuple(dims_lambda), lambdas / sum_of_lambdas)}
+        coords = dict(da[idx].coords.items())
+        coords['mode'] = np.arange(1, n_modes+1)
+        EOF.append(xr.Dataset(data_vars,coords).unstack('sensor_dim'))
+    
+    if len(EOF) == 1:
+        return EOF[0]
+    else:
+        return EOF
+    
+
+# ===================================================================================================
+def compute_mmms(v):
+    """
+        Returns the mean meridional mass streamfunction averaged over all provided longitudes
+        
+        Pressures must be in hPa
+    """
+    
+    degtorad = utils.constants().pi / 180
+
+    lat = utils.get_lat_name(v)
+    lon = utils.get_lon_name(v)
+    level = utils.get_level_name(v)
+    cos_lat = xr.ufuncs.cos(v[lat] * degtorad) 
+
+    v_Z = v.mean(dim=lon)
+    
+    return (2 * utils.constants().pi * utils.constants().R_earth * cos_lat * \
+                utils.calc_integral(v_Z, over_dim=level, x=(v_Z[level] * 100), cumulative=True) \
+                / utils.constants().g)
+
+
+# ===================================================================================================
+def int_over_atmos(da, lat_n, lon_n, level_n, lon_dim=None):
     """ 
         Returns integral of da over the mass of the atmosphere 
         
@@ -327,7 +430,7 @@ def int_over_atmos(da, lat_n, lon_n, pres_n, lon_dim=None):
     lat_m = c / 360
     lon_m = c * np.cos(da[lat_n] * degtorad) / 360
 
-    da_z = utils.calc_integral(da, over_dim=pres_n, x=(da[pres_n] * 100) / utils.constants().g)
+    da_z = utils.calc_integral(da, over_dim=level_n, x=(da[level_n] * 100) / utils.constants().g)
     if lon_dim is None:
         da_zx = utils.calc_integral(da_z, over_dim=lon_n, x=da[lon_n] * lon_m)
     else:
@@ -929,6 +1032,112 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     
     return energies
         
+
+# ===================================================================================================
+def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
+    """
+        Compute the (cross) power spectral density along dimension dim using welch's method
+
+        nwindow is the length of the signal segments, and overlap is the overlap [%] of the segments
+
+        For consistency between spatial and temporal dim, spectra is computed relative to
+        a "frequency", f = 1/dx, where dx is the spacing along dim, e.g.:
+            - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
+            - for spatial dim in meters, f = 1/meters = k/(2*pi) 
+            - for spatial dim in degrees, f = 1/degrees = k/360
+        If converting the "frequency" to wavenumber, for example, one must also adjust the spectra 
+        magnitude so that the integral remains equal to the variance, e.g. for spatial spectra:
+            k = f*(2*pi)  ->  phi_new = phi_old/(2*pi)
+    """
+
+    # Force nwindow to be even -----
+    if nwindow % 2 != 0:
+        nwindow = nwindow - 1
+        
+    if not da1.coords.to_dataset().equals(da2.coords.to_dataset()):
+            raise ValueError('da1 and da2 coordinates do not match')
+
+    # Determine dx if not provided -----
+    if dx is None:
+        diff = da1[dim].diff(dim)
+        if utils.is_datetime(da1[dim].values):
+            # Drop differences on leap days so that still works with 'noleap' calendars -----
+            diff = diff.where((diff[dim].dt.month != 3) & (diff[dim].dt.day != 1), drop=True)
+        if np.all(diff == diff[0]):
+            if utils.is_datetime(da1[dim].values):
+                dx = diff.values[0] / np.timedelta64(1, 's')
+            else:
+                dx = diff.values[0]
+        else:
+            raise ValueError(f'Coordinate {dim} must be regularly spaced to compute fft')
+
+    # Use rolling operator to break into overlapping windows -----
+    stride = int(((100-overlap) / 100) * nwindow)
+    da1_windowed = da1.rolling(**{dim:nwindow}, center=True).construct('fft_dim', stride=stride)
+    da2_windowed = da2.rolling(**{dim:nwindow}, center=True).construct('fft_dim', stride=stride)
+    
+    # Only keep completely filled windows -----
+    if nwindow == len(da1[dim]):
+        da1_windowed = da1
+        da1_windowed = da1_windowed.expand_dims('n')
+        da2_windowed = da2
+        da2_windowed = da2_windowed.expand_dims('n')
+    else:
+        da1_windowed = da1_windowed.isel({dim : range(max([int(np.floor(nwindow / stride / 2)), 1]),
+                                                      len(da1_windowed[dim]) - 
+                                                          max([int(np.floor(nwindow / stride / 2)), 1]))}) \
+                                   .rename({dim : 'n'})
+        da2_windowed = da2_windowed.isel({dim : range(max([int(np.floor(nwindow / stride / 2)), 1]),
+                                                      len(da2_windowed[dim]) - 
+                                                          max([int(np.floor(nwindow / stride / 2)), 1]))}) \
+                                   .rename({dim : 'n'})
+        da1_windowed['fft_dim'] = da1[dim][:len(da1_windowed['fft_dim'])].values
+        da1_windowed = da1_windowed.rename({'fft_dim' : dim})
+        da2_windowed['fft_dim'] = da2[dim][:len(da2_windowed['fft_dim'])].values
+        da2_windowed = da2_windowed.rename({'fft_dim' : dim})
+
+    # Apply weight to windows if specified -----
+    if hanning:
+        hwindow = xr.DataArray(np.hanning(nwindow), coords={dim : da1_windowed[dim]}, dims=[dim])
+        weight_numer = (da1_windowed * da2_windowed).mean(dim)
+        da1_windowed = hwindow * da1_windowed
+        da2_windowed = hwindow * da2_windowed
+        weight_denom = (da1_windowed * da2_windowed).mean(dim)
+        weight = weight_numer / weight_denom # Account for effect of Hanning window on energy (8/3 in theory)
+    else:
+        weight = 1
+
+    # Compute the spectral density -----
+    da1_fft = utils.calc_fft(da1_windowed, dim=dim)
+    da2_fftc = xr.ufuncs.conj(utils.calc_fft(da2_windowed, dim=dim))
+
+    return (weight * 2 * dx * (da1_fft * da2_fftc).mean('n') / nwindow).real
+
+
+# ===================================================================================================
+def compute_inband_variance(da, dim, bounds, nwindow, overlap=50):
+    """ 
+        Compute the in-band variance along dimension dim.
+        
+        For consistency between spatial and temporal dim, spectra is computed relative to
+        a "frequency", f = 1/dx, where dx is the spacing along dim, e.g.:
+            - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
+            - for spatial dim in meters, f = 1/meters = k/(2*pi) 
+            - for spatial dim in degrees, f = 1/degrees = k/360
+        bounds must be provided in a way consistent with this, e.g.:
+            - for temporal dim, bounds = 1 / (60*60*24*[d1, d2, d3]), where d# are numbers 
+              of days
+            - for spatial dim, bounds = 1 / [l1, l2, l3], where l# are numbers of meters, 
+              degrees, etc
+    """
+    
+    bounds = np.sort(bounds)
+    spectra = pwelch(da, da, dim=dim, nwindow=nwindow, overlap=overlap)
+    dx = spectra['f_'+dim].diff('f_'+dim).values[0]
+    bands = spectra.groupby_bins('f_'+dim, bounds, right=False)
+    
+    return bands.apply(utils.calc_integral, over_dim='f_'+dim, dx=dx)
+
 
 # ===================================================================================================
 # Indices

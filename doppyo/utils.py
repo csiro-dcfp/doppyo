@@ -108,7 +108,7 @@ class constants(object):
     
     @constant
     def pi():
-        return 3.1415926535897932
+        return 2*np.arccos(0)
     
     @constant
     def Ce():
@@ -248,15 +248,20 @@ def calc_gradient(da, dim, x=None):
 
 
 # ===================================================================================================
-def calc_integral(da, over_dim, x=None, method='trapz', cumulative=False):
+def calc_integral(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
     """ Returns trapezoidal/rectangular integration along specified dimension """
-    
+
     if x is None:
         x = da[over_dim]
-        
-    if method == 'trapz':
-        dx = x - x.shift(**{over_dim:1})
-        dx = dx.fillna(0.0)
+    
+    if len(x) == 1:
+        if dx is None:
+            raise ValueError('Must provide dx for integration along dimension with length 1')
+        integral = (da * dx).drop(over_dim).squeeze()
+    elif method == 'trapz':
+        if dx is None:
+            dx = x - x.shift(**{over_dim:1})
+            dx = dx.fillna(0.0)
 
         if cumulative:
             integral = ((da.shift(**{over_dim:1}) + da) * dx / 2.0) \
@@ -267,17 +272,18 @@ def calc_integral(da, over_dim, x=None, method='trapz', cumulative=False):
                        .fillna(0.0) \
                        .sum(over_dim)
     elif method == 'rect':
-        dx1 = x - x.shift(**{over_dim:1})
-        dx2 = -(x - x.shift(**{over_dim:-1}))
-        dx = dx1.combine_first(dx2)
-        
+        if dx is None:
+            dx1 = x - x.shift(**{over_dim:1})
+            dx2 = -(x - x.shift(**{over_dim:-1}))
+            dx = dx1.combine_first(dx2)
+
         if cumulative:
             integral = (da * dx).cumsum(over_dim) 
         else:
             integral = (da * dx).sum(over_dim) 
     else:
         raise ValueError(f'{method} is not a recognised integration method')
-        
+    
     return integral
     
 
@@ -365,7 +371,7 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             diff = da[di].diff(di)
             if is_datetime(da[di].values):
                 # Drop differences on leap days so that still works with 'noleap' calendars -----
-                diff = diff.where((diff.time.dt.month != 3) & (diff.time.dt.day != 1), drop=True)
+                diff = diff.where((diff[di].dt.month != 3) & (diff[di].dt.day != 1), drop=True)
             if np.all(diff == diff[0]):
                 if is_datetime(da[di].values):
                     dx_n[di] = diff.values[0] / np.timedelta64(1, 's')
@@ -504,7 +510,7 @@ def anomalize(data, clim):
     data_use = data.copy(deep=True)
     clim_use = clim.copy(deep=True)
     
-    # If only climatological time instance is given, assume this is annual average -----
+    # If only one climatological time instance is given, assume this is annual average -----
     if len(clim_use.time) > 1:
         data_freq = infer_freq(data_use.time.values[:3])
         clim_freq = infer_freq(clim_use.time.values[:3])
