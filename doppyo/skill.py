@@ -670,37 +670,10 @@ def compute_rms_error(da_cmp, da_ref, over_dims):
 
 
 # ===================================================================================================
-def Pearson_corr_gufunc(x, y, subtract_local_mean):
-    """ gu_func to return Pearson correlation coefficient """
-    
-    if subtract_local_mean:
-        cov = np.nanmean(((x - np.nanmean(x, axis=-1, keepdims=True)) * 
-                          (y - np.nanmean(y, axis=-1, keepdims=True))), axis=-1)
-        norm = np.nanstd(x, axis=-1) * np.nanstd(y, axis=-1)
-    else:
-        cov = np.nanmean((x * y), axis=-1)
-        norm = (np.nanmean((x ** 2), axis=-1)) ** 0.5 * (np.nanmean((y ** 2), axis=-1)) ** 0.5
-        
-    return cov / norm
-
-
-def calc_Pearson_corrcoef(da_1, da_2, over_dims, subtract_local_mean):
-    """ Returns the Pearson correlation over the specified dimensions. """
-        
-    # Stack all over_dims together -----
-    da_1_stacked = da_1.stack(stacked=over_dims)
-    da_2_stacked = da_2.stack(stacked=over_dims)
-    
-    return xr.apply_ufunc(Pearson_corr_gufunc, 
-                          da_1_stacked, da_2_stacked, subtract_local_mean,
-                          input_core_dims=[['stacked'], ['stacked'], []],
-                          dask='allowed',
-                          output_dtypes=[float])
-
-
 def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True):
     """ 
     Returns the Pearson correlation over the specified dimensions. 
+    
     If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is computed
     over all dimensions in over_dims that appear in both da_cmp and da_ref, and then averaged over any
     remaining dimensions in over_dims
@@ -710,22 +683,23 @@ def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True
         raise ValueError('Pearson correlation cannot be computed over 0 dimensions') 
     elif isinstance(over_dims, str):
         over_dims = [over_dims]
-         
+    
     # Find over_dims that appear in both da_cmp and da_ref, and those that don't -----
     over_dims_in_cmp = [over_dim for over_dim in over_dims if over_dim in da_cmp.dims]
     over_dims_in_ref = [over_dim for over_dim in over_dims if over_dim in da_ref.dims]
     intersection_dims = list(set(over_dims_in_cmp).intersection(set(over_dims_in_ref)))
     difference_dims = list(set(over_dims_in_cmp).difference(set(over_dims_in_ref)))
-    
-    # Only keep instances that appear in both dataarrays (excluding the ensemble dim) -----
-    # aligned = xr.align(da_cmp, da_ref, join='inner', exclude=difference_dims)
-    # da_cmp_pass = aligned[0]
-    # da_ref_pass = aligned[0]
-    
-    return da_cmp.to_dataset(name='Pearson_corrcoef') \
-                      .apply(calc_Pearson_corrcoef, da_2=da_ref, over_dims=intersection_dims, 
-                            subtract_local_mean=subtract_local_mean)['Pearson_corrcoef'] \
-                      .mean(dim=difference_dims, skipna=True) 
+
+    if subtract_local_mean:
+        cov = ((da_cmp - da_cmp.mean(intersection_dims)) * 
+               (da_ref - da_ref.mean(intersection_dims))).mean(intersection_dims)
+        norm = da_cmp.std(intersection_dims) * da_ref.std(intersection_dims)
+    else:
+        cov = (da_cmp * da_ref).mean(intersection_dims)
+        norm = ((da_cmp ** 2).mean(intersection_dims) ** 0.5) * \
+                ((da_ref ** 2).mean(intersection_dims) ** 0.5)
+
+    return (cov / norm).mean(difference_dims)
 
 
 # ===================================================================================================

@@ -397,18 +397,18 @@ def compute_mmms(v):
 
     lat = utils.get_lat_name(v)
     lon = utils.get_lon_name(v)
-    level = utils.get_level_name(v)
+    plev = utils.get_level_name(v)
     cos_lat = xr.ufuncs.cos(v[lat] * degtorad) 
 
     v_Z = v.mean(dim=lon)
     
     return (2 * utils.constants().pi * utils.constants().R_earth * cos_lat * \
-                utils.calc_integral(v_Z, over_dim=level, x=(v_Z[level] * 100), cumulative=True) \
+                utils.calc_integral(v_Z, over_dim=plev, x=(v_Z[plev] * 100), cumulative=True) \
                 / utils.constants().g)
 
 
 # ===================================================================================================
-def int_over_atmos(da, lat_n, lon_n, level_n, lon_dim=None):
+def int_over_atmos(da, lat_n, lon_n, plev_n, lon_dim=None):
     """ 
         Returns integral of da over the mass of the atmosphere 
         
@@ -430,7 +430,7 @@ def int_over_atmos(da, lat_n, lon_n, level_n, lon_dim=None):
     lat_m = c / 360
     lon_m = c * np.cos(da[lat_n] * degtorad) / 360
 
-    da_z = utils.calc_integral(da, over_dim=level_n, x=(da[level_n] * 100) / utils.constants().g)
+    da_z = utils.calc_integral(da, over_dim=plev_n, x=(da[plev_n] * 100) / utils.constants().g)
     if lon_dim is None:
         da_zx = utils.calc_integral(da_z, over_dim=lon_n, x=da[lon_n] * lon_m)
     else:
@@ -450,6 +450,17 @@ def flip_n(da):
     return daf.sortby(daf['n'])
 
 
+def truncate(F, n_truncate, dim):
+    """ 
+        Converts spatial frequency dim to wavenumber, n, and truncates all wavenumbers greater than 
+        n_truncate 
+    """
+    F[dim] = 360 * F[dim]
+    F = F.rename({dim : 'n'})
+    F = F.where(abs(F.n) <= n_truncate, drop=True)
+    return F, flip_n(F)
+    
+    
 def triple_terms(A, B, C):
     """ 
         Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
@@ -462,13 +473,29 @@ def triple_terms(A, B, C):
     
     # Drop m = 0 and n < 0 -----
     Am = Am.where(Am['m'] != 0, drop=True) 
-    B = B.where(B['n'] > 0, drop=True)
-    Cnm = Cnm.where((Cnm['m'] != 0) & (Cnm['n'] > 0), drop=True)
+    Cnm = Cnm.where(Cnm['m'] != 0, drop=True)
 
     return (B * (Am * Cnm)).sum(dim='m', skipna=False)
 
 
-def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral=False, integrate=True):
+def triple_terms_loop(A, B, C):
+    """ 
+        Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
+    """
+
+    # Loop over all m's and perform rolling sum -----
+    ms = A['n'].where(A['n'] != 0, drop=True).values
+    ABC = A.copy() * 0
+    for m in ms:
+        Am = A.sel(n=m)
+        Cnm = C.shift(n=int(m)).fillna(0)
+        ABC = ABC + (Am * B * Cnm)
+
+    return ABC
+
+
+def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral=False, n_wavenumbers=20,
+                               integrate=True, loop_triple_terms=False):
     """
         Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in 
         `Marques et al. 2011 Global diagnostic energetics of five state-of-the-art climate 
@@ -478,33 +505,39 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         cycle. Monthly Weather Review`).
 
         Inputs:
-            terms : list of terms to compute. If None, returns all terms. Available options are:
-                        Pz : total available potential energy in the zonally averaged temperature
-                             distribution
-                        Kz : total kinetic energy in zonally averaged motion
-                        Pe : total eddy available potential energy [= sum_n Pn for spectral=True]
-                             (Note that for spectral=True, an additional term, Sn, quantifying the
-                             rate of transfer of available potential energy to eddies of wavenumber 
-                             n from eddies of all other wavenumbers is also returned)
-                        Ke : total eddy kinetic energy [= sum_n Kn for spectral=True]
-                             (Note that for spectral=True, an additional term, Ln, quantifying the
-                             rate of transfer of kinetic energy to eddies of wavenumber n from eddies 
-                             of all other wavenumbers is also returned)
-                        Cz : rate of conversion of zonal available potential energy to zonal kinetic 
-                             energy
-                        Ca : rate of transfer of total available potential energy in the zonally 
-                             averaged temperature distribution (Pz) to total eddy available potential 
-                             energy (Pe) [= sum_n Rn for spectral=True]
-                        Ce : rate of transfer of total eddy available potential energy (Pe) to total 
-                             eddy kinetic energy (Ke) [= sum_n Cn for spectral=True]
-                        Ck : rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
-                             energy in zonally averaged motion (Kz) [= sum_n Mn for spectral=True]
-                        (Note that for spectral=True, two additional terms are )
-            vgradz : if True, uses `v-grad-z` approach for computing terms relating to conversion
+            terms : str or sequence
+                list of terms to compute. If None, returns all terms. Available options are:
+                    Pz : total available potential energy in the zonally averaged temperature
+                         distribution
+                    Kz : total kinetic energy in zonally averaged motion
+                    Pe : total eddy available potential energy [= sum_n Pn for spectral=True]
+                         (Note that for spectral=True, an additional term, Sn, quantifying the
+                         rate of transfer of available potential energy to eddies of wavenumber 
+                         n from eddies of all other wavenumbers is also returned)
+                    Ke : total eddy kinetic energy [= sum_n Kn for spectral=True]
+                         (Note that for spectral=True, an additional term, Ln, quantifying the
+                         rate of transfer of kinetic energy to eddies of wavenumber n from eddies 
+                         of all other wavenumbers is also returned)
+                    Cz : rate of conversion of zonal available potential energy to zonal kinetic 
+                         energy
+                    Ca : rate of transfer of total available potential energy in the zonally 
+                         averaged temperature distribution (Pz) to total eddy available potential 
+                         energy (Pe) [= sum_n Rn for spectral=True]
+                    Ce : rate of transfer of total eddy available potential energy (Pe) to total 
+                         eddy kinetic energy (Ke) [= sum_n Cn for spectral=True]
+                    Ck : rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
+                         energy in zonally averaged motion (Kz) [= sum_n Mn for spectral=True]
+            vgradz : bool, optional
+                if True, uses `v-grad-z` approach for computing terms relating to conversion
                 of potential energy to kinetic energy. Otherwise, defaults to using the 
                 `omaga-alpha` approach (see reference above for details)
-            spectral : if True, computes all terms as a function of wavenumber on longitudinal bands
-            integrate : if True, computes and returns the integral of each term over the mass of the 
+            spectral : bool, optional
+                if True, computes all terms as a function of wavenumber on longitudinal bands
+            n_wavenumbers : int, optional
+                number of wavenumbers to retain either side of wavenumber=0. Obviously only does
+                anything if spectral=True
+            integrate : bool, optional
+                if True, computes and returns the integral of each term over the mass of the 
                 atmosphere. Otherwise, only the integrands are returned.
 
         Restrictions:
@@ -533,7 +566,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     # Initialize some things -----
     lat = utils.get_lat_name(temp)
     lon = utils.get_lon_name(temp)
-    plev = utils.get_level_name(temp)
+    # THE FOLLOWING LINE IS CURRENTLY INCORRECT - TEMPORARILY USING HYBRID LEVELS AS PRESSURES LEVELS UNTIL ALL
+    # REQUIRED VARIABLES ARE AVAILABLE ON ISOBARIC LEVELS
+    plev = utils.get_pres_name(temp)
+    # SWITCH TO:
+    # plev = utils.get_level_name(temp)
     
     degtorad = utils.constants().pi / 180
     tan_lat = xr.ufuncs.tan(temp[lat] * degtorad)
@@ -606,11 +643,8 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         
         if ('Pe' in terms) | (terms is None):
         # Compute the total available potential energy eddies of wavenumber n, Pn -----
-            B = utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / len(temp[lon])
-            B['f_' + lon] = 360 * B['f_' + lon]
-            B = B.rename({'f_' + lon : 'n'})
-            Bp = B
-            Bn = flip_n(B)
+            Bp, Bn = truncate(utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
+                              len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
             Pn_int = (gamma * utils.constants().C_pd * abs(Bp) ** 2)
             energies['Pn_int'] = Pn_int
@@ -620,35 +654,36 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
 
         # Compute the rate of transfer of available potential energy to eddies of 
         # wavenumber n from eddies of all other wavenumbers, Sn -----
-            U = utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / len(u[lon])
-            U['f_' + lon] = 360 * U['f_' + lon]
-            U = U.rename({'f_' + lon : 'n'})
-            Up = U
-            Un = flip_n(U)
-            V = utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / len(v[lon])
-            V['f_' + lon] = 360 * V['f_' + lon]
-            V = V.rename({'f_' + lon : 'n'})
-            Vp = V
-            Vn = flip_n(V)
-            O = utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / len(omega[lon])
-            O['f_' + lon] = 360 * O['f_' + lon]
-            O = O.rename({'f_' + lon : 'n'})
-            Op = O
-            On = flip_n(O)
+            Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
+                              len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+            Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) /
+                              len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+            Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) /
+                              len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 
             dBpdlat = utils.calc_gradient(Bp, dim=lat, x=(Bp[lat] * degtorad))
             dBndlat = utils.calc_gradient(Bn, dim=lat, x=(Bn[lat] * degtorad))
             dBpdp = utils.calc_gradient(Bp, dim=plev, x=(Bp[plev] * 100))
             dBndp = utils.calc_gradient(Bn, dim=plev, x=(Bn[plev] * 100))
 
-            BpBnUp = triple_terms(Bp, Bn, Up)
-            BpBpUn = triple_terms(Bp, Bp, Un)
-            BpglBnVp = triple_terms(Bp, dBndlat, Vp)
-            BpglBpVn = triple_terms(Bp, dBpdlat, Vn)
-            BpgpBnOp = triple_terms(Bp, dBndp, Op)
-            BpgpBpOn = triple_terms(Bp, dBpdp, On)
-            BpBnOp = triple_terms(Bp, Bn, Op)
-            BpBpOn = triple_terms(Bp, Bp, On)
+            if loop_triple_terms:
+                BpBnUp = triple_terms_loop(Bp, Bn, Up)
+                BpBpUn = triple_terms_loop(Bp, Bp, Un)
+                BpglBnVp = triple_terms_loop(Bp, dBndlat, Vp)
+                BpglBpVn = triple_terms_loop(Bp, dBpdlat, Vn)
+                BpgpBnOp = triple_terms_loop(Bp, dBndp, Op)
+                BpgpBpOn = triple_terms_loop(Bp, dBpdp, On)
+                BpBnOp = triple_terms_loop(Bp, Bn, Op)
+                BpBpOn = triple_terms_loop(Bp, Bp, On)
+            else:
+                BpBnUp = triple_terms(Bp, Bn, Up)
+                BpBpUn = triple_terms(Bp, Bp, Un)
+                BpglBnVp = triple_terms(Bp, dBndlat, Vp)
+                BpglBpVn = triple_terms(Bp, dBpdlat, Vn)
+                BpgpBnOp = triple_terms(Bp, dBndp, Op)
+                BpgpBpOn = triple_terms(Bp, dBpdp, On)
+                BpBnOp = triple_terms(Bp, Bn, Op)
+                BpBpOn = triple_terms(Bp, Bp, On)
 
             Sn_int = -gamma * utils.constants().C_pd * (1j * Bp['n']) / \
                          (utils.constants().R_earth * xr.ufuncs.cos(Bp[lat] * degtorad)) * \
@@ -666,17 +701,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         if ('Ke' in terms) | (terms is None):
         # Compute the total kinetic energy in eddies of wavenumber n, Kn -----
             if 'U' not in locals():
-                U = utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / len(u[lon])
-                U['f_' + lon] = 360 * U['f_' + lon]
-                U = U.rename({'f_' + lon : 'n'})
-                Up = U
-                Un = flip_n(U)
+                Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
+                                  len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'V' not in locals():
-                V = utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / len(v[lon])
-                V['f_' + lon] = 360 * V['f_' + lon]
-                V = V.rename({'f_' + lon : 'n'})
-                Vp = V
-                Vn = flip_n(V)
+                Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                                  len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
             Kn_int = abs(Up) ** 2 + abs(Vp) ** 2
             energies['Kn_int'] = Kn_int
@@ -687,11 +716,8 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         # Compute the rate of transfer of kinetic energy to eddies of wavenumber n from 
         # eddies of all other wavenumbers, Ln -----
             if 'O' not in locals():
-                O = utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / len(omega[lon])
-                O['f_' + lon] = 360 * O['f_' + lon]
-                O = O.rename({'f_' + lon : 'n'})
-                Op = O
-                On = flip_n(O)
+                Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                                  len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 
             dUpdp = utils.calc_gradient(Up, dim=plev, x=(Up[plev] * 100))
             dVpdp = utils.calc_gradient(Vp, dim=plev, x=(Vp[plev] * 100))
@@ -702,22 +728,40 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             dUpdl = utils.calc_gradient(Up, dim=lat, x=(Up[lat] * degtorad))
             dVpdl = utils.calc_gradient(Vp, dim=lat, x=(Vp[lat] * degtorad))
 
-            UpUnUp = triple_terms(Up, Un, Up)
-            UpUpUn = triple_terms(Up, Up, Un)
-            VpVnUp = triple_terms(Vp, Vn, Up)
-            VpVpUn = triple_terms(Vp, Vp, Un)
-            VpUnUp = triple_terms(Vp, Un, Up)
-            VpUpUn = triple_terms(Vp, Up, Un)
-            UpVnUp = triple_terms(Up, Vn, Up)
-            UpVpUn = triple_terms(Up, Vp, Un)
-            gpUpUngpOp = triple_terms(dUpdp, Un, dOpdp)
-            gpUpUpgpOn = triple_terms(dUpdp, Up, dOndp)
-            gpVpVngpOp = triple_terms(dVpdp, Vn, dOpdp)
-            gpVpVpgpOn = triple_terms(dVpdp, Vp, dOndp)
-            glUpUnglVpc = triple_terms(dUpdl, Un, dVpcdl)
-            glUpUpglVnc = triple_terms(dUpdl, Up, dVncdl)
-            glVpVnglVpc = triple_terms(dVpdl, Vn, dVpcdl)
-            glVpVpglVnc = triple_terms(dVpdl, Vp, dVncdl)
+            if loop_triple_terms:
+                UpUnUp = triple_terms_loop(Up, Un, Up)
+                UpUpUn = triple_terms_loop(Up, Up, Un)
+                VpVnUp = triple_terms_loop(Vp, Vn, Up)
+                VpVpUn = triple_terms_loop(Vp, Vp, Un)
+                VpUnUp = triple_terms_loop(Vp, Un, Up)
+                VpUpUn = triple_terms_loop(Vp, Up, Un)
+                UpVnUp = triple_terms_loop(Up, Vn, Up)
+                UpVpUn = triple_terms_loop(Up, Vp, Un)
+                gpUpUngpOp = triple_terms_loop(dUpdp, Un, dOpdp)
+                gpUpUpgpOn = triple_terms_loop(dUpdp, Up, dOndp)
+                gpVpVngpOp = triple_terms_loop(dVpdp, Vn, dOpdp)
+                gpVpVpgpOn = triple_terms_loop(dVpdp, Vp, dOndp)
+                glUpUnglVpc = triple_terms_loop(dUpdl, Un, dVpcdl)
+                glUpUpglVnc = triple_terms_loop(dUpdl, Up, dVncdl)
+                glVpVnglVpc = triple_terms_loop(dVpdl, Vn, dVpcdl)
+                glVpVpglVnc = triple_terms_loop(dVpdl, Vp, dVncdl)
+            else:
+                UpUnUp = triple_terms(Up, Un, Up)
+                UpUpUn = triple_terms(Up, Up, Un)
+                VpVnUp = triple_terms(Vp, Vn, Up)
+                VpVpUn = triple_terms(Vp, Vp, Un)
+                VpUnUp = triple_terms(Vp, Un, Up)
+                VpUpUn = triple_terms(Vp, Up, Un)
+                UpVnUp = triple_terms(Up, Vn, Up)
+                UpVpUn = triple_terms(Up, Vp, Un)
+                gpUpUngpOp = triple_terms(dUpdp, Un, dOpdp)
+                gpUpUpgpOn = triple_terms(dUpdp, Up, dOndp)
+                gpVpVngpOp = triple_terms(dVpdp, Vn, dOpdp)
+                gpVpVpgpOn = triple_terms(dVpdp, Vp, dOndp)
+                glUpUnglVpc = triple_terms(dUpdl, Un, dVpcdl)
+                glUpUpglVnc = triple_terms(dUpdl, Up, dVncdl)
+                glVpVnglVpc = triple_terms(dVpdl, Vn, dVpcdl)
+                glVpVpglVnc = triple_terms(dVpdl, Vp, dVncdl)
 
             Ln_int = -(1j * Up['n']) / (utils.constants().R_earth * cos_lat) * \
                          (UpUnUp - UpUpUn) + \
@@ -742,23 +786,14 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             if 'temp_Z' not in locals():
                 temp_Z = temp.mean(dim=lon)
             if 'V' not in locals():
-                V = utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / len(v[lon])
-                V['f_' + lon] = 360 * V['f_' + lon]
-                V = V.rename({'f_' + lon : 'n'})
-                Vp = V
-                Vn = flip_n(V)
+                Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                                  len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'B' not in locals():
-                B = utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / len(temp[lon])
-                B['f_' + lon] = 360 * B['f_' + lon]
-                B = B.rename({'f_' + lon : 'n'})
-                Bp = B
-                Bn = flip_n(B)
+                Bp, Bn = truncate(utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
+                                  len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'O' not in locals():
-                O = utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / len(omega[lon])
-                O['f_' + lon] = 360 * O['f_' + lon]
-                O = O.rename({'f_' + lon : 'n'})
-                Op = O
-                On = flip_n(O)
+                Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                                  len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
             dtemp_Zdlat = utils.calc_gradient(temp_Z, dim=lat, x=(temp_Z[lat] * degtorad))
             theta = temp * p_kap
@@ -777,22 +812,13 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         # to eddy kinetic energy of wavenumber n, Cn -----
             if vgradz:
                 if 'U' not in locals():
-                    U = utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / len(u[lon])
-                    U['f_' + lon] = 360 * U['f_' + lon]
-                    U = U.rename({'f_' + lon : 'n'})
-                    Up = U
-                    Un = flip_n(U)
+                    Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
+                                      len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 if 'V' not in locals():
-                    V = utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / len(v[lon])
-                    V['f_' + lon] = 360 * V['f_' + lon]
-                    V = V.rename({'f_' + lon : 'n'})
-                    Vp = V
-                    Vn = flip_n(V)
-                A = utils.calc_fft(gh, dim=lon, nfft=len(gh[lon]), twosided=True, shift=True) / len(gh[lon])
-                A['f_' + lon] = 360 * A['f_' + lon]
-                A = A.rename({'f_' + lon : 'n'})
-                Ap = A
-                An = flip_n(A)
+                    Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                                      len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Ap, An = truncate(utils.calc_fft(gh, dim=lon, nfft=len(gh[lon]), twosided=True, shift=True) / 
+                                  len(gh[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
                 dApdlat = utils.calc_gradient(Ap, dim=lat, x=(Ap[lat] * degtorad))
                 dAndlat = utils.calc_gradient(An, dim=lat, x=(An[lat] * degtorad))
@@ -808,17 +834,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                     energies['Cn'] = Cn
             else:
                 if 'O' not in locals():
-                    O = utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / len(omega[lon])
-                    O['f_' + lon] = 360 * O['f_' + lon]
-                    O = O.rename({'f_' + lon : 'n'})
-                    Op = O
-                    On = flip_n(O)
+                    Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                                      len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 if 'B' not in locals():
-                    B = utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / len(temp[lon])
-                    B['f_' + lon] = 360 * B['f_' + lon]
-                    B = B.rename({'f_' + lon : 'n'})
-                    Bp = B
-                    Bn = flip_n(B)
+                    Bp, Bn = truncate(utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
+                                      len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 Cn_int = - (utils.constants().R_d / (omega[plev] * 100)) * (Op * Bn + On * Bp) # [W/kg]
                 energies['Cn_int'] = Cn_int
                 if integrate:
@@ -833,23 +853,14 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             if 'u_Z' not in locals():
                 u_Z = u.mean(dim=lon)
             if 'U' not in locals():
-                U = utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / len(u[lon])
-                U['f_' + lon] = 360 * U['f_' + lon]
-                U = U.rename({'f_' + lon : 'n'})
-                Up = U
-                Un = flip_n(U)
+                Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
+                                  len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'V' not in locals():
-                V = utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / len(v[lon])
-                V['f_' + lon] = 360 * V['f_' + lon]
-                V = V.rename({'f_' + lon : 'n'})
-                Vp = V
-                Vn = flip_n(V)
+                Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                                  len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'O' not in locals():
-                O = utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / len(omega[lon])
-                O['f_' + lon] = 360 * O['f_' + lon]
-                O = O.rename({'f_' + lon : 'n'})
-                Op = O
-                On = flip_n(O)
+                Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                                      len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v[lat] * degtorad))
             du_Zndlat = utils.calc_gradient(u_Z / xr.ufuncs.cos(u[lat] * degtorad), 
                                             dim=lat, x=(u[lat] * degtorad))
@@ -1145,42 +1156,42 @@ def compute_inband_variance(da, dim, bounds, nwindow, overlap=50):
 def compute_nino3(da_sst_anom):
     ''' Returns nino3 index '''  
     
-    box = [-5.0,5.0,360.0-150.0,360.0-90.0] # [lat_min,lat_max,lon_min,lon_max]
+    box = [-5.0,5.0,210.0,270.0] # [lat_min,lat_max,lon_min,lon_max]
     
     # Account for datasets with negative longitudes -----
     if np.any(da_sst_anom['lon'] < 0):
         box[2] = box[2] - 360
         box[3] = box[3] - 360
         
-    return calc_boxavg_latlon(da_sst_anom,box)
+    return utils.calc_boxavg_latlon(da_sst_anom,box)
 
 
 # ===================================================================================================
 def compute_nino34(da_sst_anom):
     ''' Returns nino3.4 index '''  
     
-    box = [-5.0,5.0,360.0-170.0,360.0-120.0] # [lat_min,lat_max,lon_min,lon_max]
+    box = [-5.0,5.0,190.0,240.0] # [lat_min,lat_max,lon_min,lon_max]
     
     # Account for datasets with negative longitudes -----
     if np.any(da_sst_anom['lon'] < 0):
         box[2] = box[2] - 360
         box[3] = box[3] - 360
         
-    return calc_boxavg_latlon(da_sst_anom,box)
+    return utils.calc_boxavg_latlon(da_sst_anom,box)
 
 
 # ===================================================================================================
 def compute_nino4(da_sst_anom):
     ''' Returns nino4 index '''  
     
-    box = [-5.0,5.0,360.0-160.0,360.0-150.0] # [lat_min,lat_max,lon_min,lon_max]
+    box = [-5.0,5.0,160.0,210.0] # [lat_min,lat_max,lon_min,lon_max]
     
     # Account for datasets with negative longitudes -----
     if np.any(da_sst_anom['lon'] < 0):
         box[2] = box[2] - 360
         box[3] = box[3] - 360
         
-    return calc_boxavg_latlon(da_sst_anom,box)
+    return utils.calc_boxavg_latlon(da_sst_anom,box)
 
 
 # ===================================================================================================
