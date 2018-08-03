@@ -118,6 +118,24 @@ class constants(object):
 # ===================================================================================================
 # Probability tools
 # ===================================================================================================
+def compute_skewness(da, dim):
+    """
+    Returns the skewness of da
+    """
+    daf = da - da.mean(dim)
+    return (daf ** 3 / (daf ** 2) ** 3/2).mean(dim)
+
+
+# ===================================================================================================
+def compute_kurtosis(da, dim):
+    """
+    Returns the kurtosis of da
+    """
+    daf = da - da.mean(dim)
+    return (daf ** 4 / (daf ** 2) ** 2).mean(dim)
+
+
+# ===================================================================================================
 def categorize(da, bin_edges):
     """ 
     Returns the indices of the bins to which each value in input array belongs 

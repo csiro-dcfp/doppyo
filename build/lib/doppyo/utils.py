@@ -118,6 +118,24 @@ class constants(object):
 # ===================================================================================================
 # Probability tools
 # ===================================================================================================
+def compute_skewness(da, dim):
+    """
+    Returns the skewness of da
+    """
+    daf = da - da.mean(dim)
+    return (daf ** 3 / (daf ** 2) ** 3/2).mean(dim)
+
+
+# ===================================================================================================
+def compute_kurtosis(da, dim):
+    """
+    Returns the kurtosis of da
+    """
+    daf = da - da.mean(dim)
+    return (daf ** 4 / (daf ** 2) ** 2).mean(dim)
+
+
+# ===================================================================================================
 def categorize(da, bin_edges):
     """ 
     Returns the indices of the bins to which each value in input array belongs 
@@ -647,10 +665,10 @@ def datetime_to_leadtime(data_in):
 
 
 # ===================================================================================================
-def repeat_data(data, repeat_dim, repeat_dim_value=0):
+def repeat_data(data, repeat_dim, index_to_repeat=0):
     """ 
-    Returns object the same sizes as data, but with data at repeat_dim = repeat_dim_value repeated across all 
-    other entries in repeat_dim
+    Returns object the same sizes as data, but with data at index repeat_dim = index_to_repeat repeated 
+    across all other entries in repeat_dim
     """
 
     repeat_data = data.loc[{repeat_dim : repeat_dim_value}].drop(repeat_dim).squeeze()
