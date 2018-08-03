@@ -6,6 +6,12 @@
 **/.cache
 **/__pycache__
 
+
+# python build files
+**/build
+**/dist
+**/*.egg-info
+
 # Mac stuff
 **/._*
 
