@@ -697,7 +697,13 @@ def calc_boxavg_latlon(da, box):
         box[2] = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0][0]]
         box[3] = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0][-1]]
     
-    return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3])).mean(dim=['lat', 'lon'])
+    region = da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3]))
+    if (len(region.lat) == 0):
+        raise ValueError('Region selected has no latitudinal points')
+    if (len(region.lon) == 0):
+        raise ValueError('Region selected has no longitudinal points. May need to adjust longitude dimension so that region is continuous')
+    
+    return region.mean(dim=['lat', 'lon'])
 
 
 # ===================================================================================================
