@@ -123,7 +123,7 @@ def compute_skewness(da, dim):
     Returns the skewness of da
     """
     daf = da - da.mean(dim)
-    return (daf ** 3 / (daf ** 2) ** 3/2).mean(dim)
+    return (daf ** 3).mean(dim) / ((daf ** 2).mean(dim) ** (3/2))
 
 
 # ===================================================================================================
@@ -132,7 +132,7 @@ def compute_kurtosis(da, dim):
     Returns the kurtosis of da
     """
     daf = da - da.mean(dim)
-    return (daf ** 4 / (daf ** 2) ** 2).mean(dim)
+    return (daf ** 4).mean(dim) / ((daf ** 2).mean(dim) ** (2))
 
 
 # ===================================================================================================
@@ -460,7 +460,7 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
     Returns pre-saved climatology at desired frequency (daily or longer).
     
     Currently available options are: "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", 
-    "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", cafe_c2_ocean_400-499", "HadISST_1870-2018", "REMSS_2002-2018".
+    "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", "HadISST_1870-2018", "REMSS_2002-2018".
     """
     
     data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/doppyo/mean_climatologies/'
@@ -489,6 +489,10 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
     elif clim == 'cafe_c2_ocean_400-499':
         data_loc = data_path + 'cafe.c2.ocean.400_499.clim.nc'
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
+        
+    elif clim == 'cafe_c2_ocean_500-549':
+        data_loc = data_path + 'cafe.c2.ocean.500_549.clim.nc'
+        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
     
     elif clim == 'HadISST_1870-2018':
         data_loc = data_path + 'hadisst.1870011612_2018021612.clim.nc'
@@ -499,7 +503,7 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
         ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
             
     else:
-        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", "cafe_c2_ocean_400-499", "HadISST_1870-2018","REMSS_2002-2018"')
+        raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", "cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", "HadISST_1870-2018","REMSS_2002-2018"')
         
     if variable is not None:
         try:
@@ -671,7 +675,7 @@ def repeat_data(data, repeat_dim, index_to_repeat=0):
     across all other entries in repeat_dim
     """
 
-    repeat_data = data.loc[{repeat_dim : repeat_dim_value}].drop(repeat_dim).squeeze()
+    repeat_data = data.loc[{repeat_dim : index_to_repeat}].drop(repeat_dim).squeeze()
     
     return (0 * data).groupby(repeat_dim,squeeze=True).apply(calc_difference, data_2=-repeat_data)
 
@@ -679,8 +683,19 @@ def repeat_data(data, repeat_dim, index_to_repeat=0):
 # ===================================================================================================
 def calc_boxavg_latlon(da, box):
     '''
-        Returns the average of a given quantity over a provide lat-lon region
+        Returns the average of a given quantity over a provide lat-lon region, where box = [lat_min,
+        lat_max, lon_min, lon_max]
+        
+        Cannont cuurently perform average over prime (0) meridian 
     '''
+
+    # Account for datasets with negative longitudes -----
+    if np.any(da['lon'] < 0):
+        lons = da['lon']
+        lons['lon'] = da['lon'].where(da['lon'] > 0, da['lon'] + 360)
+        lons_srtd = lons.sortby(lons.lon)
+        box[2] = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0][0]]
+        box[3] = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0][-1]]
     
     return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3])).mean(dim=['lat', 'lon'])
 

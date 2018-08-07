@@ -1157,11 +1157,6 @@ def compute_nino3(da_sst_anom):
     ''' Returns nino3 index '''  
     
     box = [-5.0,5.0,210.0,270.0] # [lat_min,lat_max,lon_min,lon_max]
-    
-    # Account for datasets with negative longitudes -----
-    if np.any(da_sst_anom['lon'] < 0):
-        box[2] = box[2] - 360
-        box[3] = box[3] - 360
         
     return utils.calc_boxavg_latlon(da_sst_anom,box)
 
@@ -1171,11 +1166,6 @@ def compute_nino34(da_sst_anom):
     ''' Returns nino3.4 index '''  
     
     box = [-5.0,5.0,190.0,240.0] # [lat_min,lat_max,lon_min,lon_max]
-    
-    # Account for datasets with negative longitudes -----
-    if np.any(da_sst_anom['lon'] < 0):
-        box[2] = box[2] - 360
-        box[3] = box[3] - 360
         
     return utils.calc_boxavg_latlon(da_sst_anom,box)
 
@@ -1185,11 +1175,6 @@ def compute_nino4(da_sst_anom):
     ''' Returns nino4 index '''  
     
     box = [-5.0,5.0,160.0,210.0] # [lat_min,lat_max,lon_min,lon_max]
-    
-    # Account for datasets with negative longitudes -----
-    if np.any(da_sst_anom['lon'] < 0):
-        box[2] = box[2] - 360
-        box[3] = box[3] - 360
         
     return utils.calc_boxavg_latlon(da_sst_anom,box)
 
@@ -1201,15 +1186,6 @@ def compute_emi(da_sst_anom):
     boxA = [-10.0,10.0,360.0-165.0,360.0-140.0] # [lat_min,lat_max,lon_min,lon_max]
     boxB = [-15.0,5.0,360.0-110.0,360.0-70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxC = [-10.0,20.0,125.0,145.0] # [lat_min,lat_max,lon_min,lon_max]
-    
-    # Account for datasets with negative longitudes -----
-    if np.any(da_sst_anom['lon'] < 0):
-        boxA[2] = boxA[2] - 360
-        boxA[3] = boxA[3] - 360
-        boxB[2] = boxB[2] - 360
-        boxB[3] = boxB[3] - 360
-        boxC[2] = boxC[2] - 360
-        boxC[3] = boxC[3] - 360
         
     da_sstA = utils.calc_boxavg_latlon(da_sst_anom,boxA)
     da_sstB = utils.calc_boxavg_latlon(da_sst_anom,boxB)
@@ -1224,12 +1200,6 @@ def compute_dmi(da_sst_anom):
     
     boxW = [-10.0,10.0,50.0,70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxE = [-10.0,0.0,90.0,110.0] # [lat_min,lat_max,lon_min,lon_max]
-    
-    if np.any(da_sst_anom['lon'] < 0):
-        boxW[2] = boxW[2] - 360
-        boxW[3] = boxW[3] - 360
-        boxE[2] = boxE[2] - 360
-        boxE[3] = boxE[3] - 360
         
     da_W = utils.calc_boxavg_latlon(da_sst_anom,boxW)
     da_E = utils.calc_boxavg_latlon(da_sst_anom,boxE)
