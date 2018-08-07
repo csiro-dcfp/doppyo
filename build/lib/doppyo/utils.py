@@ -688,14 +688,15 @@ def get_latlon_region(da, box):
 
     # Account for datasets with negative longitudes -----
     if np.any(da['lon'] < 0):
-        lons = da['lon']
-        lons['lon'] = da['lon'].where(da['lon'] > 0, da['lon'] + 360)
-        lons_srtd = lons.sortby(lons.lon)
-        lon_vals = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0]]
-        return da.sel(lat=slice(box[0],box[1]), lon=np.sort(lon_vals))
+        lons = da['lon'].values
+        lons_pos = np.where(lons < 0, lons+360, lons)
+        idx = np.where((lons_pos >= box[2]) & (lons_pos <= box[3]))[0]
+        if np.all(np.diff(idx)[0] == np.diff(idx)):
+            return da.sel(lat=slice(box[0],box[1])).isel(lon=slice(idx[0],idx[-1]))
+        else:
+            return da.sel(lat=slice(box[0],box[1])).isel(lon=idx)
     else:
         return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3]))
-
 
 # ===================================================================================================
 def calc_boxavg_latlon(da, box):
