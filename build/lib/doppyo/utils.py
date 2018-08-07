@@ -681,12 +681,9 @@ def repeat_data(data, repeat_dim, index_to_repeat=0):
 
 
 # ===================================================================================================
-def calc_boxavg_latlon(da, box):
+def get_latlon_region(da, box):
     '''
-        Returns the average of a given quantity over a provide lat-lon region, where box = [lat_min,
-        lat_max, lon_min, lon_max]
-        
-        Cannont cuurently perform average over prime (0) meridian 
+        Returns da over a provided lat-lon region, where box = [lat_min, lat_max, lon_min, lon_max]
     '''
 
     # Account for datasets with negative longitudes -----
@@ -694,16 +691,20 @@ def calc_boxavg_latlon(da, box):
         lons = da['lon']
         lons['lon'] = da['lon'].where(da['lon'] > 0, da['lon'] + 360)
         lons_srtd = lons.sortby(lons.lon)
-        box[2] = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0][0]]
-        box[3] = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0][-1]]
+        lon_vals = lons_srtd.values[np.where((lons_srtd.lon >= box[2]) & (lons_srtd.lon <= box[3]))[0]]
+        return da.sel(lat=slice(box[0],box[1]), lon=np.sort(lon_vals))
+    else:
+        return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3]))
+
+
+# ===================================================================================================
+def calc_boxavg_latlon(da, box):
+    '''
+        Returns the average of a given quantity over a provide lat-lon region, where box = [lat_min,
+        lat_max, lon_min, lon_max]
+    '''
     
-    region = da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3]))
-    if (len(region.lat) == 0):
-        raise ValueError('Region selected has no latitudinal points')
-    if (len(region.lon) == 0):
-        raise ValueError('Region selected has no longitudinal points. May need to adjust longitude dimension so that region is continuous')
-    
-    return region.mean(dim=['lat', 'lon'])
+    return get_latlon_region(da, box).mean(dim=['lat', 'lon'])
 
 
 # ===================================================================================================
