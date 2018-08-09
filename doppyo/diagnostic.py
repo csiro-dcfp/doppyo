@@ -13,7 +13,6 @@ __all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws',
 # ===================================================================================================
 # Packages
 # ===================================================================================================
-import warnings
 import collections
 import numpy as np
 import xarray as xr
