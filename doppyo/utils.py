@@ -664,14 +664,14 @@ def datetime_to_leadtime(data_in):
         month = data_in.time.dt.month[0]
         if dt == 60*60*24:
             freq = 'D'
-        elif: ((month == 1) | (month == 3) | (month == 5) | (month == 7) | (month == 8) | (month == 10) | 
+        elif ((month == 1) | (month == 3) | (month == 5) | (month == 7) | (month == 8) | (month == 10) | 
                (month == 12)) & (dt == 31*60*60*24):
             freq = 'MS'
-        elif: ((month == 4) | (month == 6) | (month == 9) | (month == 11)) & (dt == 30*60*60*24):
+        elif ((month == 4) | (month == 6) | (month == 9) | (month == 11)) & (dt == 30*60*60*24):
             freq = 'MS'
-        elif: (month == 2) & ((dt == 28*60*60*24) | (dt == 29*60*60*24)):  
+        elif (month == 2) & ((dt == 28*60*60*24) | (dt == 29*60*60*24)):  
             freq = 'MS'
-        elif: (dt == 365*60*60*24) | (dt == 366*60*60*24)
+        elif (dt == 365*60*60*24) | (dt == 366*60*60*24):
             freq = 'A'
         else:
             freq = 'NA'
