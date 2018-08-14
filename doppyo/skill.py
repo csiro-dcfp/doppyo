@@ -47,7 +47,7 @@ def compute_rank_histogram(da_cmp, da_ref, over_dims, ensemble_dim='ensemble'):
 
 
 # ===================================================================================================
-def compute_rps(da_cmp, da_ref, bins, over_dims, ensemble_dim='ensemble'):
+def compute_rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
     """ Returns the (continuous) ranked probability score """
 
     if over_dims is None:

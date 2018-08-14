@@ -207,7 +207,10 @@ def unstack_and_count(da, dims):
     except ValueError:
         unstacked = da
 
-    return ((0 * unstacked) + 1).sum(dim = dims)
+    if dims is None:
+        return ((0 * unstacked) + 1)
+    else:
+        return ((0 * unstacked) + 1).sum(dim=dims, skipna=True)
 
 
 def compute_histogram(da, bin_edges, over_dims):
@@ -215,14 +218,15 @@ def compute_histogram(da, bin_edges, over_dims):
 
     # To use groupby_bins, da must have a name -----
     da = da.rename('data') 
-
-    hist = da.groupby_bins(da,bins=bin_edges) \
+    
+    hist = da.groupby_bins(da,bins=bin_edges, squeeze=False) \
              .apply(unstack_and_count, dims=over_dims) \
              .fillna(0) \
              .rename({'data_bins' : 'bins'})
     hist['bins'] = (bin_edges[0:-1]+bin_edges[1:])/2
-
-    return hist.astype(int)
+    
+    # Add nans where data did not fall in any bin -----
+    return hist.astype(int).where(hist.sum('bins') != 0)
 
 
 # ===================================================================================================
@@ -296,13 +300,13 @@ def calc_integral(da, over_dim, x=None, dx=None, method='trapz', cumulative=Fals
             dx = dx1.combine_first(dx2)
 
         if cumulative:
-            integral = (da * dx).cumsum(over_dim) 
+            integral = (da * dx).cumsum(over_dim, skipna=False) 
         else:
-            integral = (da * dx).sum(over_dim) 
+            integral = (da * dx).sum(over_dim, skipna=False) 
     else:
         raise ValueError(f'{method} is not a recognised integration method')
     
-    return integral
+    return integral.where(da.sum(over_dim, skipna=False).notnull())
     
 
 # ===================================================================================================
@@ -659,6 +663,26 @@ def datetime_to_leadtime(data_in):
     lead_times = range(len(data_in.time))
     try:
         freq = infer_freq(data_in.time.values)
+        
+        # If pandas tries to assign start time to frequency (e.g. QS-OCT), remove this -----
+        if '-' in freq:
+            freq = freq[:freq.find('-')]
+        
+        # Split frequency into numbers and strings -----
+        incr_string = ''.join([i for i in freq if i.isdigit()])
+        freq_incr = [int(incr_string) if incr_string else 1][0]
+        freq_type = ''.join([i for i in freq if not i.isdigit()])
+    
+        # Specify all lengths great than 1 month in months -----
+        if 'QS' in freq_type:
+            freq = str(3*freq_incr) + 'MS'
+        elif 'Q' in freq_type:
+            freq = str(3*freq_incr) + 'M'
+        elif ('YS' in freq_type) | ('AS' in freq_type):
+            freq = str(12*freq_incr) + 'MS'
+        elif ('Y' in freq_type) | ('A' in freq_type):
+            freq = str(12*freq_incr) + 'M'
+            
     except ValueError:
         dt = (data_in.time.values[1] - data_in.time.values[0]) / np.timedelta64(1, 's')
         month = data_in.time.dt.month[0]
