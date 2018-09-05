@@ -6,10 +6,11 @@
 """
 
 __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'compute_cdf', 'compute_rank', 
-           'compute_histogram', 'calc_gradient', 'calc_integral', 'calc_difference', 'calc_division', 
-           'calc_average', 'calc_fft', 'load_climatology', 'anomalize', 'trunc_time', 'infer_freq', 
-           'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_data', 
-           'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
+           'compute_histogram', 'calc_gradient', 'calc_xy_from_latlon', 'calc_integral', 'calc_difference', 
+           'calc_division', 'calc_average', 'calc_fft', 'calc_ifft', 'fftfilt', 'stack_times', 'normal_mbias_correct', 
+           'normal_msbias_correct', 'conditional_bias_correct', 'load_climatology', 'anomalize', 
+           'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
+           'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
            'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
            'get_pres_name', 'cftime_to_datetime64']
 
@@ -27,7 +28,12 @@ import itertools
 from scipy.interpolate import interp1d
 from scipy import ndimage
 import dask.array
+import matplotlib
+import matplotlib.pyplot as plt
 import copy
+
+# Load doppyo packages -----
+from doppyo import skill
 
 # ===================================================================================================
 # Classes
@@ -243,30 +249,45 @@ def calc_gradient(da, dim, x=None):
     
     # Replace dimension values if specified -----
     da_n = da.copy()
-    if x is not None:
-        da_n[dim] = x
+    if x is None:
+        x = da_n[dim]
         
-    centre_chunk = range(len(da_n[dim])-2)
-
+    centre_chunk = range(len(x[dim])-2)
+    
     f_hd = da_n.shift(**{dim:-2})
     f = da_n.shift(**{dim:-1})
     f_hs = da_n
-    hs = da_n[dim].shift(**{dim:-1}) - da_n[dim]
-    hd = da_n[dim].shift(**{dim:-2}) - da_n[dim].shift(**{dim:-1})
+    hs = x.shift(**{dim:-1}) - x
+    hd = x.shift(**{dim:-2}) - x.shift(**{dim:-1})
     c = (hs ** 2 * f_hd + (hd ** 2 - hs ** 2) * f - hd ** 2 * f_hs) / \
         (hs * hd * (hd + hs)).isel(**{dim : centre_chunk})
-    c[dim] = da_n[dim][1:-1]
+    c[dim] = x[dim][1:-1]
 
     l = (da_n.shift(**{dim:-1}) - da_n).isel(**{dim : 0}) / \
-        (da_n[dim].shift(**{dim:-1}) - da_n[dim]).isel(**{dim : 0})
+        (x.shift(**{dim:-1}) - x).isel(**{dim : 0})
 
     r = (-da_n.shift(**{dim:1}) + da_n).isel(**{dim : -1}) / \
-        (-da_n[dim].shift(**{dim:1}) + da_n[dim]).isel(**{dim : -1})
+        (-x.shift(**{dim:1}) + x).isel(**{dim : -1})
     
     grad = xr.concat([l, c, r], dim=dim)
     grad[dim] = da[dim]
     
     return grad
+
+
+# ===================================================================================================
+def calc_xy_from_latlon(lon, lat):
+    ''' 
+        Returns x/y in m from grid points that are in a latitude/longitude format.
+    '''
+    
+    degtorad = constants().pi / 180
+    
+    y = (2 * constants().pi * constants().R_earth * lat / 360)
+    x = 2 * constants().pi * constants().R_earth * xr.ufuncs.cos(lon * degtorad) * lon / 360
+    y = y * (0 * x + 1)
+    
+    return x, y
 
 
 # ===================================================================================================
@@ -344,7 +365,7 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
         Returns the sequentual ffts of the provided array along the specified dimensions
 
         da : xarray.DataArray
-            Array from which compute the spectrum
+            Array from which compute the fft
         dim : str or sequence
             Dimensions along which to compute the fft
         nfft : float or sequence, optional
@@ -373,9 +394,9 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
 
     if isinstance(dim, str):
         dim = [dim]   
-    if nfft is not None and not hasattr(nfft, "__getitem__"):
+    if nfft is not None and not isinstance(nfft, (list,)):
         nfft = [nfft]
-    if dx is not None and not hasattr(dx, "__getitem__"):
+    if dx is not None and not isinstance(dx, (list,)):
         dx = [dx]
 
     # Build nfft and dx into dictionaries -----
@@ -393,7 +414,8 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             diff = da[di].diff(di)
             if is_datetime(da[di].values):
                 # Drop differences on leap days so that still works with 'noleap' calendars -----
-                diff = diff.where((diff[di].dt.month != 3) & (diff[di].dt.day != 1), drop=True)
+                diff = diff.where(((diff[di].dt.month != 3) | (diff[di].dt.day != 1)), drop=True)
+                
             if np.all(diff == diff[0]):
                 if is_datetime(da[di].values):
                     dx_n[di] = diff.values[0] / np.timedelta64(1, 's')
@@ -437,16 +459,18 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
                 fft_coords['f_' + di] = np.fft.fftfreq(nfft_n[di], dx_n[di])
                 if isinstance(fft_array, dask_array_type):
                     fft_array = dask.array.fft.fft(fft_array, n=nfft_n[di], axis=axis_num)
+                    if shift:
+                        fft_coords['f_' + di] = np.fft.fftshift(fft_coords['f_' + di])
+                        fft_array = dask.array.fft.fftshift(fft_array, axes=axis_num)
                 else:
                     fft_array = np.fft.fft(fft_array, n=nfft_n[di], axis=axis_num)
+                    if shift:
+                        fft_coords['f_' + di] = np.fft.fftshift(fft_coords['f_' + di])
+                        fft_array = np.fft.fftshift(fft_array, axes=axis_num)
                 # Auto-rechunk -----
                 # fft_array = dask.array.fft.fft(fft_array.rechunk({axis_num: nfft_n[di]}),
                 #                                n=nfft_n[di],
                 #                                axis=axis_num).rechunk({axis_num: chunks[axis_num][0]})
-
-                if shift is True:
-                    fft_coords['f_' + di] = np.fft.fftshift(fft_coords['f_' + di])
-                    fft_array = dask.array.fft.fftshift(fft_array, axes=axis_num)
 
             first = False
 
@@ -456,6 +480,298 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
     return xr.DataArray(fft_array, coords=fft_coords, dims=fft_dims, name='fft')
 
 
+# ===================================================================================================
+def calc_ifft(da, dim, nifft=None, shifted=True):
+    """
+        Returns the sequentual iffts of the provided array along the specified dimensions. 
+        
+        Note, it is not possible to reconstruct the dimension along which the fft was performed (r_dim) 
+        from knowledge only of the fft "frequencies" (f_dim). For example, time cannot be reconstructed 
+        from frequency. Here, r_dim is defined relative to 0 in steps of dx as determined from f_dim. It
+        may be necessary for the user to use the original (pre-fft) dimension to redefine r_dim after the
+        ifft is performed.
+
+        da : xarray.DataArray
+            Array from which compute the ifft
+        dim : str or sequence
+            Dimensions along which to compute the ifft
+        nifft : float or sequence, optional
+            Number of points in each dimensions to use in the transformation. If None, the full length
+            of each dimension is used.
+        shifted : bool, optional
+            If True, assumes that the frequency axes are shifted to center the 0 frequency, otherwise 
+            assumes negative frequencies follow positive frequencies as in numpy.fft.ftt
+    """
+
+    if isinstance(dim, str):
+        dim = [dim]   
+    if nifft is not None and not isinstance(nifft, (list,)):
+        nifft = [nifft]
+
+    # Build nifft into a dictionary -----
+    nifft_n = dict()
+    for i, di in enumerate(dim):
+        try:
+            nifft_n[di] = nifft[i]
+        except TypeError:
+            nifft_n[di] = len(da[di])
+    
+    # Initialise ifft data, dimensions and coordinates -----
+    ifft_array = da.data
+    ifft_coords = dict()
+    ifft_dims = tuple()
+    for di in da.dims:
+        if di not in dim:
+            ifft_dims += (di,)
+            ifft_coords[di] = da[di].values
+        else:
+            
+            if di[0:2] == 'f_':
+                ifft_dims += (di[2:],)
+            else:
+                ifft_dims += ('r_' + di,)
+
+    # Loop over dimensions and perform ifft -----
+    for di in dim:
+        if di in da.dims:
+            axis_num = da.get_axis_num(di)
+                
+            nfft = len(da[di])
+            
+            if isinstance(ifft_array, dask_array_type):
+                if shifted:
+                    dx = 1 / np.fft.ifftshift(da[di]).values[1] / nfft
+                    ifft_array = dask.array.fft.ifftshift(ifft_array, axes=axis_num)
+                else:
+                    dx = 1 / da[di].values[1] / nfft
+                ifft_array = dask.array.fft.ifft(ifft_array, n=nifft_n[di], axis=axis_num)
+            else:
+                if shifted:
+                    dx = 1 / np.fft.ifftshift(da[di])[1] / nfft
+                    ifft_array = np.fft.ifftshift(ifft_array, axes=axis_num)
+                else:
+                    dx = 1 / da[di].values[1] / nfft
+                ifft_array = np.fft.ifft(ifft_array, n=nifft_n[di], axis=axis_num)
+                
+            if di[0:2] == 'f_':
+                ifft_coords[di[2:]] = dx * np.linspace(0, nifft_n[di]-1, nifft_n[di])
+            else:
+                ifft_coords['r_' + di] = dx * np.linspace(0, nifft_n[di]-1, nifft_n[di])
+
+        else:
+            raise ValueError(f'Cannot find dimension {di} in DataArray')
+
+    return xr.DataArray(ifft_array, coords=ifft_coords, dims=ifft_dims, name='ifft')
+
+
+# ===================================================================================================
+def fftfilt(da, dim, method, dx, x_cut):
+    """
+        Spectrally filters da along dimension dim.
+        
+        da : xarray.DataArray
+            Array to filter
+        dim : str
+            Dimensions along which to filter
+        method : str
+            'low pass', 'high pass' or 'band pass'
+        dx : float
+            Define the spacing of the dimension.
+        xc : float or array (if method = 'band pass')
+            Define the cut-off value(s), e.g. xc = 5*dx
+    """
+
+    if not isinstance(dx, (list,)):
+        dx = [dx]
+    if not isinstance(x_cut, (list,)):
+        x_cut = [x_cut]
+
+    if ((method == 'low pass') | (method == 'high pass')) & (len(x_cut) != 1):
+        raise ValueError('Only one cut-off value can be specified for "low pass" or "high pass"')
+    if (method == 'band pass') & (len(x_cut) != 2):
+        raise ValueError('Two cut-off values must be specified for "band pass"')
+
+    freq_cut = 1 / np.array(x_cut)
+
+    dafft = calc_fft(da, dim=dim, dx=dx, twosided=True, shift=False)
+
+    if method == 'low pass':
+        danull = dafft.where(abs(dafft['f_'+dim]) <= freq_cut, other=0)
+    elif method == 'high pass':
+        danull = dafft.where(abs(dafft['f_'+dim]) >= freq_cut, other=0)
+    elif method == 'band pass':
+        danull = dafft.where((abs(dafft['f_'+dim]) >= np.min(freq_cut)) &
+                             (abs(dafft['f_'+dim]) <= np.max(freq_cut)), other=0)
+    else:
+        raise ValueError('Unrecognised filter method. Choose from "low pass" or "high pass" or "band pass"')
+
+    dafilt = calc_ifft(danull, dim='f_'+dim, shifted=False).real
+    dafilt[dim] = da[dim]
+
+    return dafilt
+
+
+# ===================================================================================================
+def stack_times(da):
+    da_list = []
+    for init_date in da.init_date.values:
+        da_list.append(leadtime_to_datetime(da.sel(init_date=init_date)))
+    return xr.concat(da_list, dim='time')
+
+
+# ===================================================================================================
+anomalize = lambda data, clim: datetime_to_leadtime(
+                                   anomalize(
+                                       leadtime_to_datetime(data),clim))
+
+rescale = lambda da, scale : datetime_to_leadtime(
+                                      scale_per_month(
+                                          leadtime_to_datetime(da), scale))
+
+def groupby_lead_and_mean(da, over_dims):
+    return da.unstack('stacked_init_date_lead_time').groupby('lead_time').mean(over_dims, skipna=True)
+
+def groupby_lead_and_std(da, over_dims):
+    return da.unstack('stacked_init_date_lead_time').groupby('lead_time').std(over_dims, skipna=True)
+
+def unstack_and_shift_per_month(da, shift):
+    da_us = da.unstack('stacked_init_date_lead_time')
+    the_month = np.ndarray.flatten(da_us.month.values)
+    the_month = int(np.unique(the_month[~np.isnan(the_month)]))
+    return da_us - shift.sel(month=the_month)
+
+def unstack_and_scale_per_month(da, scale):
+    da_us = da.unstack('stacked_init_date_lead_time')
+    the_month = np.ndarray.flatten(da_us.month.values)
+    the_month = int(np.unique(the_month[~np.isnan(the_month)]))
+    return da_us * scale.sel(month=the_month)
+
+def scale_per_month(da, scale):
+    return da.groupby('time.month') * scale
+
+def normal_mbias_correct(da_biased, da_target, da_target_clim=False):
+    """
+        Adjusts, per month and lead time, the mean and standard deviation of da_biased to match that of da_target
+        
+        If da_target_clim is provided, returns both the corrected full field and the anomalies. Otherwise, returns
+        only the anomalies
+    """
+    
+    month = (da_biased.init_date.dt.month + da_biased.lead_time) % 12
+    month = month.where(month != 0, 12)
+
+    # Correct the mean -----
+    da_biased.coords['month'] = month
+    try:
+        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims=['init_date','ensemble'])
+    except ValueError:
+        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims='init_date')
+    
+    if da_target_clim is not False:
+        da_target_mean = da_target.groupby('time.month').mean('time')
+        
+        da_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
+                                                       shift=(da_biased_mean - da_target_mean)) \
+                                      .mean('month', skipna=True)
+        da_meancorr['lead_time'] = da_biased['lead_time']
+        da_meancorr.coords['month'] = month
+
+        # Compute the corrected anomalies -----
+        da_anom_meancorr = da_meancorr.groupby('init_date').apply(anomalize, clim=da_target_clim)
+        da_anom_meancorr.coords['month'] = month
+    else:
+        da_anom_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
+                                                            shift=(da_biased_mean)) \
+                                      .mean('month', skipna=True)
+        da_anom_meancorr['lead_time'] = da_anom_meancorr['lead_time']
+        da_anom_meancorr.coords['month'] = month
+    
+    if da_target_clim is not False:
+        da_meancorrr = da_anom_meancorr.groupby('init_date').apply(anomalize, clim=-da_target_clim)
+        return da_meancorr.drop('month'), da_anom_meancorr.drop('month')
+    else:
+        return da_anom_meancorr.drop('month')
+    
+def normal_msbias_correct(da_biased, da_target, da_target_clim=False):
+    """
+        Adjusts, per month and lead time, the mean and standard deviation of da_biased to match that of da_target
+        
+        If da_target_clim is provided, returns both the corrected full field and the anomalies. Otherwise, returns
+        only the anomalies
+    """
+    
+    month = (da_biased.init_date.dt.month + da_biased.lead_time) % 12
+    month = month.where(month != 0, 12)
+
+    # Correct the mean -----
+    da_biased.coords['month'] = month
+    try:
+        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims=['init_date','ensemble'])
+    except ValueError:
+        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims='init_date')
+    
+    if da_target_clim is not False:
+        da_target_mean = da_target.groupby('time.month').mean('time')
+        
+        da_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
+                                                       shift=(da_biased_mean - da_target_mean)) \
+                                      .mean('month', skipna=True)
+        da_meancorr['lead_time'] = da_biased['lead_time']
+        da_meancorr.coords['month'] = month
+
+        # Compute the corrected anomalies -----
+        da_anom_meancorr = da_meancorr.groupby('init_date').apply(anomalize, clim=da_target_clim)
+        da_anom_meancorr.coords['month'] = month
+    else:
+        da_anom_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
+                                                            shift=(da_biased_mean)) \
+                                      .mean('month', skipna=True)
+        da_anom_meancorr['lead_time'] = da_anom_meancorr['lead_time']
+        da_anom_meancorr.coords['month'] = month
+    
+    # Correct the standard deviation -----
+    try:
+        da_biased_std_tmp = da_anom_meancorr.groupby('month').apply(groupby_lead_and_std, over_dims=['init_date','ensemble'])
+    except ValueError:
+        da_biased_std_tmp = da_anom_meancorr.groupby('month').apply(groupby_lead_and_std, over_dims='init_date')
+    try:
+        da_target_std = da_target.sel(lat=da_biased.lat, lon=da_biased.lon).groupby('time.month').std('time')
+    except:
+        da_target_std = da_target.groupby('time.month').std('time')
+        
+    da_anom_stdcorr_tmp = da_anom_meancorr.groupby('month').apply(unstack_and_scale_per_month, \
+                                                                  scale=(da_target_std / da_biased_std_tmp)) \
+                                              .mean('month', skipna=True)
+    da_anom_stdcorr_tmp['lead_time'] = da_biased['lead_time']
+    da_anom_stdcorr_tmp.coords['month'] = month
+    
+    # This will "squeeze" each pdf at each lead time appropriately. However, the total variance across all leads for 
+    # a given month will now be incorrect. Thus, we now rescale as a function of month only
+    try:
+        da_biased_std = stack_times(da_anom_stdcorr_tmp).groupby('time.month').std(['time','ensemble'])
+    except ValueError:
+        da_biased_std = stack_times(da_anom_stdcorr_tmp).groupby('time.month').std('time')
+    da_anom_stdcorr = da_anom_stdcorr_tmp.groupby('init_date').apply(rescale, scale=(da_target_std / da_biased_std))
+    
+    if da_target_clim is not False:
+        da_stdcorr = da_anom_stdcorr.groupby('init_date').apply(anomalize, clim=-da_target_clim)
+        return da_stdcorr.drop('month'), da_anom_stdcorr.drop('month')
+    else:
+        return da_anom_stdcorr.drop('month')
+
+    
+# ===================================================================================================
+def conditional_bias_correct(da_cmp, da_ref, over_dims):
+    """
+        Return conditional bias corrected data using the approach of Goddard et al. 2013
+    """
+
+    cc = skill.compute_Pearson_corrcoef(da_cmp.mean('ensemble'), da_ref, over_dims=over_dims, subtract_local_mean=False)
+    correct_cond_bias = (da_ref.std(over_dims) / da_cmp.mean('ensemble').std(over_dims)) * cc
+    
+    return da_cmp * correct_cond_bias
+
+    
 # ===================================================================================================
 # Climatology tools
 # ===================================================================================================
@@ -902,3 +1218,163 @@ def cftime_to_datetime64(time,shift_year=0):
     return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
                                                  .strftime(), 'ns') \
                                                  for i in range(len(time))])
+
+
+# ===================================================================================================
+# REMOVE
+# ===================================================================================================
+def load_ncfiles(dataset, variables):
+    import glob
+    folder = '/OSM/CBR/OA_DCFP/data2/observations/jra55/isobaric/007_hgt/cat/'
+    file = 'jra*nc'
+    files = glob.glob(folder + file)
+    files = sorted(files, key=lambda x: int(x.split('.')[-3]))
+    gh = xr.open_mfdataset(files, parallel=True, chunks={'initial_time0_hours':3000})['HGT_GDS0_ISBL'] \
+             .rename({'g0_lon_3':'lon', 'g0_lat_2':'lat', 'initial_time0_hours':'time', 'lv_ISBL1':'level'}) \
+             .sel(time=slice('2000','2010'))
+
+    folder = '/OSM/CBR/OA_DCFP/data2/observations/jra55/isobaric/011_tmp/cat/'
+    file = 'jra*nc'
+    files = glob.glob(folder + file)
+    files = sorted(files, key=lambda x: int(x.split('.')[-3]))[1:]
+    temp = xr.open_mfdataset(files, parallel=True, chunks={'initial_time0_hours':3000})['TMP_GDS0_ISBL'] \
+             .rename({'g0_lon_3':'lon', 'g0_lat_2':'lat', 'initial_time0_hours':'time', 'lv_ISBL1':'level'}) \
+             .sel(time=slice('2000','2010'))
+
+    folder = '/OSM/CBR/OA_DCFP/data2/observations/jra55/isobaric/033_ugrd/cat/'
+    file = 'jra*nc'
+    files = glob.glob(folder + file)
+    files = sorted(files, key=lambda x: int(x.split('.')[-3]))
+    u = xr.open_mfdataset(files, parallel=True, chunks={'initial_time0_hours':3000})['UGRD_GDS0_ISBL'] \
+          .rename({'g0_lon_3':'lon', 'g0_lat_2':'lat', 'initial_time0_hours':'time', 'lv_ISBL1':'level'}) \
+          .sel(time=slice('2000','2010'))
+
+    folder = '/OSM/CBR/OA_DCFP/data2/observations/jra55/isobaric/034_vgrd/cat/'
+    file = 'jra*nc'
+    files = glob.glob(folder + file)
+    files = sorted(files, key=lambda x: int(x.split('.')[-3]))
+    v = xr.open_mfdataset(files, parallel=True, chunks={'initial_time0_hours':3000})['VGRD_GDS0_ISBL'] \
+          .rename({'g0_lon_3':'lon', 'g0_lat_2':'lat', 'initial_time0_hours':'time', 'lv_ISBL1':'level'}) \
+          .sel(time=slice('2000','2010'))
+
+    folder = '/OSM/CBR/OA_DCFP/data2/observations/jra55/isobaric/039_vvel/cat/'
+    file = 'anl*nc'
+    files = glob.glob(folder + file)
+    files = sorted(files, key=lambda x: int(x.split('.')[-3]))
+    omega = xr.open_mfdataset(files, parallel=True, chunks={'initial_time0_hours':3000})['VVEL_GDS0_ISBL'] \
+              .rename({'g0_lon_3':'lon', 'g0_lat_2':'lat', 'initial_time0_hours':'time', 'lv_ISBL1':'level'}) \
+              .sel(time=slice('2000','2010'))
+    
+    return gh, temp, u, v, omega
+
+
+# ===================================================================================================
+def plot_fields(data, title, vmin, vmax, headings=None, cmin=None, cmax=None,
+                ncol=2, mult_row=1, mult_col=1, mult_cshift=1, contour=False, cmap='viridis', invert=False):
+    """ Plots tiles of figures """
+    
+    matplotlib.rc('font', family='sans-serif') 
+    matplotlib.rc('font', serif='Helvetica') 
+    matplotlib.rc('text', usetex='false') 
+    matplotlib.rcParams.update({'font.size': 12})
+    
+    if len(data) == 1:
+        ncol=1
+        
+    nrow = int(np.ceil(len(data)/ncol));
+
+    fig = plt.figure(figsize=(11*mult_col, nrow*4*mult_row))
+        
+    count = 1
+    for idx,dat in enumerate(data):
+        if ('lat' in dat.dims) and ('lon' in dat.dims):
+            trans = cartopy.crs.PlateCarree()
+            ax = plt.subplot(nrow, ncol, count, projection=cartopy.crs.PlateCarree(central_longitude=180))
+            ax.coastlines(color='black')
+            extent = [dat.lon.min(), dat.lon.max(), 
+                      dat.lat.min(), dat.lat.max()]
+
+            if contour is True:
+                if cmin is not None:
+                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,21), origin='lower', transform=trans, 
+                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
+                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,11), origin='lower', transform=trans,
+                              colors='w', linewidths=2)
+                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,11), origin='lower', transform=trans,
+                              colors='k', linewidths=1)
+                else:
+                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,20), origin='lower', transform=trans, 
+                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
+            else:
+                im = ax.imshow(dat, origin='lower', extent=extent, transform=trans, vmin=vmin, vmax=vmax, cmap=cmap)
+
+            gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), draw_labels=True)
+            gl.xlines = False
+            gl.ylines = False
+            gl.xlabels_top = False
+            if count % ncol == 0:
+                gl.ylabels_left = False
+            elif (count+ncol-1) % ncol == 0: 
+                gl.ylabels_right = False
+            else:
+                gl.ylabels_left = False
+                gl.ylabels_right = False
+            gl.xlocator = mticker.FixedLocator([-90, 0, 90, 180])
+            gl.ylocator = mticker.FixedLocator([-90, -60, 0, 60, 90])
+            gl.xformatter = LONGITUDE_FORMATTER
+            gl.yformatter = LATITUDE_FORMATTER
+            #ax.set_extent(extent)
+            if headings is not None:
+                ax.set_title(headings[idx])
+        else:
+            ax = plt.subplot(nrow, ncol, count)
+            if 'lat' in dat.dims:
+                x_plt = dat['lat']
+                y_plt = dat[find_other_dims(dat,'lat')[0]]
+                # if dat.get_axis_num('lat') > 0:
+                #     dat = dat.transpose()
+            elif 'lon' in dat.dims:
+                x_plt = dat['lon']
+                y_plt = dat[find_other_dims(dat,'lon')[0]]
+                # if dat.get_axis_num('lon') > 0:
+                #     dat = dat.transpose()
+            else: 
+                x_plt = dat[dat.dims[1]]
+                y_plt = dat[dat.dims[0]]
+                
+            extent = [x_plt.min(), x_plt.max(), 
+                      y_plt.min(), y_plt.max()]
+            
+            if contour is True:
+                if cmin is not None:
+                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,21), vmin=vmin, vmax=vmax, cmap=cmap)
+                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,11), colors='w', linewidths=2)
+                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,11), colors='k', linewidths=1)
+                else:
+                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,20), vmin=vmin, vmax=vmax, cmap=cmap)
+            else:
+                im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
+                
+            if count % ncol == 0:
+                ax.yaxis.tick_right()
+            elif (count+ncol-1) % ncol == 0: 
+                ax.set_ylabel(y_plt.dims[0])
+            else:
+                ax.set_yticks([])
+            if idx / ncol >= nrow - 1:
+                ax.set_xlabel(x_plt.dims[0])
+            if headings is not None:
+                ax.set_title(headings[idx], fontsize=16)
+            
+            if invert:
+                ax.invert_yaxis()
+
+        count += 1
+
+    plt.tight_layout()
+    fig.subplots_adjust(bottom=mult_cshift*0.16)
+    cbar_ax = fig.add_axes([0.15, 0.13, 0.7, 0.020])
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
+    cbar_ax.set_xlabel(title, rotation=0, labelpad=15);
+    cbar.set_ticks(np.linspace(vmin,vmax,5))
+    

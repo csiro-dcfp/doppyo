@@ -277,6 +277,7 @@ def compute_thermal_wind(gh, plev_lower, plev_upper):
     """
     
     degtorad = utils.constants().pi / 180
+    lon_name = utils.get_lon_name(gh)
     lat_name = utils.get_lat_name(gh)
     plev_name = utils.get_level_name(gh)
     
@@ -288,18 +289,20 @@ def compute_thermal_wind(gh, plev_lower, plev_upper):
     thickness = upper - lower
     
     # Compute the gradient -----
-    # utils.calc_gradient(thickness, dim=lat_name, x=(thickness[lat_name] * degtorad))
-    w = wsh.xarray.VectorWind(thickness, thickness)
+    x,y = utils.calc_xy_from_latlon(gh[lon_name], gh[lat_name])
+    u_tmp = utils.calc_gradient(thickness, dim=lon_name, x=x)
+    v_tmp = utils.calc_gradient(thickness, dim=lat_name, x=y)
     
-    # Compute the thickness gradient -----
-    u_tmp, v_tmp = w.gradient(thickness)
+    # Or use windspharm -----
+    # w = wsh.xarray.VectorWind(thickness, thickness)
+    # u_tmp, v_tmp = w.gradient(thickness)
     
     # k x (u_tw,v_tw) -> (-v_tw, u_tw) -----
     u_tw = -v_tmp / (2 * utils.constants().Omega * xr.ufuncs.sin(thickness[lat_name] * degtorad))
     v_tw = u_tmp / (2 * utils.constants().Omega * xr.ufuncs.sin(thickness[lat_name] * degtorad))
     
     # Combine into dataset -----
-    tw = u_tw.to_dataset('u_tw')
+    tw = u_tw.to_dataset(name='u_tw')
     tw['v_tw'] = v_tw
     
     return tw
@@ -565,11 +568,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     # Initialize some things -----
     lat = utils.get_lat_name(temp)
     lon = utils.get_lon_name(temp)
-    # THE FOLLOWING LINE IS CURRENTLY INCORRECT - TEMPORARILY USING HYBRID LEVELS AS PRESSURES LEVELS UNTIL ALL
-    # REQUIRED VARIABLES ARE AVAILABLE ON ISOBARIC LEVELS
-    plev = utils.get_pres_name(temp)
-    # SWITCH TO:
-    # plev = utils.get_level_name(temp)
+    plev = utils.get_level_name(temp)
     
     degtorad = utils.constants().pi / 180
     tan_lat = xr.ufuncs.tan(temp[lat] * degtorad)
@@ -1118,8 +1117,8 @@ def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
         weight = 1
 
     # Compute the spectral density -----
-    da1_fft = utils.calc_fft(da1_windowed, dim=dim)
-    da2_fftc = xr.ufuncs.conj(utils.calc_fft(da2_windowed, dim=dim))
+    da1_fft = utils.calc_fft(da1_windowed, dim=dim, dx=dx)
+    da2_fftc = xr.ufuncs.conj(utils.calc_fft(da2_windowed, dim=dim, dx=dx))
 
     return (weight * 2 * dx * (da1_fft * da2_fftc).mean('n') / nwindow).real
 
