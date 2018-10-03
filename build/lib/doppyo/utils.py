@@ -1,6 +1,6 @@
 """
     General support functions for the doppyo package
-    Author: Dougie Squire
+    Author: Dougie Squire (some ocean focused additions & edits Thomas Moore)
     Date created: 04/04/2018
     Python Version: 3.6
 """
@@ -12,7 +12,7 @@ __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'comput
            'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
            'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
            'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
-           'get_pres_name', 'cftime_to_datetime64']
+           'get_pres_name', 'cftime_to_datetime64', 'get_depth_name']
 
 # ===================================================================================================
 # Packages
@@ -1160,6 +1160,8 @@ def get_lon_name(da):
         return 'lon'
     elif 'lon_2' in da.dims:
         return 'lon_2'
+    elif 'xt_ocean' in da.dims:
+        return 'xt_ocean'
     else:
         raise KeyError('Unable to determine longitude dimension')
         pass
@@ -1173,10 +1175,26 @@ def get_lat_name(da):
         return 'lat'
     elif 'lat_2' in da.dims:
         return 'lat_2'
+    elif 'yt_ocean' in da.dims:
+        return 'yt_ocean'
     else:
         raise KeyError('Unable to determine latitude dimension')
         pass
 
+    
+# ===================================================================================================
+def get_depth_name(da):
+    """ Returns name of ocean depth coordinate in da """
+    
+    if 'depth' in da.dims:
+        return 'depth'
+    elif 'depth_coord' in da.dims:
+        return 'depth_coord'
+    elif 'st_ocean' in da.dims:
+        return 'st_ocean'
+    else:
+        raise KeyError('Unable to determine depth dimension')
+        pass
     
 # ===================================================================================================
 def get_level_name(da):
