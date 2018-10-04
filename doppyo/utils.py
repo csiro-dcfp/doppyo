@@ -31,6 +31,7 @@ import dask.array
 import matplotlib
 import matplotlib.pyplot as plt
 import copy
+import warnings
 
 # Load doppyo packages -----
 from doppyo import skill
@@ -620,9 +621,9 @@ def stack_times(da):
 
 
 # ===================================================================================================
-anomalize = lambda data, clim: datetime_to_leadtime(
-                                   anomalize(
-                                       leadtime_to_datetime(data),clim))
+lambda_anomalize = lambda data, clim: datetime_to_leadtime(
+                                           anomalize(
+                                               leadtime_to_datetime(data),clim))
 
 rescale = lambda da, scale : datetime_to_leadtime(
                                       scale_per_month(
@@ -677,7 +678,7 @@ def normal_mbias_correct(da_biased, da_target, da_target_clim=False):
         da_meancorr.coords['month'] = month
 
         # Compute the corrected anomalies -----
-        da_anom_meancorr = da_meancorr.groupby('init_date').apply(anomalize, clim=da_target_clim)
+        da_anom_meancorr = da_meancorr.groupby('init_date').apply(lambda_anomalize, clim=da_target_clim)
         da_anom_meancorr.coords['month'] = month
     else:
         da_anom_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
@@ -687,7 +688,7 @@ def normal_mbias_correct(da_biased, da_target, da_target_clim=False):
         da_anom_meancorr.coords['month'] = month
     
     if da_target_clim is not False:
-        da_meancorrr = da_anom_meancorr.groupby('init_date').apply(anomalize, clim=-da_target_clim)
+        da_meancorrr = da_anom_meancorr.groupby('init_date').apply(lambda_anomalize, clim=-da_target_clim)
         return da_meancorr.drop('month'), da_anom_meancorr.drop('month')
     else:
         return da_anom_meancorr.drop('month')
@@ -720,7 +721,7 @@ def normal_msbias_correct(da_biased, da_target, da_target_clim=False):
         da_meancorr.coords['month'] = month
 
         # Compute the corrected anomalies -----
-        da_anom_meancorr = da_meancorr.groupby('init_date').apply(anomalize, clim=da_target_clim)
+        da_anom_meancorr = da_meancorr.groupby('init_date').apply(lambda_anomalize, clim=da_target_clim)
         da_anom_meancorr.coords['month'] = month
     else:
         da_anom_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
@@ -754,7 +755,7 @@ def normal_msbias_correct(da_biased, da_target, da_target_clim=False):
     da_anom_stdcorr = da_anom_stdcorr_tmp.groupby('init_date').apply(rescale, scale=(da_target_std / da_biased_std))
     
     if da_target_clim is not False:
-        da_stdcorr = da_anom_stdcorr.groupby('init_date').apply(anomalize, clim=-da_target_clim)
+        da_stdcorr = da_anom_stdcorr.groupby('init_date').apply(lambda_anomalize, clim=-da_target_clim)
         return da_stdcorr.drop('month'), da_anom_stdcorr.drop('month')
     else:
         return da_anom_stdcorr.drop('month')
@@ -845,41 +846,60 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
 
 # ===================================================================================================
 def anomalize(data, clim):
-    """ Receives raw and climatology data at matched frequencies and returns the anomaly """
+    """ 
+        Receives raw and climatology data at matched frequencies and returns the anomaly 
+    """
     
     data_use = data.copy(deep=True)
     clim_use = clim.copy(deep=True)
     
-    # If only one climatological time instance is given, assume this is annual average -----
-    if len(clim_use.time) > 1:
-        data_freq = infer_freq(data_use.time.values[:3])
-        clim_freq = infer_freq(clim_use.time.values[:3])
+    # If clim is saved on a time dimension, deal with accordingly ----- 
+    if 'time' in clim_use.dims:
+        # Find frequency (assume this is annual average if only one time value exists) -----
+        if len(clim_use.time) > 1:
+            clim_freq = pd.infer_freq(clim_use.time.values[:3])
+        else:
+            clim_freq = 'A'
+            
+        # Build daily, monthly or annual climatologies -----
+        if 'D' in clim_freq:
+            # Contruct month-day array (to deal with leap years) -----
+            clim_mon = np.array([str(i).zfill(2) + '-' for i in clim_use.time.dt.month.values])
+            clim_day = np.array([str(i).zfill(2)  for i in clim_use.time.dt.day.values])
+            clim_use['time'] = np.core.defchararray.add(clim_mon, clim_day)
+            
+            clim_use = clim_use.groupby('time', squeeze=False).mean(dim='time')
+            deal_with_leap = True
+        elif 'M' in clim_freq:
+            clim_use = clim_use.groupby('time.month', squeeze=False).mean(dim='time')
+        elif ('A' in clim_freq) | ('Y' in clim_freq):
+            clim_use = prune(clim_use.groupby('time.year', squeeze=False).mean(dim='time').squeeze())
+    elif 'dayofyear' in clim_use.dims:
+        clim_freq = 'D'
+        deal_with_leap = False
+    elif 'month' in clim_use.dims:
+        clim_freq = 'M'
     else:
-        data_freq = 'A'
+        warnings.warn('Unable to determine frequency of climatology DataArray, assuming annual average')
         clim_freq = 'A'
-
-    if data_freq != clim_freq:
-        raise ValueError('"data" and "clim" must have matched frequencies')
     
-    if 'D' in data_freq:
+    # Subtract the climatology from the full field -----
+    if ('D' in clim_freq) and (deal_with_leap is True):
         time_keep = data_use.time
 
         # Contruct month-day arrays -----
         data_mon = np.array([str(i).zfill(2) + '-' for i in data_use.time.dt.month.values])
         data_day = np.array([str(i).zfill(2)  for i in data_use.time.dt.day.values])
         data_use['time'] = np.core.defchararray.add(data_mon, data_day)
-        clim_mon = np.array([str(i).zfill(2) + '-' for i in clim_use.time.dt.month.values])
-        clim_day = np.array([str(i).zfill(2)  for i in clim_use.time.dt.day.values])
-        clim_use['time'] = np.core.defchararray.add(clim_mon, clim_day)
 
-        anom = data_use.groupby('time') - clim_use.groupby('time',squeeze=False).mean(dim='time')
+        anom = data_use.groupby('time') - clim_use
         anom['time'] = time_keep
-    elif 'M' in data_freq:
-        freq = 'time.month'
-        anom = data_use.groupby(freq) - clim_use.groupby(freq,squeeze=False).mean(dim='time')
-    elif ('A' in data_freq) | ('Y' in data_freq):
-        freq = 'time.year'
-        anom = data_use - prune(clim_use.groupby(freq,squeeze=False).mean(dim='time').squeeze())
+    elif ('D' in clim_freq) and (deal_with_leap is False):
+        anom = data_use.groupby('time.dayofyear') - clim_use
+    elif 'M' in clim_freq:
+        anom = data_use.groupby('time.month') - clim_use
+    elif ('A' in clim_freq) | ('Y' in clim_freq):
+        anom = data_use - clim_use
         
     return prune(anom)
 
@@ -923,7 +943,7 @@ def month_delta(date_in, delta, trunc_to_start=False):
     else:
         date_out = np.datetime64(date_mod.replace(day=d,month=m, year=y))
     
-    return date_out
+    return np.datetime64(date_out,'ns')
 
 
 # ===================================================================================================

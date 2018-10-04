@@ -699,7 +699,7 @@ def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True
         norm = ((da_cmp ** 2).mean(intersection_dims) ** 0.5) * \
                 ((da_ref ** 2).mean(intersection_dims) ** 0.5)
 
-    return (cov / norm).mean(difference_dims)
+    return (cov / norm).mean(difference_dims).rename('Pearson_corrcoef')
 
 
 # ===================================================================================================
