@@ -17,8 +17,8 @@ Three modules are currently available
 
 Some test modules are also avaliable in ``doppyo.test``. However, these are far from complete 
 
-Usage (CSIRO OA\_DCFP users only)
-==================================
+Usage (If not using DCFP JupyterHub server)
+===========================================
 
 1. Install anaconda if you have not already done so:
 
