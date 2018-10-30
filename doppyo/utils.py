@@ -12,7 +12,7 @@ __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'comput
            'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
            'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
            'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
-           'get_pres_name', 'cftime_to_datetime64', 'get_depth_name']
+           'get_pres_name', 'cftime_to_datetime64', 'get_depth_name', 'size_GB']
 
 # ===================================================================================================
 # Packages
@@ -1236,5 +1236,27 @@ def cftime_to_datetime64(time,shift_year=0):
     return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
                                                  .strftime(), 'ns') \
                                                  for i in range(len(time))])
-
+# ===================================================================================================
+def size_GB(xr_object):
+    """
+    How many GB (or GiB) is your xarray object?
     
+    // Requires an xarray object
+        
+    // Returns:
+    * equivalent GB (GBytes) - 10^9 conversion
+    * equivalent GiB (GiBytes) - 2^ 30 conversion
+        
+    < Thomas Moore - thomas.moore@csiro.au - 10102018 >
+    """ 
+    bytes = xr_object.nbytes
+    Ten2the9 = 10**9
+    Two2the30 = 2**30
+    GBytes = bytes / Ten2the9
+    GiBytes = bytes / Two2the30
+    
+    #print out results
+    print(xr_object.name, "is", GBytes, "GB", 'which is', GiBytes,"GiB")
+    
+    
+    return GBytes,GiBytes
