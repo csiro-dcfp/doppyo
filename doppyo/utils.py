@@ -9,7 +9,7 @@ __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'comput
            'compute_histogram', 'calc_gradient', 'calc_xy_from_latlon', 'calc_integral', 'calc_difference', 
            'calc_division', 'calc_average', 'calc_fft', 'calc_ifft', 'fftfilt', 'stack_times', 'normal_mbias_correct', 
            'normal_msbias_correct', 'conditional_bias_correct', 'load_climatology', 'anomalize', 
-           'trunc_time', 'infer_freq', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
+           'trunc_time', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
            'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
            'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
            'get_pres_name', 'cftime_to_datetime64']
@@ -838,7 +838,7 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
             raise ValueError(f'"{variable}" is not a variable in "{clim}"')
     
     # Resample if required -----    
-    load_freq = infer_freq(ds['time'].values)
+    load_freq = pd.infer_freq(ds['time'].values)
     if load_freq != freq:
         if variable == 'precip':
             ds = ds.resample(time=freq).sum(dim='time')
@@ -922,15 +922,6 @@ def trunc_time(time, freq):
 
 
 # ===================================================================================================
-def infer_freq(time):
-    """ 
-    Returns most likely frequency of provided time array 
-    """
-    
-    return pd.infer_freq(time)
-
-
-# ===================================================================================================
 def month_delta(date_in, delta, trunc_to_start=False):
     """ Increments provided datetime64 array by delta months """
     
@@ -1003,7 +994,7 @@ def datetime_to_leadtime(data_in):
     init_date = data_in.time.values[0]
     lead_times = range(len(data_in.time))
     try:
-        freq = infer_freq(data_in.time.values)
+        freq = pd.infer_freq(data_in.time.values)
         
         # If pandas tries to assign start time to frequency (e.g. QS-OCT), remove this -----
         if '-' in freq:
