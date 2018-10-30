@@ -8,7 +8,6 @@
 
 
 # python build files
-**/build
 **/dist
 **/*.egg-info
 
