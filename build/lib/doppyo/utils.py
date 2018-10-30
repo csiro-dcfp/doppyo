@@ -28,8 +28,6 @@ import itertools
 from scipy.interpolate import interp1d
 from scipy import ndimage
 import dask.array
-import matplotlib
-import matplotlib.pyplot as plt
 import copy
 import warnings
 
@@ -1251,10 +1249,10 @@ def cftime_to_datetime64(time,shift_year=0):
 # visualization tools
 # ===================================================================================================
 def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2, mult_row=1, 
-                mult_col=1, mult_cshift=1, contour=False, cmap='viridis', fontsize=12, invert=False):
+                mult_col=1, mult_cshift=1, mult_cbar=1, contour=False, cmap='viridis', fontsize=12, invert=False):
     """ Plots tiles of figures """
     
-    matplotlib.rc('font', family='sans-serif') 
+    matplotlib.rc('font', family='sans-serif')
     matplotlib.rc('font', serif='Helvetica') 
     matplotlib.rc('text', usetex='false') 
     matplotlib.rcParams.update({'font.size': fontsize})
@@ -1351,7 +1349,7 @@ def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2,
 
     plt.tight_layout()
     fig.subplots_adjust(bottom=mult_cshift*0.16)
-    cbar_ax = fig.add_axes([0.15, 0.13, 0.7, 0.020])
+    cbar_ax = fig.add_axes([0.15, 0.13, 0.7, mult_cbar*0.020])
     cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
     cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
     cbar.set_ticks(np.linspace(vmin,vmax,5))

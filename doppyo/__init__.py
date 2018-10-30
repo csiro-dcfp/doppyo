@@ -1,3 +1,4 @@
-import doppyo.diagnostic
-import doppyo.skill
-import doppyo.utils
+name = "doppyo"
+from . import diagnostic
+from . import skill
+from . import utils
