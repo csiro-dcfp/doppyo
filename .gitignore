@@ -3,8 +3,8 @@
 # python and jupyter notebook files
 .ipynb_checkpoints
 __pycache__
-**/.pytest_cache
-**/.cache
+.pytest_cache
+.cache
 *.pyc
 
 # doppyo distribution directories
