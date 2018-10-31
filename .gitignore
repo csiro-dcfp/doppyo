@@ -1,35 +1,33 @@
 # Specific local files
 
 # python and jupyter notebook files
-**/.ipynb_checkpoints
+.ipynb_checkpoints
+__pycache__
 **/.pytest_cache
 **/.cache
-**/__pycache__
+*.pyc
 
-
-# python build files
-**/build
-**/dist
-**/*.egg-info
+# doppyo distribution directories
+/build
+/dist
+/doppyo.egg-info
 
 # Mac stuff
-**/._*
+._*
+.DS_Store
 
 # Standard error output files
-**/*.err
+*.err
 
 # excel files
 **/*.xlsx
 **/*.xl
 
 # nc files
-**/*.nc
-
-# mac files
-**/.DS_Store
+*.nc
 
 # Backup files
-**/*.bak
+*.bak
 
 # Compiled Static libraries
 **/*.lai
