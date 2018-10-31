@@ -1,38 +1,40 @@
 When contributing to doppyo, please branch off the `dev` branch and use the following docstring formatting:
 
 """
-	This is a description of what this function does.
+    This is a description of what this function does.
 
-        Parameters
-        ----------
-        input1 : DataArray
-            Description of input1
-        input2 : bool, optional
-            Description of input2
-	input3 : str or sequence of str, optional
-	    Description of input3
+    Parameters 
+    ----------
+    input1 : DataArray
+        Description of input1
+    input2 : bool, optional
+        Description of input2
+    input3 : str or sequence of str, optional
+        Description of input3
 
-        Returns
-        -------
-        output1 : DataArray
-            Description of output1
+    Returns
+    -------
+    output1 : DataArray
+        Description of output1
 
-        Examples
-        --------
-        >>> example_command
-	command_output
+    Examples
+    --------
+    >>> example_command
+    command_output
 
-        Limitations
-	--------
-	Limitations of the function
+    Limitations
+    --------
+    Limitations of the function
 
-	To do
-	--------
+    To do
+    --------
+    Things still to be done
 
-	See also (if appropriate)
-        --------
-        Reference other package with similar API
+    See also (if appropriate)
+    --------
+    Reference other package with similar API
 
-	Notes (if appropriate)
-	--------
+    Notes (if appropriate)
+    --------
+    Any relevant notes
 """
