@@ -1,11 +1,11 @@
 """
-    doppyo functions for computing various climate diagnostics
-    Author: Dougie Squire
+    doppyo functions for computing various ocean, atmosphere, & climate diagnostics
+    Author: Dougie Squire (ocean diagnostic additions Thomas Moore)
     Date created: 04/04/2018
     Python Version: 3.6
 """
 
-__all__ = ['compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
+__all__ = [ 'compute_isotherm_depth','compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
            'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
            'compute_eofs', 'compute_mmms', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
            'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
@@ -21,6 +21,56 @@ from scipy.sparse import linalg
 
 # Load doppyo packages -----
 from doppyo import utils
+
+# ===================================================================================================
+# Ocean diagnostics
+# ===================================================================================================
+def compute_isotherm_depth(ocean_temp,target_temp=20):
+    """ 
+        Version 1: No interpolation between grid spacing. Fast result but stepwise on model z-grid.
+        Usage: isotherm_depth,isotherm_depth_masked,cold_mask = compute_isotherm_depth(ocean_temp,25)
+
+        // Requires a data array (ocean_temp) with:
+        * at least 3D field of ocean temperature 
+        * the z axis must be depth with standard naming (depth_coord) - although we'll try to deal with
+        other names.
+        
+        // Returns a dataset (isotherm) with:
+        * the depth of an isotherm (isotherm_depth) given a target temperature 
+        (target_temp).  Default target_temp is 20C.
+        * a mask (cold_mask) where points with maximum column temperatures
+        less than the target temperature are masked out 
+        * the isotherm depth with the mask applied (isotherm_depth_masked).
+        
+        < Thomas Moore - thomas.moore@csiro.au - 02102018 >       
+    """
+
+    # get coord names -----
+    depth_coord = utils.get_depth_name(ocean_temp)
+    lat = utils.get_lat_name(ocean_temp)
+    lon = utils.get_lon_name(ocean_temp)
+
+    # find isotherm -----
+    mask = (ocean_temp > target_temp)
+    depth_mask = mask * ocean_temp[depth_coord]
+    isotherm_depth = depth_mask.max(depth_coord)
+
+    # mask out cold regions -----
+    max_column_temperature = ocean_temp.max(dim=depth_coord)
+    cold_mask = (max_column_temperature*0).where(max_column_temperature < target_temp, other=1)
+    
+    # fully mask the results -----
+    isotherm_depth_masked = isotherm_depth.where(cold_mask == 1)
+    
+    # Combine into dataset -----
+    isotherm = isotherm_depth.to_dataset(name='isotherm_depth')
+    isotherm['isotherm_depth_masked'] = isotherm_depth_masked
+    isotherm['cold_mask'] = cold_mask
+    
+    return isotherm
+
+
+
 
 # ===================================================================================================
 # Flow field diagnostics
