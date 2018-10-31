@@ -1252,7 +1252,6 @@ def cftime_to_datetime64(time,shift_year=0):
     return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
                                                  .strftime(), 'ns') \
                                                  for i in range(len(time))])
-<<<<<<< HEAD
 
 
 # ===================================================================================================
@@ -1363,7 +1362,8 @@ def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2,
     cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
     cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
     cbar.set_ticks(np.linspace(vmin,vmax,5))
-=======
+    
+    
 # ===================================================================================================
 def size_GB(xr_object):
     """
@@ -1388,4 +1388,3 @@ def size_GB(xr_object):
     
     
     return GBytes,GiBytes
->>>>>>> feature/moore_ocean
