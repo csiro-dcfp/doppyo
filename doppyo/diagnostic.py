@@ -596,6 +596,9 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             Pressures must be in hPa
             lat and lon are in degrees
             For spectral=True, lon must be regularly spaced
+            
+        Notes:
+            dfgldfhglkhdflkgjhadlfkghlksd
 
         Notation: (stackable, e.g. *_ZT indicates the time average of the zonal average)
             *_A -> area average over an isobaric surface
