@@ -22,11 +22,11 @@ When contributing to doppyo, please branch off the `dev` branch and use the foll
     >>> example_command
     command_output
 
-    Limitations
+    Limitations (if appropriate)
     --------
     Limitations of the function
 
-    To do
+    To do (if appropriate)
     --------
     Things still to be done
 
