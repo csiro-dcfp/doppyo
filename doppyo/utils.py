@@ -1,6 +1,6 @@
 """
     General support functions for the doppyo package
-    Author: Dougie Squire
+    Author: Dougie Squire (some ocean focused additions & edits Thomas Moore)
     Date created: 04/04/2018
     Python Version: 3.6
 """
@@ -12,7 +12,7 @@ __all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'comput
            'trunc_time', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
            'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
            'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
-           'get_pres_name', 'cftime_to_datetime64']
+           'get_pres_name', 'cftime_to_datetime64', 'get_depth_name', 'size_GB']
 
 # ===================================================================================================
 # Packages
@@ -1176,6 +1176,8 @@ def get_lon_name(da):
         return 'lon'
     elif 'lon_2' in da.dims:
         return 'lon_2'
+    elif 'xt_ocean' in da.dims:
+        return 'xt_ocean'
     else:
         raise KeyError('Unable to determine longitude dimension')
         pass
@@ -1189,10 +1191,26 @@ def get_lat_name(da):
         return 'lat'
     elif 'lat_2' in da.dims:
         return 'lat_2'
+    elif 'yt_ocean' in da.dims:
+        return 'yt_ocean'
     else:
         raise KeyError('Unable to determine latitude dimension')
         pass
 
+    
+# ===================================================================================================
+def get_depth_name(da):
+    """ Returns name of ocean depth coordinate in da """
+    
+    if 'depth' in da.dims:
+        return 'depth'
+    elif 'depth_coord' in da.dims:
+        return 'depth_coord'
+    elif 'st_ocean' in da.dims:
+        return 'st_ocean'
+    else:
+        raise KeyError('Unable to determine depth dimension')
+        pass
     
 # ===================================================================================================
 def get_level_name(da):
@@ -1234,6 +1252,7 @@ def cftime_to_datetime64(time,shift_year=0):
     return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
                                                  .strftime(), 'ns') \
                                                  for i in range(len(time))])
+<<<<<<< HEAD
 
 
 # ===================================================================================================
@@ -1344,3 +1363,29 @@ def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2,
     cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
     cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
     cbar.set_ticks(np.linspace(vmin,vmax,5))
+=======
+# ===================================================================================================
+def size_GB(xr_object):
+    """
+    How many GB (or GiB) is your xarray object?
+    
+    // Requires an xarray object
+        
+    // Returns:
+    * equivalent GB (GBytes) - 10^9 conversion
+    * equivalent GiB (GiBytes) - 2^ 30 conversion
+        
+    < Thomas Moore - thomas.moore@csiro.au - 10102018 >
+    """ 
+    bytes = xr_object.nbytes
+    Ten2the9 = 10**9
+    Two2the30 = 2**30
+    GBytes = bytes / Ten2the9
+    GiBytes = bytes / Two2the30
+    
+    #print out results
+    print(xr_object.name, "is", GBytes, "GB", 'which is', GiBytes,"GiB")
+    
+    
+    return GBytes,GiBytes
+>>>>>>> feature/moore_ocean
