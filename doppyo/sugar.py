@@ -79,3 +79,41 @@ def compute_histogram(da, bin_edges, over_dims):
     
     # Add nans where data did not fall in any bin -----
     return hist.astype(int).where(hist.sum('bins') != 0)
+
+
+# ===================================================================================================
+def calc_gradient(da, dim, x=None):
+    """
+        Returns the gradient computed using second order accurate central differences in the 
+        interior points and either first order accurate one-sided (forward or backwards) 
+        differences at the boundaries
+
+        See https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.gradient.html
+    """ 
+    
+    # Replace dimension values if specified -----
+    da_n = da.copy()
+    if x is None:
+        x = da_n[dim]
+        
+    centre_chunk = range(len(x[dim])-2)
+    
+    f_hd = da_n.shift(**{dim:-2})
+    f = da_n.shift(**{dim:-1})
+    f_hs = da_n
+    hs = x.shift(**{dim:-1}) - x
+    hd = x.shift(**{dim:-2}) - x.shift(**{dim:-1})
+    c = (hs ** 2 * f_hd + (hd ** 2 - hs ** 2) * f - hd ** 2 * f_hs) / \
+        (hs * hd * (hd + hs)).isel(**{dim : centre_chunk})
+    c[dim] = x[dim][1:-1]
+
+    l = (da_n.shift(**{dim:-1}) - da_n).isel(**{dim : 0}) / \
+        (x.shift(**{dim:-1}) - x).isel(**{dim : 0})
+
+    r = (-da_n.shift(**{dim:1}) + da_n).isel(**{dim : -1}) / \
+        (-x.shift(**{dim:1}) + x).isel(**{dim : -1})
+    
+    grad = xr.concat([l, c, r], dim=dim)
+    grad[dim] = da[dim]
+    
+    return grad

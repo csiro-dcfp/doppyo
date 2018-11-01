@@ -6,7 +6,7 @@
 """
 
 __all__ = ['timer', 'constant', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 
-           'histogram', 'calc_gradient', 'calc_xy_from_latlon', 'integrate', 'calc_difference', 
+           'histogram', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'calc_difference', 
            'calc_division', 'calc_average', 'calc_fft', 'calc_ifft', 'fftfilt', 'stack_times', 'normal_mbias_correct', 
            'normal_msbias_correct', 'conditional_bias_correct', 'load_climatology', 'anomalize', 
            'trunc_time', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
@@ -461,19 +461,65 @@ def histogram(da, bin_edges, over_dims):
 # ===================================================================================================
 # Operational tools
 # ===================================================================================================
-def calc_gradient(da, dim, x=None):
-    """
-        Returns the gradient computed using second order accurate central differences in the 
-        interior points and either first order accurate one-sided (forward or backwards) 
-        differences at the boundaries
+def differentiate_wrt(da, dim, x):
+    """ 
+        Returns the gradient along dim using x to compute differences. This function is required
+        because the current implementation of xr.differentiate (0.10.9) can only differentiate with 
+        respect to a 1D coordinate. It is common to want to differentiate with respect to something 
+        that changes as a function of multiple dimensions (e.g. the zonal distance between regularly 
+        spaced lat/lon points varies as a function of lat and lon). Uses second order accurate central 
+        differencing in the interior points and first order accurate one-sided (forward or backwards) 
+        differencing at the boundaries.
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values to differentiate
+        dim : str
+            The dimension to be used to compute the gradient
+        x : xarray DataArray
+            Array containing values to differentiate with respect to. Must have the same dimensions
+            as da
+            
+        Returns
+        -------
+        differentiated : xarray DataArray
+            New DataArray object containing the differentiate data
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(180,360)), coords=[('lat', np.arange(-90,90,1)), ('lon', np.arange(0,360,1))])
+        >>> x, y = doppyo.utils.xy_from_lonlat(A['lon'], A['lat'])
+        >>> differentiate_wrt(A, dim='lon', x=x)
+        <xarray.DataArray 'differentiated' (lat: 180, lon: 360)>
+        array([[ 3.674336e+10, -9.015981e+10, -2.150203e+11, ..., -6.471076e+10,
+                -6.057067e+09,  1.253664e+11],
+               [-4.133347e-07, -3.932972e-04, -5.982892e-04, ...,  2.972605e-04,
+                 9.456351e-04,  1.907131e-03],
+               [-6.596434e-04,  6.147016e-06,  2.370071e-04, ..., -8.578490e-06,
+                 9.281731e-06,  2.211755e-04],
+               ...,
+               [-6.467389e-05,  6.315746e-05,  1.713705e-04, ...,  9.742767e-05,
+                 1.043358e-04,  1.066228e-04],
+               [ 1.542484e-04,  2.802838e-04,  5.511727e-05, ...,  1.665500e-04,
+                -6.087167e-06, -3.060961e-04],
+               [-5.991109e-04,  2.085148e-04,  4.525132e-04, ..., -9.346556e-05,
+                -7.977593e-05,  3.411080e-05]])
+        Coordinates:
+          * lat      (lat) int64 -90 -89 -88 -87 -86 -85 -84 ... 83 84 85 86 87 88 89
+          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 ... 352 353 354 355 356 357 358 359
 
-        See https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.gradient.html
+        See also
+        --------
+        xarray.DataArray.differentiate()
+        numpy.gradient()
     """ 
     
+    if not (set(da.dims) == set(x.dims)):
+        raise ValueError('da and x must have the same dimensions')
+        
     # Replace dimension values if specified -----
     da_n = da.copy()
-    if x is None:
-        x = da_n[dim]
         
     centre_chunk = range(len(x[dim])-2)
     
@@ -492,22 +538,49 @@ def calc_gradient(da, dim, x=None):
     r = (-da_n.shift(**{dim:1}) + da_n).isel(**{dim : -1}) / \
         (-x.shift(**{dim:1}) + x).isel(**{dim : -1})
     
-    grad = xr.concat([l, c, r], dim=dim)
-    grad[dim] = da[dim]
+    diff = xr.concat([l, c, r], dim=dim)
+    diff[dim] = da[dim]
     
-    return grad
+    return diff.rename('differentiated')
 
 
 # ===================================================================================================
-def calc_xy_from_latlon(lon, lat):
+def xy_from_lonlat(lon, lat):
     ''' 
-        Returns x/y in m from grid points that are in a latitude/longitude format.
+        Returns x/y in m from grid points that are in a longitude/latitude format.
+        
+        Parameters
+        ----------
+        lon : xarray DataArray
+            Array containing longitudes stored relative to longitude dimension/coordinate
+        lat : xarray DataArray
+            Array containing latitudes stored relative to latitude dimension/coordinate
+            
+        Returns
+        -------
+        x : xarray DataArray
+            Array containing zonal distance in m
+        y : xarray DataArray
+            Array containing meridional distance in m
+            
+        Examples
+        --------
+        >>> lat = xr.DataArray(np.arange(-90,90,90), dims=['lat'])
+        >>> lon = xr.DataArray(np.arange(0,360,90), dims=['lon'])
+        >>> doppyo.utils.xy_from_lonlat(lon=lon, lat=lat)
+        (<xarray.DataArray (lat: 2, lon: 4)>
+         array([[0.000000e+00, 6.127853e-10, 1.225571e-09, 1.838356e-09],
+                [0.000000e+00, 1.000754e+07, 2.001509e+07, 3.002263e+07]])
+         Dimensions without coordinates: lat, lon, <xarray.DataArray (lat: 2, lon: 4)>
+         array([[-10007543.39801, -10007543.39801, -10007543.39801, -10007543.39801],
+                [        0.     ,         0.     ,         0.     ,         0.     ]])
+         Dimensions without coordinates: lat, lon)
     '''
     
     degtorad = constants().pi / 180
     
     y = (2 * constants().pi * constants().R_earth * lat / 360)
-    x = 2 * constants().pi * constants().R_earth * xr.ufuncs.cos(lon * degtorad) * lon / 360
+    x = 2 * constants().pi * constants().R_earth * xr.ufuncs.cos(lat * degtorad) * lon / 360
     y = y * (0 * x + 1)
     
     return x, y
@@ -515,7 +588,41 @@ def calc_xy_from_latlon(lon, lat):
 
 # ===================================================================================================
 def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
-    """ Returns trapezoidal/rectangular integration along specified dimension """
+    """ 
+        Returns trapezoidal/rectangular integration along specified dimension 
+    
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values to integrate
+        over_dim : str
+            Dimension to integrate
+        x : xarray DataArray, optional
+            Values to use for integrand. Must contain dimensions over_dim. If None, x is determined
+            from the coords associated with over_dim
+        dx : value, optional
+            Integrand spacing used to compute the integral. If None, dx is determined from x
+        method : str, optional
+            Method of performing integral. Options are 'trapz' for trapezoidal integration, or 'rect'
+            for rectangular integration
+        cumulative : bool, optional
+            If True, return the cumulative integral    
+            
+        Returns
+        -------
+        integral : xarray DataArray
+            Array containing the integral along the specified dimension
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), 
+        ...                                                        ('y', np.arange(2))])
+        >>> doppyo.utils.integrate(A, over_dim='x')
+        <xarray.DataArray 'integral' (y: 2)>
+        array([-0.20331 , -0.781251])
+        Coordinates:
+          * y        (y) int64 0 1
+    """
 
     if x is None:
         x = da[over_dim]
@@ -550,7 +657,7 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
     else:
         raise ValueError(f'{method} is not a recognised integration method')
     
-    return integral.where(da.sum(over_dim, skipna=False).notnull())
+    return integral.where(da.sum(over_dim, skipna=False).notnull()).rename('integral')
     
 
 # ===================================================================================================

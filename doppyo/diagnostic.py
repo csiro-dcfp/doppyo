@@ -70,8 +70,6 @@ def compute_isotherm_depth(ocean_temp,target_temp=20):
     return isotherm
 
 
-
-
 # ===================================================================================================
 # Flow field diagnostics
 # ===================================================================================================
@@ -242,8 +240,66 @@ def compute_waf(psi_anom, u, v, p_lev=None):
 def BruntVaisala(temp, plevel_name=None):
     """
         Returns the Brunt Väisälä frequency
+        Author: Dougie Squire
+        Date: 15/07/2018
         
-        temp must be saved on pressure levels
+        Parameters
+        ----------
+        temp : xarray DataArray
+            Array containing fields of temperature with at least coordinates latitude, longitude and
+            pressure level (following standard naming - see Limitations)
+        plevel_name : str, optional
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
+            automatically
+            
+        Returns
+        -------
+        nsq : xarray DataArray
+            Array with same dimensions as input arrays containing the Brunt Väisälä frequency
+        
+        Examples
+        --------
+        >>> temp = xr.DataArray(np.random.normal(size=(100,100,100)), 
+        ...                     coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
+        >>> doppyo.diagnostic.BruntVaisala(temp)
+        <xarray.DataArray 'nsq' (level: 100, lat: 100, lon: 100)>
+        array([[[-6.440575e-02,  8.507044e-01, ...,  2.439879e-01, -2.703915e-01],
+                [-9.956548e-02,  4.659944e-02, ...,  1.125894e-01,  8.680479e-02],
+                ...,
+                [-1.402951e-01,  1.864266e+00, ..., -1.013359e-01,  1.892111e-01],
+                [-6.434526e-01, -9.490949e-02, ...,  2.852764e-01, -2.348707e-01]],
+
+               [[-8.803910e-01, -7.542996e-02, ...,  5.650788e-01, -5.570075e+02],
+                [ 1.183424e-01,  7.111900e-02, ..., -3.451816e-02,  1.443370e-01],
+                ...,
+                [-8.943706e-02,  8.560311e-03, ..., -2.046340e+01, -1.291341e+01],
+                [-1.204200e+00, -8.616088e-02, ...,  3.391413e-01, -1.174251e-01]],
+
+               ...,
+
+               [[ 1.358592e+02,  2.111141e+01, ...,  1.755355e+02,  3.878441e+00],
+                [-1.200583e+02, -8.901648e+00, ..., -1.662999e+01, -5.048908e+02],
+                ...,
+                [-2.378197e+00, -2.869639e+02, ..., -1.554855e+00,  1.059697e+01],
+                [-7.653866e+01, -5.533192e+01, ..., -3.528339e+02,  2.076783e+01]],
+
+               [[-2.458317e+01,  2.400232e+03, ..., -4.991260e+01,  4.255249e+01],
+                [-1.508371e+02, -2.132226e+03, ..., -2.149874e+01, -2.904825e+01],
+                ...,
+                [-2.384498e+02,  4.558282e+01, ...,  2.307316e+04, -3.189341e+00],
+                [-7.459385e+00, -1.400366e+02, ..., -1.528724e+01,  3.107310e+01]]])
+        Coordinates:
+          * level    (level) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+          * lat      (lat) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+        Attributes:
+            long_name:  Brunt-Vaisala frequency squared
+            units:      s^-2
+
+        Limitations
+        -----------
+        The coordinates of all data inputs must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
     """
 
     R = utils.constants().R_d
@@ -260,7 +316,7 @@ def BruntVaisala(temp, plevel_name=None):
     nsq.attrs['long_name']='Brunt-Vaisala frequency squared'
     nsq.attrs['units']='s^-2'
     
-    return nsq
+    return nsq.rename('nsq')
 
 
 # ===================================================================================================
@@ -311,8 +367,11 @@ def Eady(u, v, gh, nsq, level_name=None):
             Array containing fields of geopotential height with at least coordinates latitude, longitude 
             and level (following standard naming - see Limitations)
         nsq : xarray DataArray
-            Array containing fields of Brunt Vaisala frequency with at least coordinates latitude, 
+            Array containing fields of Brunt Väisälä frequency with at least coordinates latitude, 
             longitude and level (following standard naming - see Limitations)
+        level_name : str, optional
+            Name of level coordinate. If None, doppyo will attempt to determine level_name
+            automatically
             
         Returns
         -------
@@ -387,33 +446,69 @@ def Eady(u, v, gh, nsq, level_name=None):
 
 
 # ===================================================================================================
-def compute_thermal_wind(gh, plev_lower, plev_upper):
+def thermal_wind(gh, plevel_lower, plevel_upper, plevel_name=None):
     """ 
         Returns the thermal wind, (u_tw, v_tw) = 1/f x k x grad(thickness), where f = 2*Omega*sin(lat)
         
-        *_lower and *_upper refer to the value of pressure, not height
+        Parameters
+        ----------
+        gh : xarray DataArray
+            Array containing fields of geopotential height with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        plevel_lower : value
+            Value of lower pressure level used to compute termal wind. Must exist in level coordinate of
+            gh
+        plevel_upper : value
+            Value of upper pressure level used to compute termal wind. Must exist in level coordinate of
+            gh
+        plevel_name : str, optional
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
+            automatically
+            
+        Returns
+        -------
+        thermal_wind : xarray DataArray
+            New DataArray object containing the differentiate data
         
-        gh must have at least latitude and longitude dimensions and two pressure levels with 
-        standard naming. plev_lower and plev_upper must be available levels in the pressure
-        level dimension.
+        Examples
+        --------
+        >>> gh = xr.DataArray(np.random.normal(size=(20,180,360)), 
+        ...                   coords=[('level', np.arange(20)), ('lat', np.arange(-90,90,1)), 
+        ...                   ('lon', np.arange(0,360,1))])
+        >>> doppyo.diagnostic.thermal_wind(gh, plevel_lower=5, plevel_upper=10)
+        <xarray.Dataset>
+        Dimensions:  (lat: 180, lon: 360)
+        Coordinates:
+            level    float64 7.5
+          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 ... 352 353 354 355 356 357 358 359
+          * lat      (lat) int64 -90 -89 -88 -87 -86 -85 -84 ... 83 84 85 86 87 88 89
+        Data variables:
+            u_tw     (lon, lat) float64 0.04964 -0.0321 0.008728 ... -0.04973 -0.1208
+            v_tw     (lat, lon) float64 -3.182e+14 3.389e+14 1.305e+15 ... -0.8222 5.368
+            
+        Limitations
+        -----------
+        The coordinates of gh must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
     """
     
     degtorad = utils.constants().pi / 180
     lon_name = utils.get_lon_name(gh)
     lat_name = utils.get_lat_name(gh)
-    plev_name = utils.get_level_name(gh)
+    if plevel_name is None:
+        plevel_name = utils.get_plevel_name(gh)
     
     # Compute the thickness -----
-    upper = gh.sel({plev_name : plev_lower})
-    upper[plev_name] = (plev_lower + plev_upper) / 2
-    lower = gh.sel({plev_name : plev_upper})
-    lower[plev_name] = (plev_lower + plev_upper) / 2
+    upper = gh.sel({plevel_name : plevel_lower})
+    upper[plevel_name] = (plevel_lower + plevel_upper) / 2
+    lower = gh.sel({plevel_name : plevel_upper})
+    lower[plevel_name] = (plevel_lower + plevel_upper) / 2
     thickness = upper - lower
     
     # Compute the gradient -----
-    x,y = utils.calc_xy_from_latlon(gh[lon_name], gh[lat_name])
-    u_tmp = utils.calc_gradient(thickness, dim=lon_name, x=x)
-    v_tmp = utils.calc_gradient(thickness, dim=lat_name, x=y)
+    x, y = utils.xy_from_lonlat(gh[lon_name], gh[lat_name])
+    u_tmp = utils.differentiate_wrt(thickness, dim=lon_name, x=x)
+    v_tmp = utils.differentiate_wrt(thickness, dim=lat_name, x=y)
     
     # Or use windspharm -----
     # w = wsh.xarray.VectorWind(thickness, thickness)
