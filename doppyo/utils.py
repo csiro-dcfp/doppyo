@@ -5,8 +5,8 @@
     Python Version: 3.6
 """
 
-__all__ = ['timer', 'constant', 'constants', 'categorize','compute_pdf', 'compute_cdf', 'compute_rank', 
-           'compute_histogram', 'calc_gradient', 'calc_xy_from_latlon', 'calc_integral', 'calc_difference', 
+__all__ = ['timer', 'constant', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 
+           'histogram', 'calc_gradient', 'calc_xy_from_latlon', 'integrate', 'calc_difference', 
            'calc_division', 'calc_average', 'calc_fft', 'calc_ifft', 'fftfilt', 'stack_times', 'normal_mbias_correct', 
            'normal_msbias_correct', 'conditional_bias_correct', 'load_climatology', 'anomalize', 
            'trunc_time', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
@@ -45,13 +45,17 @@ from doppyo import skill
 # Classes
 # ===================================================================================================
 class timer(object):
-    '''
-        Class for timing code snippets 
+    """
+        Reports time taken to complete code snippets.
+        Author: Dougie Squire
+        Date: 14/02/2018
 
-        Usage:
-            with timer():
-                # do something
-    '''
+        Examples
+        --------
+        >>> with doppyo.utils.timer():
+        >>>     x = 1 + 1
+        Elapsed: 4.5299530029296875e-06 sec
+    """
     
     def __init__(self, name=None):
         self.name = name
@@ -66,63 +70,71 @@ class timer(object):
         
 
 # ===================================================================================================
-def constant(f):
-    """ Decorator to make constants unmodifiable """
-    
-    def fset(self, value):
-        raise TypeError('Cannot overwrite constant values')
-    def fget(self):
-        return f()
-    return property(fget, fset)
-
 class constants(object):
-    """ Class of commonly used constants """
+    """ 
+        Returns commonly used constants.
+        Author: Dougie Squire
+        Date: 14/02/2018
     
-    @constant
+        Examples
+        --------
+        >>> pi = doppyo.utils.constants().pi
+    """
+    
+    def _constant(f):
+        """ Decorator to make constants unmodifiable """
+
+        def fset(self, value):
+            raise TypeError('Cannot overwrite constant values')
+        def fget(self):
+            return f()
+        return property(fget, fset)
+    
+    @_constant
     def R_d():
         return 287.04 # gas constant of dry air [J / (kg * degK)]
     
-    @constant
+    @_constant
     def R_v():
         return 461.50 # gas constant of water vapor [J / (kg * degK)]
     
-    @constant
+    @_constant
     def C_vd():
         return 719.0 # heat capacity of dry air at constant volume [J / (kg * degK)]
     
-    @constant
+    @_constant
     def C_pd():
         return 1005.7 # 'heat capacity of dry air at constant pressure [J / (kg * degK)]
     
-    @constant
+    @_constant
     def C_vv():
         return 1410.0 # heat capacity of water vapor at constant volume [J / (kg * degK)]
     
-    @constant
+    @_constant
     def C_pv():
         return 1870.0 # heat capacity of water vapor at constant pressure [J / (kg * degK)]
     
-    @constant
+    @_constant
     def C_l():
         return 4190.0 # heat capacity of liquid water [J / (kg * degK)] 
     
-    @constant
+    @_constant
     def g():
         return 9.81 # gravitational acceleration [m / s^2]
     
-    @constant
+    @_constant
     def R_earth():
         return 6.371e6 # radius of the earth ['m']
     
-    @constant
+    @_constant
     def Omega():
         return 7.2921e-5 # earth rotation rate [rad/s]
     
-    @constant
+    @_constant
     def pi():
-        return 2*np.arccos(0)
+        return 2*np.arccos(0) # pi
     
-    @constant
+    @_constant
     def Ce():
         return 0.3098 # Eady constant
 
@@ -130,115 +142,320 @@ class constants(object):
 # ===================================================================================================
 # Probability tools
 # ===================================================================================================
-def compute_skewness(da, dim):
+def skewness(da, dim):
     """
-    Returns the skewness of da
+        Returns the skewness along dimension dim
+        Author: Dougie Squire
+        Date: 20/08/2018
+
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values for which to compute skewness
+        dim : str or sequence of str
+            Dimension(s) over which to compute the skewness
+
+        Returns
+        -------
+        skewness : xarray DataArray
+            New DataArray object with skewness applied to its data and the indicated dimension(s) removed
+
+        Examples
+        --------
+        >>> arr = xr.DataArray(np.arange(6).reshape(2, 3), 
+        ...                    coords=[('x', ['a', 'b']), ('y', [0, 1, 2])])
+        >>> arr
+        <xarray.DataArray (x: 2, y: 3)>
+        array([[0, 1, 2],
+               [3, 4, 5]])
+        Coordinates:
+          * x        (x) <U1 'a' 'b'
+          * y        (y) int64 0 1 2
+        >>> doppyo.utils.skewness(arr, 'x')
+        <xarray.DataArray (y: 3)>
+        array([0., 0., 0.])
+        Coordinates:
+          * y        (y) int64 0 1 2
     """
+    
     daf = da - da.mean(dim)
-    return (daf ** 3).mean(dim) / ((daf ** 2).mean(dim) ** (3/2))
+    return ((daf ** 3).mean(dim) / ((daf ** 2).mean(dim) ** (3/2))).rename('skewness')
 
 
 # ===================================================================================================
-def compute_kurtosis(da, dim):
+def kurtosis(da, dim):
     """
-    Returns the kurtosis of da
+        Returns the kurtosis along dimension dim
+        Author: Dougie Squire
+        Date: 20/08/2018
+
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values for which to compute kurtosis
+        dim : str or sequence of str
+            Dimension(s) over which to compute the kurtosis
+
+        Returns
+        -------
+        kurtosis : xarray DataArray
+            New DataArray object with kurtosis applied to its data and the indicated dimension(s) removed
+
+        Examples
+        --------
+        >>> arr = xr.DataArray(np.arange(6).reshape(2, 3), 
+        ...                    coords=[('x', ['a', 'b']), ('y', [0, 1, 2])])
+        >>> arr
+        <xarray.DataArray (x: 2, y: 3)>
+        array([[0, 1, 2],
+               [3, 4, 5]])
+        Coordinates:
+          * x        (x) <U1 'a' 'b'
+          * y        (y) int64 0 1 2
+        >>> doppyo.utils.kurtosis(arr, 'x')
+        <xarray.DataArray (y: 3)>
+        array([1., 1., 1.])
+        Coordinates:
+          * y        (y) int64 0 1 2
     """
+    
     daf = da - da.mean(dim)
-    return (daf ** 4).mean(dim) / ((daf ** 2).mean(dim) ** (2))
+    return ((daf ** 4).mean(dim) / ((daf ** 2).mean(dim) ** (2))).rename('kurtosis')
 
 
 # ===================================================================================================
-def categorize(da, bin_edges):
+def digitize(da, bin_edges):
+    """
+        Returns the indices of the bins to which each value in input array belongs.
+        Author: Dougie Squire
+        Date: 31/10/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values to digitize
+        dim : array_like
+            Array of bin edges. Output indices, i, are such that bin_edges[i-1] <= x < bin_edges[i]
+
+        Returns
+        -------
+        digitized : xarray DataArray
+            New DataArray object of indices
+
+        Examples
+        --------
+        >>> da = xr.DataArray(np.random.normal(size=(20,40)), coords=[('x', np.arange(20)), 
+        ...                                                           ('y', np.arange(40))])
+        >>> bins=np.linspace(-2,2,10)
+        >>> bin_edges = doppyo.utils.get_bin_edges(bins)
+        >>> doppyo.utils.digitize(da, bin_edges)
+        <xarray.DataArray 'digitized' (x: 20, y: 40)>
+        array([[ 7,  6,  4, ...,  5,  6,  7],
+               [ 5, 11,  2, ...,  7,  6,  0],
+               [ 9,  3,  2, ...,  6,  5,  6],
+               ...,
+               [11, 10,  8, ...,  6,  5,  2],
+               [ 3, 10,  3, ...,  8,  7,  7],
+               [ 5,  4,  9, ...,  5,  5,  7]])
+        Coordinates:
+          * x        (x) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+          * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
+    """
+    
+    data = da.data
+    if isinstance(data, dask_array_type):
+        return xr.DataArray(dask.array.digitize(data, bins=bin_edges), da.coords).rename('digitized')
+    else:
+        return xr.DataArray(np.digitize(data, bins=bin_edges), da.coords).rename('digitized')
+
+
+# ===================================================================================================
+def pdf(da, bin_edges, over_dims):
     """ 
-    Returns the indices of the bins to which each value in input array belongs 
-    Output indices are such that bin_edges[i-1] <= x < bin_edges[i]
+        Returns the probability distribution function along the specified dimensions
+        Author: Dougie Squire
+        Date: 01/10/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values used to compute the pdf
+        bin_edges : array_like
+            The bin edges, including the rightmost edge
+        over_dims : str or sequence of str
+            Dimension(s) over which to compute the pdf
+            
+        Returns
+        -------
+        pdf : xarray DataArray
+            New DataArray object containing pdf
+        
+        Examples
+        --------
+        >>> da = xr.DataArray(np.random.normal(size=(100,100)), coords=[('x', np.arange(100)), ('y', np.arange(100))])
+        >>> bins=np.linspace(-2,2,10)
+        >>> bin_edges = doppyo.utils.get_bin_edges(bins)
+        >>> doppyo.utils.pdf(da, bin_edges=bin_edges, over_dims='x')
+        <xarray.DataArray (bins: 10, y: 100)>
+        array([[0.069588, 0.046392, 0.046875, ..., 0.090909, 0.070312, 0.090909],
+               [0.208763, 0.255155, 0.140625, ..., 0.113636, 0.117187, 0.113636],
+               [0.278351, 0.115979, 0.304688, ..., 0.25    , 0.234375, 0.227273],
+               ...,
+               [0.115979, 0.255155, 0.46875 , ..., 0.25    , 0.210937, 0.136364],
+               [0.046392, 0.139175, 0.117188, ..., 0.090909, 0.1875  , 0.136364],
+               [0.046392, 0.069588, 0.046875, ..., 0.022727, 0.070312, 0.068182]])
+        Coordinates:
+          * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...
+          * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
+          
+        Limitations
+        -----------
+        This function uses doppyo.utils.histogram() which uses xr.groupby_bins when over_dims is a subset 
+        of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize 
+        groupby operations in xarray, see https://github.com/pydata/xarray/issues/585
     """
-
-    return xr.apply_ufunc(np.digitize, da, bin_edges,
-                          input_core_dims=[[],[]],
-                          dask='allowed',
-                          output_dtypes=[int]).rename('categorized')
+    
+    hist = histogram(da, bin_edges, over_dims)
+    
+    return (hist / integrate(hist, over_dim='bins', method='rect')).rename('pdf')
 
 
 # ===================================================================================================
-def compute_pdf(da, bin_edges, over_dims):
-    """ Returns the probability distribution function along the specified dimensions"""
+def cdf(da, bin_edges, over_dims):
+    """ 
+        Returns the cumulative probability distribution function along the specified dimensions
+        Author: Dougie Squire
+        Date: 01/10/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values used to compute the cdf
+        bin_edges : array_like
+            The bin edges, including the rightmost edge
+        over_dims : str or sequence of str
+            Dimension(s) over which to compute the cdf
+            
+        Returns
+        -------
+        cdf : xarray DataArray
+            New DataArray object containing cdf
+        
+        Examples
+        --------
+        >>> da = xr.DataArray(np.random.normal(size=(100,100)), coords=[('x', np.arange(100)), ('y', np.arange(100))])
+        >>> bins=np.linspace(-2,2,10)
+        >>> bin_edges = doppyo.utils.get_bin_edges(bins)
+        >>> doppyo.utils.cdf(da, bin_edges=bin_edges, over_dims='x')
+        <xarray.DataArray (bins: 10, y: 100)>
+        array([[0.050505, 0.      , 0.030612, ..., 0.020202, 0.010204, 0.020619],
+               [0.121212, 0.085106, 0.081633, ..., 0.080808, 0.081633, 0.061856],
+               [0.232323, 0.138298, 0.142857, ..., 0.171717, 0.183673, 0.195876],
+               ...,
+               [0.939394, 0.925532, 0.908163, ..., 0.909091, 0.94898 , 0.907216],
+               [0.979798, 0.968085, 0.969388, ..., 0.959596, 0.979592, 0.989691],
+               [1.      , 1.      , 1.      , ..., 1.      , 1.      , 1.      ]])
+        Coordinates:
+          * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...
+          * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
+          
+        Limitations
+        -----------
+        This function uses doppyo.utils.histogram() which uses xr.groupby_bins when over_dims is a subset 
+        of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize 
+        groupby operations in xarray, see https://github.com/pydata/xarray/issues/585
+    """
     
-    hist = compute_histogram(da, bin_edges, over_dims)
-    
-    return hist / calc_integral(hist, over_dim='bins', method='rect')
+    return integrate(pdf(da, bin_edges, over_dims), over_dim='bins', method='rect', cumulative=True).rename('cdf')
 
 
 # ===================================================================================================
-def compute_cdf(da, bin_edges, over_dims):
-    """ Returns the cumulative probability distribution function along the specified dimensions"""
+def histogram(da, bin_edges, over_dims):
+    """ 
+        Returns the histogram over the specified dimensions
+        Author: Dougie Squire
+        Date: 01/10/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing values used to compute the histogram
+        bin_edges : array_like
+            The bin edges, including the rightmost edge
+        over_dims : str or sequence of str
+            Dimension(s) over which to compute the histogram
+            
+        Returns
+        -------
+        histogram : xarray DataArray
+            New DataArray object containing the histogram
+            
+        Examples
+        --------
+        >>> da = xr.DataArray(np.random.normal(size=(100,100)), 
+        ...                   coords=[('x', np.arange(100)), ('y', np.arange(100))])
+        >>> bins=np.linspace(-2,2,10)
+        >>> bin_edges = doppyo.utils.get_bin_edges(bins)
+        >>> doppyo.utils.histogram(da, bin_edges=bin_edges, over_dims='x')
+        <xarray.DataArray 'data' (bins: 10, y: 100)>
+        array([[ 3.,  1.,  6., ...,  2.,  4.,  3.],
+               [ 2., 12.,  4., ...,  7.,  3.,  7.],
+               [ 9.,  9., 11., ..., 19., 13.,  6.],
+               ...,
+               [13.,  9.,  4., ...,  6.,  6., 11.],
+               [ 3.,  6.,  3., ...,  3.,  7.,  4.],
+               [ 2.,  0.,  1., ...,  3.,  3.,  4.]])
+        Coordinates:
+          * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...
+          * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
+  
+        Limitations
+        -----------
+        This function uses xr.groupby_bins when over_dims is a subset of da.dims and is therefore not 
+        parallelized in these cases. There are efforts underway to parallelize groupby operations in 
+        xarray, see https://github.com/pydata/xarray/issues/585
+        
+        See also
+        --------
+        numpy.histogram()
+        dask.array.histogram()
+    """
     
-    pdf = compute_pdf(da, bin_edges, over_dims)
-    
-    return calc_integral(pdf, over_dim='bins', method='rect', cumulative=True)
+    def _unstack_and_count(da, dims):
+        """ Unstacks provided xarray object and returns the total number of elements along dims """
+        try:
+            unstacked = da.unstack(da.dims[0])
+        except ValueError:
+            unstacked = da
 
+        if dims is None:
+            return unstacked.count(keep_attrs=True)
+        else:
+            return ((0 * unstacked) + 1).sum(dim=dims, skipna=True) # da.count has no skipna option in 0.10.8
 
-# ===================================================================================================
-def rank_gufunc(x):
-    ''' Returns ranked data along specified dimension '''
+    bins = (bin_edges[0:-1]+bin_edges[1:]) / 2
     
-    import bottleneck
-    ranks = bottleneck.nanrankdata(x,axis=-1)
-    ranks = ranks[...,0]
-    
-    return ranks
-
-
-def compute_rank(da_1, da_2, over_dim): 
-    ''' Feeds forecast and observation data to ufunc that ranks data along specified dimension'''
-    
-    # Add 'ensemble' coord to obs if one does not exist -----
-    if over_dim not in da_2.coords:
-        da_2_pass = da_2.copy()
-        da_2_pass.coords[over_dim] = -1
-        da_2_pass = da_2_pass.expand_dims(over_dim)
+    # If histogram is computed over all dimensions, use dask/np.histogram
+    if set(da.dims) == set(over_dims):
+        data = da.data
+        if isinstance(data, dask_array_type):
+            hist, _ = dask.array.histogram(da.data, bins=bin_edges)
+            return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('data')
+        else:
+            hist, _ = np.histogram(da.data, bins=bin_edges)
+            return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('data')
     else:
-        da_2_pass = da_2.copy()
+        # To use groupby_bins, da must have a name -----
+        da = da.rename('histogram') 
 
-    # Only keep and combine instances that appear in both dataarrays (excluding the ensemble dim) -----
-    aligned = xr.align(da_2_pass, da_1, join='inner', exclude=over_dim)
-    combined = xr.concat(aligned, dim=over_dim)
-    
-    return xr.apply_ufunc(rank_gufunc, combined,
-                          input_core_dims=[[over_dim]],
-                          dask='allowed',
-                          output_dtypes=[int]).rename('rank')
-
-
-# ===================================================================================================
-def unstack_and_count(da, dims):
-    """ Unstacks provided xarray object and returns the total number of elements along dims """
-    
-    try:
-        unstacked = da.unstack(da.dims[0])
-    except ValueError:
-        unstacked = da
-
-    if dims is None:
-        return ((0 * unstacked) + 1)
-    else:
-        return ((0 * unstacked) + 1).sum(dim=dims, skipna=True)
-
-
-def compute_histogram(da, bin_edges, over_dims):
-    """ Returns the histogram of data over the specified dimensions """
-
-    # To use groupby_bins, da must have a name -----
-    da = da.rename('data') 
-    
-    hist = da.groupby_bins(da,bins=bin_edges, squeeze=False) \
-             .apply(unstack_and_count, dims=over_dims) \
-             .fillna(0) \
-             .rename({'data_bins' : 'bins'})
-    hist['bins'] = (bin_edges[0:-1]+bin_edges[1:])/2
+        hist = da.groupby_bins(da, bins=bin_edges, squeeze=False) \
+                 .apply(_unstack_and_count, dims=over_dims) \
+                 .fillna(0) \
+                 .rename({'histogram_bins' : 'bins'})
+        hist['bins'] = (bin_edges[0:-1]+bin_edges[1:]) / 2
     
     # Add nans where data did not fall in any bin -----
-    return hist.astype(int).where(hist.sum('bins') != 0)
+    return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
 
 
 # ===================================================================================================
@@ -297,7 +514,7 @@ def calc_xy_from_latlon(lon, lat):
 
 
 # ===================================================================================================
-def calc_integral(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
+def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
     """ Returns trapezoidal/rectangular integration along specified dimension """
 
     if x is None:
@@ -1214,14 +1431,23 @@ def get_depth_name(da):
     
 # ===================================================================================================
 def get_level_name(da):
+    """ Returns name of level coordinate in da """
+    
+    if 'level' in da.dims:
+        return 'level'
+    else:
+        raise KeyError('Unable to determine level dimension')
+        pass
+    
+    
+# ===================================================================================================
+def get_plevel_name(da):
     """ Returns name of pressure level coordinate in da """
     
     if 'level' in da.dims:
         return 'level'
-    elif 'plev' in da.dims:
-        return 'plev'
     else:
-        raise KeyError('Unable to determine pressure dimension')
+        raise KeyError('Unable to determine pressure level dimension')
         pass
     
     

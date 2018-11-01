@@ -2,10 +2,12 @@ When contributing to doppyo, please branch off the `dev` branch and use the foll
 
 """
     This is a description of what this function does.
+    Author: A. U. Thor
+    Date: dd/mm/yyyy
 
     Parameters 
     ----------
-    input1 : DataArray
+    input1 : xarray DataArray
         Description of input1
     input2 : bool, optional
         Description of input2

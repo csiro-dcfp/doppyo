@@ -5,7 +5,7 @@
     Python Version: 3.6
 """
 
-__all__ = ['compute_rank_histogram', 'compute_rps', 'compute_reliability', 'compute_roc', 
+__all__ = ['rank_histogram', 'compute_rps', 'compute_reliability', 'compute_roc', 
            'compute_discrimination', 'compute_Brier_score', 'compute_contingency_table', 
            'compute_accuracy_score', 'compute_Heidke_score', 'compute_Peirce_score', 
            'compute_Gerrity_score', 'compute_bias_score', 'compute_hit_rate', 
@@ -22,6 +22,8 @@ __all__ = ['compute_rank_histogram', 'compute_rps', 'compute_reliability', 'comp
 import numpy as np
 import xarray as xr
 import itertools
+import bottleneck
+from xarray.core.duck_array_ops import dask_array_type
 
 # Load doppyo packages -----
 from doppyo import utils
@@ -30,20 +32,90 @@ from doppyo import utils
 # ===================================================================================================
 # Methods for probabilistic comparisons
 # ===================================================================================================
-def compute_rank_histogram(da_cmp, da_ref, over_dims, ensemble_dim='ensemble'):
-    """ Returns rank histogram """
+def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'):
+    """ 
+        Returns the rank histogram along the specified dimensions
+        Author: Dougie Squire
+        Date: 01/11/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Comparison data. This data is used to rank the reference data. Must include an ensemble 
+            dimension
+        da_ref : xarray DataArray
+            Reference data. This data is ranked within the comparison data. Dimensions should match
+            those of da_cmp
+        over_dims : str or sequence of str
+            The dimension(s) over which to compute the histogram of ranks
+        norm : bool, optional
+            If True, rank histograms are normalised by their enclosed area
+        ensemble_dim : str, optional
+            The name of the ensemble dimension in da_cmp
+            
+        Returns
+        -------
+        rank_histogram : xarray DataArray
+            New DataArray object containing the rank histograms
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(100,100,20)), 
+        ...                       coords=[('x', np.arange(100)), ('y', np.arange(100)), ('e', np.arange(20))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(100,100)), 
+        ...                       coords=[('x', np.arange(100)), ('y', np.arange(100))])
+        >>> doppyo.skill.rank_histogram(da_cmp, da_ref, over_dims='x', ensemble_dim='e')
+        <xarray.DataArray (bins: 21, y: 100)>
+        array([[0.04, 0.05, 0.04, ..., 0.06, 0.06, 0.02],
+               [0.04, 0.06, 0.05, ..., 0.04, 0.03, 0.05],
+               [0.06, 0.03, 0.04, ..., 0.01, 0.05, 0.01],
+               ...,
+               [0.05, 0.02, 0.06, ..., 0.05, 0.03, 0.08],
+               [0.08, 0.07, 0.04, ..., 0.04, 0.03, 0.04],
+               [0.07, 0.04, 0.05, ..., 0.08, 0.03, 0.02]])
+        Coordinates:
+          * bins     (bins) float64 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 ...
+          * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
+    """
+    
+    def _rank_first(x):
+        """ Returns the rank of the first element along the last axes """
+
+        ranks = bottleneck.nanrankdata(x,axis=-1)
+
+        return ranks[...,0]
     
     if over_dims is None:
         raise ValueError('Cannot compute rank histogram with no independent dimensions')
-        
-    # Rank the data -----
-    da_ranked = utils.compute_rank(da_cmp, da_ref, over_dim=ensemble_dim)
+       
+    # Stack da_cmp and da_ref along ensemble dimension -----
+    if ensemble_dim not in da_ref.coords:
+        da_2 = da_ref.copy()
+        da_2.coords[ensemble_dim] = -1
+        da_2 = da_2.expand_dims(ensemble_dim)
+    else:
+        raise ValueError('da_ref cannot contain an ensemble dimension')
 
+    # Only keep and combine instances that appear in both dataarrays (excluding the ensemble dim) -----
+    aligned = xr.align(da_2, da_cmp, join='inner', exclude=ensemble_dim)
+    combined = xr.concat(aligned, dim=ensemble_dim)
+
+    # Rank the data -----
+    if isinstance(combined.data, dask_array_type):
+        combined = combined.chunk(chunks={ensemble_dim: -1})
+    da_ranked = xr.apply_ufunc(_rank_first, combined,
+                               input_core_dims=[[ensemble_dim]],
+                               dask='parallelized',
+                               output_dtypes=[int]).rename('rank')
+    
     # Initialise bins -----
-    bins = range(1,len(da_cmp[ensemble_dim])+2)
+    bins = range(1, len(da_cmp[ensemble_dim])+2)
     bin_edges = utils.get_bin_edges(bins)
     
-    return utils.compute_pdf(da_ranked, bin_edges, over_dims=over_dims)
+    if norm:
+        return utils.pdf(da_ranked, bin_edges, over_dims=over_dims).rename('rank_histogram')
+    else:
+        return utils.histogram(da_ranked, bin_edges, over_dims=over_dims).rename('rank_histogram')
 
 
 # ===================================================================================================
@@ -60,7 +132,7 @@ def compute_rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
     cdf_cmp = utils.compute_cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
     cdf_ref = utils.compute_cdf(da_ref, bin_edges=bin_edges, over_dims=None)
     
-    return utils.calc_integral((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
+    return utils.integrate((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
                 .mean(dim=over_dims, skipna=True)
 
 
@@ -190,10 +262,10 @@ def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, over_dims):
 
     # Compute histogram of comparison likelihoods when reference is True/False -----
     replace_val = 1000 * max(cmp_prob_edges) # Replace nans with a value not in any bin
-    hist_event = utils.compute_histogram(cmp_likelihood.where(ref_logical == True).fillna(replace_val), 
+    hist_event = utils.histogram(cmp_likelihood.where(ref_logical == True).fillna(replace_val), 
                                          cmp_prob_edges, over_dims=over_dims) \
                                          / (ref_logical == True).sum(dim=over_dims)
-    hist_no_event = utils.compute_histogram(cmp_likelihood.where(ref_logical == False).fillna(replace_val), 
+    hist_no_event = utils.histogram(cmp_likelihood.where(ref_logical == False).fillna(replace_val), 
                                             cmp_prob_edges, over_dims=over_dims) \
                                             / (ref_logical == False).sum(dim=over_dims)
     

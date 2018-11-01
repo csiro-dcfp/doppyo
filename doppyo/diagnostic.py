@@ -6,7 +6,7 @@
 """
 
 __all__ = [ 'compute_isotherm_depth','compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
-           'compute_waf', 'compute_BruntVaisala', 'compute_ks2', 'compute_Eady', 'compute_thermal_wind',
+           'compute_waf', 'BruntVaisala', 'compute_ks2', 'Eady', 'compute_thermal_wind',
            'compute_eofs', 'compute_mmms', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
            'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
 
@@ -239,7 +239,7 @@ def compute_waf(psi_anom, u, v, p_lev=None):
 
 
 # ===================================================================================================
-def compute_BruntVaisala(temp):
+def BruntVaisala(temp, plevel_name=None):
     """
         Returns the Brunt Väisälä frequency
         
@@ -250,9 +250,11 @@ def compute_BruntVaisala(temp):
     Cp = utils.constants().C_pd
     g = utils.constants().g
 
-    plev_name = utils.get_level_name(temp)
-    dTdp = utils.calc_gradient(temp, plev_name)
-    pdR = temp[plev_name] / R
+    if plevel_name is None:
+        plevel_name = utils.get_plevel_name(temp)
+    
+    dTdp = temp.differentiate(coord=plevel_name)
+    pdR = temp[plevel_name] / R
 
     nsq = ((-dTdp * pdR + (temp / Cp)) / (temp / g) ** 2).rename('nsq')
     nsq.attrs['long_name']='Brunt-Vaisala frequency squared'
@@ -291,27 +293,97 @@ def compute_ks2(u, v, u_clim):
 
 
 # ===================================================================================================
-def compute_Eady(u, v, gh, nsq):
+def Eady(u, v, gh, nsq, level_name=None):
     """ 
         Returns the square of the Eady growth rate
+        Author: Dougie Squire
+        Date: 15/07/2018
         
-        u, v, gh and nsq must have at least latitude and longitude dimensions with 
-        standard naming
-        Data must be saved on pressure levels
+        Parameters
+        ----------
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude, longitude and
+            level (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        gh : xarray DataArray
+            Array containing fields of geopotential height with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        nsq : xarray DataArray
+            Array containing fields of Brunt Vaisala frequency with at least coordinates latitude, 
+            longitude and level (following standard naming - see Limitations)
+            
+        Returns
+        -------
+        Eady^2 : xarray DataArray
+            Array with same dimensions as input arrays containing the square of the Eady growth rate
+        
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(100,100,100)), 
+        ...                  coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
+        >>> v = xr.DataArray(np.random.normal(size=(100,100,100)), 
+        ...                  coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
+        >>> temp = xr.DataArray(np.random.normal(size=(100,100,100)), 
+        ...                     coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
+        >>> gh = xr.DataArray(np.random.normal(size=(100,100,100)), 
+        ...                   coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
+        >>> nsq = doppyo.diagnostic.BruntVaisala(temp)
+        >>> doppyo.diagnostic.Eady(u, v, gh, nsq)
+        <xarray.DataArray (lat: 100, level: 100, lon: 100)>
+        array([[[-0.000000e+00, -0.000000e+00, ..., -0.000000e+00,  0.000000e+00],
+                [-0.000000e+00, -0.000000e+00, ..., -0.000000e+00,  0.000000e+00],
+                ...,
+                [-0.000000e+00,  0.000000e+00, ...,  0.000000e+00, -0.000000e+00],
+                [-0.000000e+00,  0.000000e+00, ...,  0.000000e+00, -0.000000e+00]],
+
+               [[ 5.226499e-11,  7.126141e-12, ..., -4.379406e-13,  7.448277e-13],
+                [ 4.799243e-12,  2.932465e-14, ..., -6.538057e-14,  1.843478e-13],
+                ...,
+                [-2.892538e-15, -1.029624e-15, ..., -3.250589e-14, -1.876167e-15],
+                [-1.616244e-12,  2.055856e-17, ...,  5.519865e-14,  3.894556e-17]],
+
+               ...,
+
+               [[ 6.575283e-08, -7.037373e-10, ..., -7.763162e-10, -3.256715e-09],
+                [-5.909895e-07,  1.346452e-09, ..., -1.871157e-08, -5.904951e-11],
+                ...,
+                [-1.613081e-10, -8.011633e-09, ..., -2.132814e-10,  1.315870e-11],
+                [-1.762877e-11, -1.742130e-11, ..., -1.142285e-11, -1.631656e-12]],
+
+               [[ 2.920811e-11,  1.475637e-09, ...,  3.355625e-06, -4.365391e-10],
+                [ 2.805286e-09,  3.148309e-11, ...,  1.802772e-11, -2.081402e-10],
+                ...,
+                [-1.441918e-13,  7.279281e-13, ...,  1.501911e-13,  3.652270e-14],
+                [ 1.775775e-11, -6.472930e-08, ...,  3.317168e-12,  6.530305e-12]]])
+        Coordinates:
+          * lat      (lat) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+          * level    (level) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+        Attributes:
+            units:      s^-2
+            long_name:  Square of Eady growth rate
+            
+        Limitations
+        -----------
+        The coordinates of all data inputs must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
     """
     
     degtorad = utils.constants().pi / 180
     lat_name = utils.get_lat_name(u)
     lon_name = utils.get_lon_name(u)
-    plev_name = utils.get_level_name(u)
+    if level_name is None:
+        level_name = utils.get_level_name(u)
     
     f = 2 * utils.constants().Omega * xr.ufuncs.sin(gh[lat_name] * degtorad)
-    eady2 = ((utils.constants().Ce * f) * (utils.calc_gradient((u ** 2 + v ** 2) ** 0.5, dim=plev_name) / \
-            utils.calc_gradient(gh, dim=plev_name))) ** 2 / nsq
+    eady2 = ((utils.constants().Ce * f) * (xr.ufuncs.sqrt(u ** 2 + v ** 2).differentiate(coord=level_name) / \
+            gh.differentiate(coord=level_name))) ** 2 / nsq
     eady2.attrs['units'] = 's^-2'
     eady2.attrs['long_name'] = 'Square of Eady growth rate'
     
-    return eady2
+    return eady2.rename('Eady^2')
 
 
 # ===================================================================================================
@@ -455,7 +527,7 @@ def compute_mmms(v):
     v_Z = v.mean(dim=lon)
     
     return (2 * utils.constants().pi * utils.constants().R_earth * cos_lat * \
-                utils.calc_integral(v_Z, over_dim=plev, x=(v_Z[plev] * 100), cumulative=True) \
+                utils.integrate(v_Z, over_dim=plev, x=(v_Z[plev] * 100), cumulative=True) \
                 / utils.constants().g)
 
 
@@ -482,13 +554,13 @@ def int_over_atmos(da, lat_n, lon_n, plev_n, lon_dim=None):
     lat_m = c / 360
     lon_m = c * np.cos(da[lat_n] * degtorad) / 360
 
-    da_z = utils.calc_integral(da, over_dim=plev_n, x=(da[plev_n] * 100) / utils.constants().g)
+    da_z = utils.integrate(da, over_dim=plev_n, x=(da[plev_n] * 100) / utils.constants().g)
     if lon_dim is None:
-        da_zx = utils.calc_integral(da_z, over_dim=lon_n, x=da[lon_n] * lon_m)
+        da_zx = utils.integrate(da_z, over_dim=lon_n, x=da[lon_n] * lon_m)
     else:
         lon_extent = lon_dim * lon_m
         da_zx = (lon_extent.max(lon_n) - lon_extent.min(lon_n)) * da_z
-    da_zxy = utils.calc_integral(da_zx, over_dim=lat_n, x=da[lat_n] * lat_m)
+    da_zxy = utils.integrate(da_zx, over_dim=lat_n, x=da[lat_n] * lat_m)
     
     return da_zxy / (4 * utils.constants().pi * utils.constants().R_earth ** 2)
 
@@ -1198,7 +1270,7 @@ def compute_inband_variance(da, dim, bounds, nwindow, overlap=50):
     dx = spectra['f_'+dim].diff('f_'+dim).values[0]
     bands = spectra.groupby_bins('f_'+dim, bounds, right=False)
     
-    return bands.apply(utils.calc_integral, over_dim='f_'+dim, dx=dx)
+    return bands.apply(utils.integrate, over_dim='f_'+dim, dx=dx)
 
 
 # ===================================================================================================
