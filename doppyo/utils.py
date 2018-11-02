@@ -1,17 +1,17 @@
 """
     General support functions for the doppyo package
-    Author: Dougie Squire (some ocean focused additions & edits Thomas Moore)
+    Authors: Dougie Squire & Thomas Moore
     Date created: 04/04/2018
     Python Version: 3.6
 """
 
 __all__ = ['timer', 'constant', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 
-           'histogram', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'calc_difference', 
-           'calc_division', 'calc_average', 'calc_fft', 'calc_ifft', 'fftfilt', 'stack_times', 'normal_mbias_correct', 
-           'normal_msbias_correct', 'conditional_bias_correct', 'load_climatology', 'anomalize', 
-           'trunc_time', 'month_delta', 'year_delta', 'leadtime_to_datetime', 'datetime_to_leadtime', 
-           'repeat_data', 'calc_boxavg_latlon', 'stack_by_init_date', 'prune', 'get_nearest_point', 'get_bin_edges', 
-           'is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
+           'histogram', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 'multiply',
+           'divide', 'average', 'fft', 'ifft', 'fftfilt', 'load_climatology', 'anomalize', 
+           'trunc_time', 'leadtime_to_datetime', 'datetime_to_leadtime', 
+           'repeat_datapoint', 'get_latlon_region', 'latlon_average', 'stack_by_init_date', 
+           'concat_times', 'prune', 'get_bin_edges', 
+           '_is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
            'get_pres_name', 'cftime_to_datetime64', 'get_depth_name', 'size_GB']
 
 # ===================================================================================================
@@ -470,6 +470,8 @@ def differentiate_wrt(da, dim, x):
         spaced lat/lon points varies as a function of lat and lon). Uses second order accurate central 
         differencing in the interior points and first order accurate one-sided (forward or backwards) 
         differencing at the boundaries.
+        Author: Dougie Squire
+        Date: 02/11/2018
         
         Parameters
         ----------
@@ -546,8 +548,10 @@ def differentiate_wrt(da, dim, x):
 
 # ===================================================================================================
 def xy_from_lonlat(lon, lat):
-    ''' 
+    """
         Returns x/y in m from grid points that are in a longitude/latitude format.
+        Author: Dougie Squire
+        Date: 01/11/2018
         
         Parameters
         ----------
@@ -575,7 +579,7 @@ def xy_from_lonlat(lon, lat):
          array([[-10007543.39801, -10007543.39801, -10007543.39801, -10007543.39801],
                 [        0.     ,         0.     ,         0.     ,         0.     ]])
          Dimensions without coordinates: lat, lon)
-    '''
+    """
     
     degtorad = constants().pi / 180
     
@@ -590,7 +594,9 @@ def xy_from_lonlat(lon, lat):
 def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
     """ 
         Returns trapezoidal/rectangular integration along specified dimension 
-    
+        Author: Dougie Squire
+        Date: 16/08/2018
+        
         Parameters
         ----------
         da : xarray DataArray
@@ -661,25 +667,182 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
     
 
 # ===================================================================================================
-def calc_difference(data_1, data_2):
-    """ Returns the difference of two fields """
+def add(data_1, data_2):
+    """ 
+        Returns the addition of two arrays, data_1 + data_2
+        Author: Dougie Squire
+        Date: 27/06/2018
+
+        Parameters
+        ----------
+        data_1 : array_like
+            The first array
+        data_2 : array_like 
+            The second array
+
+        Returns
+        -------
+        addition : array_like
+            The addition of data_1 and data_2
+
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> B = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> doppyo.utils.add(A,B)
+        <xarray.DataArray (x: 3, y: 2)>
+        array([[-0.333176,  0.344428],
+               [ 0.629463,  0.515872],
+               [ 1.121926,  0.567797]])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1
+    """
+    
+    return data_1 - data_2
+
+# ===================================================================================================
+def subtract(data_1, data_2):
+    """ 
+        Returns the difference of two arrays, data_1 - data_2
+        Author: Dougie Squire
+        Date: 27/06/2018
+
+        Parameters
+        ----------
+        data_1 : array_like
+            The first array
+        data_2 : array_like 
+            The second array
+
+        Returns
+        -------
+        subtraction : array_like
+            The difference between data_1 and data_2
+
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> B = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> doppyo.utils.subtract(A,B)
+        <xarray.DataArray (x: 3, y: 2)>
+        array([[-0.265376,  1.331496],
+               [ 1.065077, -1.278974],
+               [ 3.691209, -1.928883]])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1
+    """
     
     return data_1 - data_2
 
 
 # ===================================================================================================
-def calc_division(data_1, data_2):
-    """ Returns the division of two fields """
+def multiply(data_1, data_2):
+    """ 
+        Returns the multiplication of two fields, data_1 * data_2
+        Author: Dougie Squire
+        Date: 27/06/2018
+        
+        Parameters
+        ----------
+        data_1 : array_like
+            The first array
+        data_2 : array_like 
+            The second array
+            
+        Returns
+        -------
+        multiplication : array_like
+            The multiplication of data_1 and data_2
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> B = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> doppyo.utils.multiply(A,B)
+        <xarray.DataArray (x: 3, y: 2)>
+        array([[-0.219773,  0.235889],
+               [-0.529542, -1.30342 ],
+               [-1.048924,  0.20482 ]])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1
+    """
+    
+    return data_1 * data_2
+
+
+# ===================================================================================================
+def divide(data_1, data_2):
+    """ 
+        Returns the division of two fields, data_1 / data_2
+        Author: Dougie Squire
+        Date: 27/06/2018
+        
+        Parameters
+        ----------
+        data_1 : array_like
+            The first array
+        data_2 : array_like 
+            The second array
+            
+        Returns
+        -------
+        division : array_like
+            The division of data_1 by data_2
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> B = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), ('y', np.arange(2))])
+        >>> doppyo.utils.divide(A,B)
+        <xarray.DataArray (x: 3, y: 2)>
+        array([[-0.310139,  0.071369],
+               [-0.647227, -0.427525],
+               [-0.179623,  1.229811]])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1
+    """
     
     return data_1 / data_2
 
 
 # ===================================================================================================
-def calc_average(da, dim=None, weights=None):
+def average(da, dim=None, weights=None):
     """
         Returns the weighted average
+        Author: Dougie Squire
+        Date: 06/08/2018
 
-        Shape of weights must be broadcastable to shape of da
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to be averaged
+        dim : str or sequence of str, optional
+            Dimension(s) over which to compute weighted average. If None, average is computed over all
+            dimensions
+        weights : xarray DataArray, optional
+            Weights to apply during averaging. Shape of weights must be broadcastable to shape of da.
+            If None, unity weighting is applied
+            
+        Returns
+        -------
+        weighted : xarray DataArray
+            Weighted average of input array along specified dimensions
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(4,4)), coords=[('lat', np.arange(-90,90,45)), 
+        ...                                                        ('lon', np.arange(0,360,90))])
+        >>> degtorad = doppyo.utils.constants().pi / 180
+        >>> cos_lat = xr.ufuncs.cos(A['lat'] * degtorad) 
+        >>> doppyo.utils.average(A, dim='lat', weights=cos_lat)
+        <xarray.DataArray (lon: 4)>
+        array([-0.473632, -0.241208, -0.954826,  0.498559])
+        Coordinates:
+          * lon      (lon) int64 0 90 180 270
     """
 
     if weights is None:
@@ -690,36 +853,68 @@ def calc_average(da, dim=None, weights=None):
 
 
 # ===================================================================================================
-def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
+def fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
     """
         Returns the sequentual ffts of the provided array along the specified dimensions
-
+        Author: Dougie Squire
+        Date: 06/08/2018
+        
+        Parameters
+        ----------
         da : xarray.DataArray
             Array from which compute the fft
         dim : str or sequence
             Dimensions along which to compute the fft
         nfft : float or sequence, optional
-            Number of points in each dimensions=to use in the transformation. If None, the full length
+            Number of points in each dimensions to use in the transformation. If None, the full length
             of each dimension is used.
         dx : float or sequence, optional
             Define the spacing of the dimensions. If None, the spacing is computed directly from the 
-            coordinates associated with the dimensions.
+            coordinates associated with the dimensions. If dx is a time array, frequencies are computed 
+            in Hz
         twosided : bool, optional
             When the DFT is computed for purely real input, the output is Hermitian-symmetric, 
             meaning the negative frequency terms are just the complex conjugates of the corresponding 
             positive-frequency terms, and the negative-frequency terms are therefore redundant.
             If True, force the fft to include negative and positive frequencies, even if the input 
-            data is real.
+            data is real. If the input array is complex, one must set twosided=True
         shift : bool, optional
             If True, the frequency axes are shifted to center the 0 frequency, otherwise negative 
             frequencies follow positive frequencies as in numpy.fft.ftt
 
+        Returns
+        -------
+        fft : xarray DataArray
+            Array containing the sequentual ffts of the provided array along the specified dimensions
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(4,4)), 
+        ...                  coords=[('lat', np.arange(-90,90,45)), 
+        ...                          ('time', pd.date_range(start='1/1/2018', periods=4, freq='D'))])
+        >>> doppyo.utils.fft(A, dim='time', twosided=True, shift=True)
+        <xarray.DataArray 'fft' (lat: 4, f_time: 4)>
+        array([[ 2.996572+0.j      , -2.833156-0.676355j, -0.038218+0.j      ,
+                -2.833156+0.676355j],
+               [-0.66788 +0.j      ,  0.551732-3.406326j,  2.003329+0.j      ,
+                 0.551732+3.406326j],
+               [ 2.032978+0.j      ,  0.657454+1.703941j,  2.085695+0.j      ,
+                 0.657454-1.703941j],
+               [ 0.462405+0.j      , -0.815011+2.357146j, -1.257371+0.j      ,
+                -0.815011-2.357146j]])
+        Coordinates:
+          * lat      (lat) int64 -90 -45 0 45
+          * f_time   (f_time) float64 -5.787e-06 -2.894e-06 0.0 2.894e-06
+  
+        See also
+        --------
+        dask.array.fft
+        numpy.fft
+        
+        Notes
+        -----
         A real fft is performed over the first dimension, which is faster. The transforms over the 
         remaining dimensions are then computed with the classic fft.
-
-        If the input array is complex, one must set twosided = True
-        
-        If dx is a time array, frequencies are computed in Hz
     """
 
     if isinstance(dim, str):
@@ -742,12 +937,12 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
             dx_n[di] = dx[i]
         except TypeError:
             diff = da[di].diff(di)
-            if is_datetime(da[di].values):
+            if _is_datetime(da[di].values):
                 # Drop differences on leap days so that still works with 'noleap' calendars -----
                 diff = diff.where(((diff[di].dt.month != 3) | (diff[di].dt.day != 1)), drop=True)
                 
             if np.all(diff == diff[0]):
-                if is_datetime(da[di].values):
+                if _is_datetime(da[di].values):
                     dx_n[di] = diff.values[0] / np.timedelta64(1, 's')
                 else:
                     dx_n[di] = diff.values[0]
@@ -768,6 +963,7 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
     # Loop over dimensions and perform fft -----
     # Auto-rechunk -----
     # chunks = copy.copy(fft_array.chunks)
+    
     first = True
     for di in dim:
         if di in da.dims:
@@ -811,16 +1007,19 @@ def calc_fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
 
 
 # ===================================================================================================
-def calc_ifft(da, dim, nifft=None, shifted=True):
+def ifft(da, dim, nifft=None, shifted=True):
     """
-        Returns the sequentual iffts of the provided array along the specified dimensions. 
+        Returns the sequentual iffts of the provided array along the specified dimensions. Note, it is 
+        not possible to reconstruct the  dimension along which the fft was performed (r_dim) from 
+        knowledge only of the fft "frequencies" (f_dim). For example, time cannot be reconstructed from 
+        frequency. Here, r_dim is defined relative to 0 in steps of dx as determined from f_dim. It may 
+        be necessary for the user to use the original (pre-fft) dimension to redefine r_dim after the
+        ifft is performed (see the Examples s ection of this docstring).
+        Author: Dougie Squire
+        Date: 06/08/2018
         
-        Note, it is not possible to reconstruct the dimension along which the fft was performed (r_dim) 
-        from knowledge only of the fft "frequencies" (f_dim). For example, time cannot be reconstructed 
-        from frequency. Here, r_dim is defined relative to 0 in steps of dx as determined from f_dim. It
-        may be necessary for the user to use the original (pre-fft) dimension to redefine r_dim after the
-        ifft is performed.
-
+        Parameters
+        ----------
         da : xarray.DataArray
             Array from which compute the ifft
         dim : str or sequence
@@ -829,8 +1028,46 @@ def calc_ifft(da, dim, nifft=None, shifted=True):
             Number of points in each dimensions to use in the transformation. If None, the full length
             of each dimension is used.
         shifted : bool, optional
-            If True, assumes that the frequency axes are shifted to center the 0 frequency, otherwise 
+            If True, assumes that the input dimensions are shifted to center the 0 frequency, otherwise 
             assumes negative frequencies follow positive frequencies as in numpy.fft.ftt
+            
+        Returns
+        -------
+        ifft : xarray DataArray
+            Array containing the sequentual iffts of the provided array along the specified dimensions
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(4,4)), 
+        ...                  coords=[('lat', np.arange(-90,90,45)), 
+        ...                  ('time', pd.date_range(start='1/1/2018', periods=4, freq='D'))])
+        >>> A_fft = doppyo.utils.fft(A, dim=['time', 'lat'], twosided=True, shift=False)
+        >>> A_new = doppyo.utils.ifft(A_fft, dim=['f_lat', 'f_time'], shifted=False).real
+        >>> print(A_new)
+        <xarray.DataArray 'ifft' (lat: 4, time: 4)>
+        array([[-0.821396, -0.321925, -0.183761,  1.020338],
+               [ 0.147125,  0.17867 ,  0.343659,  1.487173],
+               [-1.53012 ,  1.586665, -0.097846,  1.535701],
+               [ 0.663949, -0.9256  ,  0.086642,  0.586463]])
+        Coordinates:
+          * lat      (lat) float64 0.0 45.0 90.0 135.0
+          * time     (time) float64 0.0 8.64e+04 1.728e+05 2.592e+05
+        >>> A_new['lat'] = A['lat']
+        >>> A_new['time'] = A['time']
+        >>> print(A_new)
+        <xarray.DataArray 'ifft' (lat: 4, time: 4)>
+        array([[-0.821396, -0.321925, -0.183761,  1.020338],
+               [ 0.147125,  0.17867 ,  0.343659,  1.487173],
+               [-1.53012 ,  1.586665, -0.097846,  1.535701],
+               [ 0.663949, -0.9256  ,  0.086642,  0.586463]])
+        Coordinates:
+          * lat      (lat) int64 -90 -45 0 45
+          * time     (time) datetime64[ns] 2018-01-01 2018-01-02 2018-01-03 2018-01-04
+          
+        See also
+        --------
+        dask.array.fft
+        numpy.fft
     """
 
     if isinstance(dim, str):
@@ -897,18 +1134,40 @@ def calc_ifft(da, dim, nifft=None, shifted=True):
 # ===================================================================================================
 def fftfilt(da, dim, method, dx, x_cut):
     """
-        Spectrally filters da along dimension dim.
+        Spectrally filters the provided array along dimension dim.
+        Author: Dougie Squire
+        Date: 15/09/2018
         
+        Parameters
+        ----------
         da : xarray.DataArray
             Array to filter
         dim : str
-            Dimensions along which to filter
+            Dimension along which to filter
         method : str
-            'low pass', 'high pass' or 'band pass'
-        dx : float
+            Filter method to use. Options are 'low pass', 'high pass' or 'band pass'
+        dx : value
             Define the spacing of the dimension.
-        xc : float or array (if method = 'band pass')
-            Define the cut-off value(s), e.g. xc = 5*dx
+        xc : value or array_like (if method = 'band pass')
+            Define the filter cut-off value(s), e.g. x_cut = 5*dx
+            
+        Returns
+        -------
+        filtered : xarray.DataArray
+            Filtered array
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(100)), 
+        ...                  coords=[('time', pd.date_range(start='1/1/2018', periods=100, freq='D'))])
+        >>> A_filt = doppyo.utils.fftfilt(A, dim='time', method='low pass', dx=1, x_cut=10)
+        >>> print(A_filt)
+        <xarray.DataArray 'filtered' (time: 1000)>
+        array([ 0.120893,  0.059256, -0.085101, ..., -0.351555, -0.112201,  0.061701])
+        Coordinates:
+          * time     (time) datetime64[ns] 2018-01-01 2018-01-02 ... 2020-09-26
+        >>> A.plot()
+        >>> A_filt.plot()
     """
 
     if not isinstance(dx, (list,)):
@@ -923,7 +1182,7 @@ def fftfilt(da, dim, method, dx, x_cut):
 
     freq_cut = 1 / np.array(x_cut)
 
-    dafft = calc_fft(da, dim=dim, dx=dx, twosided=True, shift=False)
+    dafft = fft(da, dim=dim, dx=dx, twosided=True, shift=False)
 
     if method == 'low pass':
         danull = dafft.where(abs(dafft['f_'+dim]) <= freq_cut, other=0)
@@ -935,182 +1194,61 @@ def fftfilt(da, dim, method, dx, x_cut):
     else:
         raise ValueError('Unrecognised filter method. Choose from "low pass" or "high pass" or "band pass"')
 
-    dafilt = calc_ifft(danull, dim='f_'+dim, shifted=False).real
+    dafilt = ifft(danull, dim='f_'+dim, shifted=False).real
     dafilt[dim] = da[dim]
 
-    return dafilt
+    return dafilt.rename('filtered')
 
 
-# ===================================================================================================
-def stack_times(da):
-    da_list = []
-    for init_date in da.init_date.values:
-        da_list.append(leadtime_to_datetime(da.sel(init_date=init_date)))
-    return xr.concat(da_list, dim='time')
-
-
-# ===================================================================================================
-lambda_anomalize = lambda data, clim: datetime_to_leadtime(
-                                           anomalize(
-                                               leadtime_to_datetime(data),clim))
-
-rescale = lambda da, scale : datetime_to_leadtime(
-                                      scale_per_month(
-                                          leadtime_to_datetime(da), scale))
-
-def groupby_lead_and_mean(da, over_dims):
-    return da.unstack('stacked_init_date_lead_time').groupby('lead_time').mean(over_dims, skipna=True)
-
-def groupby_lead_and_std(da, over_dims):
-    return da.unstack('stacked_init_date_lead_time').groupby('lead_time').std(over_dims, skipna=True)
-
-def unstack_and_shift_per_month(da, shift):
-    da_us = da.unstack('stacked_init_date_lead_time')
-    the_month = np.ndarray.flatten(da_us.month.values)
-    the_month = int(np.unique(the_month[~np.isnan(the_month)]))
-    return da_us - shift.sel(month=the_month)
-
-def unstack_and_scale_per_month(da, scale):
-    da_us = da.unstack('stacked_init_date_lead_time')
-    the_month = np.ndarray.flatten(da_us.month.values)
-    the_month = int(np.unique(the_month[~np.isnan(the_month)]))
-    return da_us * scale.sel(month=the_month)
-
-def scale_per_month(da, scale):
-    return da.groupby('time.month') * scale
-
-def normal_mbias_correct(da_biased, da_target, da_target_clim=False):
-    """
-        Adjusts, per month and lead time, the mean and standard deviation of da_biased to match that of da_target
-        
-        If da_target_clim is provided, returns both the corrected full field and the anomalies. Otherwise, returns
-        only the anomalies
-    """
-    
-    month = (da_biased.init_date.dt.month + da_biased.lead_time) % 12
-    month = month.where(month != 0, 12)
-
-    # Correct the mean -----
-    da_biased.coords['month'] = month
-    try:
-        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims=['init_date','ensemble'])
-    except ValueError:
-        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims='init_date')
-    
-    if da_target_clim is not False:
-        da_target_mean = da_target.groupby('time.month').mean('time')
-        
-        da_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
-                                                       shift=(da_biased_mean - da_target_mean)) \
-                                      .mean('month', skipna=True)
-        da_meancorr['lead_time'] = da_biased['lead_time']
-        da_meancorr.coords['month'] = month
-
-        # Compute the corrected anomalies -----
-        da_anom_meancorr = da_meancorr.groupby('init_date').apply(lambda_anomalize, clim=da_target_clim)
-        da_anom_meancorr.coords['month'] = month
-    else:
-        da_anom_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
-                                                            shift=(da_biased_mean)) \
-                                      .mean('month', skipna=True)
-        da_anom_meancorr['lead_time'] = da_anom_meancorr['lead_time']
-        da_anom_meancorr.coords['month'] = month
-    
-    if da_target_clim is not False:
-        da_meancorrr = da_anom_meancorr.groupby('init_date').apply(lambda_anomalize, clim=-da_target_clim)
-        return da_meancorr.drop('month'), da_anom_meancorr.drop('month')
-    else:
-        return da_anom_meancorr.drop('month')
-    
-def normal_msbias_correct(da_biased, da_target, da_target_clim=False):
-    """
-        Adjusts, per month and lead time, the mean and standard deviation of da_biased to match that of da_target
-        
-        If da_target_clim is provided, returns both the corrected full field and the anomalies. Otherwise, returns
-        only the anomalies
-    """
-    
-    month = (da_biased.init_date.dt.month + da_biased.lead_time) % 12
-    month = month.where(month != 0, 12)
-
-    # Correct the mean -----
-    da_biased.coords['month'] = month
-    try:
-        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims=['init_date','ensemble'])
-    except ValueError:
-        da_biased_mean = da_biased.groupby('month').apply(groupby_lead_and_mean, over_dims='init_date')
-    
-    if da_target_clim is not False:
-        da_target_mean = da_target.groupby('time.month').mean('time')
-        
-        da_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
-                                                       shift=(da_biased_mean - da_target_mean)) \
-                                      .mean('month', skipna=True)
-        da_meancorr['lead_time'] = da_biased['lead_time']
-        da_meancorr.coords['month'] = month
-
-        # Compute the corrected anomalies -----
-        da_anom_meancorr = da_meancorr.groupby('init_date').apply(lambda_anomalize, clim=da_target_clim)
-        da_anom_meancorr.coords['month'] = month
-    else:
-        da_anom_meancorr = da_biased.groupby('month').apply(unstack_and_shift_per_month, \
-                                                            shift=(da_biased_mean)) \
-                                      .mean('month', skipna=True)
-        da_anom_meancorr['lead_time'] = da_anom_meancorr['lead_time']
-        da_anom_meancorr.coords['month'] = month
-    
-    # Correct the standard deviation -----
-    try:
-        da_biased_std_tmp = da_anom_meancorr.groupby('month').apply(groupby_lead_and_std, over_dims=['init_date','ensemble'])
-    except ValueError:
-        da_biased_std_tmp = da_anom_meancorr.groupby('month').apply(groupby_lead_and_std, over_dims='init_date')
-    try:
-        da_target_std = da_target.sel(lat=da_biased.lat, lon=da_biased.lon).groupby('time.month').std('time')
-    except:
-        da_target_std = da_target.groupby('time.month').std('time')
-        
-    da_anom_stdcorr_tmp = da_anom_meancorr.groupby('month').apply(unstack_and_scale_per_month, \
-                                                                  scale=(da_target_std / da_biased_std_tmp)) \
-                                              .mean('month', skipna=True)
-    da_anom_stdcorr_tmp['lead_time'] = da_biased['lead_time']
-    da_anom_stdcorr_tmp.coords['month'] = month
-    
-    # This will "squeeze" each pdf at each lead time appropriately. However, the total variance across all leads for 
-    # a given month will now be incorrect. Thus, we now rescale as a function of month only
-    try:
-        da_biased_std = stack_times(da_anom_stdcorr_tmp).groupby('time.month').std(['time','ensemble'])
-    except ValueError:
-        da_biased_std = stack_times(da_anom_stdcorr_tmp).groupby('time.month').std('time')
-    da_anom_stdcorr = da_anom_stdcorr_tmp.groupby('init_date').apply(rescale, scale=(da_target_std / da_biased_std))
-    
-    if da_target_clim is not False:
-        da_stdcorr = da_anom_stdcorr.groupby('init_date').apply(lambda_anomalize, clim=-da_target_clim)
-        return da_stdcorr.drop('month'), da_anom_stdcorr.drop('month')
-    else:
-        return da_anom_stdcorr.drop('month')
-
-    
-# ===================================================================================================
-def conditional_bias_correct(da_cmp, da_ref, over_dims):
-    """
-        Return conditional bias corrected data using the approach of Goddard et al. 2013
-    """
-
-    cc = skill.compute_Pearson_corrcoef(da_cmp.mean('ensemble'), da_ref, over_dims=over_dims, subtract_local_mean=False)
-    correct_cond_bias = (da_ref.std(over_dims) / da_cmp.mean('ensemble').std(over_dims)) * cc
-    
-    return da_cmp * correct_cond_bias
-
-    
 # ===================================================================================================
 # Climatology tools
 # ===================================================================================================
-def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
+def load_mean_climatology(clim, freq, variable=None, **kwargs):
     """ 
-    Returns pre-saved climatology at desired frequency (daily or longer).
-    
-    Currently available options are: "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", 
-    "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", "HadISST_1870-2018", "REMSS_2002-2018".
+        Returns pre-saved climatology at desired frequency.
+        Author: Dougie Squire
+        Date: 04/03/2018
+        
+        Parameters
+        ----------
+        clim : str
+            Name of climatology to load. Currently available options are: "jra_1958-2016", 
+            "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", 
+            "cafe_c2_atmos_500-549", cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", 
+            "HadISST_1870-2018", "REMSS_2002-2018"
+        freq : str
+            Desired frequency of climatology (daily or longer) e.g. 'D', 'M'
+        variable : str, optional
+            Variable to load. If None, all variables are returned
+        **kwargs : dict
+            Additional arguments to pass to load command
+        
+        Returns
+        -------
+        climatology : xarray DataArray
+            Requested climatology
+        
+        Examples
+        --------
+        >>> doppyo.utils.load_mean_climatology(clim='cafe_c2_atmos_500-549', freq='D', variable='u')
+        <xarray.DataArray 'u' (time: 366, level: 37, lat: 90, lon: 144)>
+        [175504320 values with dtype=float32]
+        Coordinates:
+          * lon      (lon) float64 1.25 3.75 6.25 8.75 11.25 ... 351.2 353.8 356.2 358.8
+          * lat      (lat) float64 -89.49 -87.98 -85.96 -83.93 ... 85.96 87.98 89.49
+          * level    (level) float32 1.0 2.0 3.0 5.0 7.0 ... 925.0 950.0 975.0 1000.0
+          * time     (time) datetime64[ns] 2016-01-01T12:00:00 ... 2016-12-31T12:00:00
+        Attributes:
+            long_name:      zonal wind
+            units:          m/sec
+            valid_range:    [-32767  32767]
+            packing:        4
+            cell_methods:   time: mean
+            time_avg_info:  average_T1,average_T2,average_DT
+        
+        Limitations
+        -----------
+        Can only be run from a system connected to Bowen cloud storage
     """
     
     data_path = '/OSM/CBR/OA_DCFP/data/intermediate_products/doppyo/mean_climatologies/'
@@ -1118,42 +1256,26 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
     # Load specified dataset -----
     if clim == 'jra_1958-2016':
         data_loc = data_path + 'jra.isobaric.1958010100_2016123118.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-            
     elif clim == 'cafe_f1_atmos_2003-2017':
         data_loc = data_path + 'cafe.f1.atmos.2003010112_2017123112.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-            
     elif clim == 'cafe_f1_ocean_2003-2017':
-        data_loc = data_path + 'cafe.f1.ocean.2003010112_2017123112.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-            
+        data_loc = data_path + 'cafe.f1.ocean.2003010112_2017123112.clim.nc'  
     elif clim == 'cafe_c2_atmos_400-499':
         data_loc = data_path + 'cafe.c2.atmos.400_499.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-    
     elif clim == 'cafe_c2_atmos_500-549':
-        data_loc = data_path + 'cafe.c2.atmos.500_549.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-            
+        data_loc = data_path + 'cafe.c2.atmos.500_549.clim.nc'    
     elif clim == 'cafe_c2_ocean_400-499':
         data_loc = data_path + 'cafe.c2.ocean.400_499.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-        
     elif clim == 'cafe_c2_ocean_500-549':
         data_loc = data_path + 'cafe.c2.ocean.500_549.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-    
     elif clim == 'HadISST_1870-2018':
         data_loc = data_path + 'hadisst.1870011612_2018021612.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-    
     elif clim == 'REMSS_2002-2018':
-        data_loc = data_path + 'remss.2002060112_2018041812.clim.nc'
-        ds = xr.open_dataset(data_loc, chunks=chunks, **kwargs)
-            
+        data_loc = data_path + 'remss.2002060112_2018041812.clim.nc' 
     else:
         raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", "cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", "HadISST_1870-2018","REMSS_2002-2018"')
+        
+    ds = xr.open_dataset(data_loc, **kwargs)
         
     if variable is not None:
         try:
@@ -1168,7 +1290,6 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
             ds = ds.resample(time=freq).sum(dim='time')
         else:
             ds = ds.resample(time=freq).mean(dim='time')
-        ds = ds.chunk(chunks=chunks)
 
     return ds
 
@@ -1176,17 +1297,52 @@ def load_mean_climatology(clim, freq, variable=None, chunks=None, **kwargs):
 # ===================================================================================================
 def anomalize(data, clim):
     """ 
-        Receives raw and climatology data at matched frequencies and returns the anomaly 
+        Returns anomalies of data about clim
+        Author: Dougie Squire
+        Date: 04/03/2018
+        
+        Parameters
+        ----------
+        data : xarray DataArray
+            Array to compute anomalies from
+        clim : xarray DataArray
+            Array to compute anomalies about
+            
+        Returns
+        -------
+        anomalies : xarray DataArray
+            Array containing anomalies of data about clim
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(1000)), 
+        ...                  coords=[('time', pd.date_range(start='1/1/2000', periods=1000, freq='D'))])
+        >>> A_clim = A.groupby('time.month').mean('time')
+        >>> doppyo.utils.anomalize(A, A_clim)
+        <xarray.DataArray (time: 1000)>
+        array([-3.050884, -0.361403, -0.893451, ...,  0.685141,  0.477916, -1.175434])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-01 2000-01-02 ... 2002-09-26
+          
+        Limitations
+        -----------
+        Cannot anomalize about multiple day/month/year climatologies, e.g. 5-day averages 
     """
     
     data_use = data.copy(deep=True)
     clim_use = clim.copy(deep=True)
+    
+    def _contains_int(string):
+        """ Checks if string contains an integer """
+        return any(char.isdigit() for char in string)
     
     # If clim is saved on a time dimension, deal with accordingly ----- 
     if 'time' in clim_use.dims:
         # Find frequency (assume this is annual average if only one time value exists) -----
         if len(clim_use.time) > 1:
             clim_freq = pd.infer_freq(clim_use.time.values[:3])
+            if _contains_int(clim_freq):
+                raise ValueError('Cannot anomalize about multiple day/month/year climatologies')
         else:
             clim_freq = 'A'
             
@@ -1208,6 +1364,8 @@ def anomalize(data, clim):
         deal_with_leap = False
     elif 'month' in clim_use.dims:
         clim_freq = 'M'
+    elif 'year' in clim_use.dims:
+        clim_freq = 'A'
     else:
         warnings.warn('Unable to determine frequency of climatology DataArray, assuming annual average')
         clim_freq = 'A'
@@ -1228,7 +1386,7 @@ def anomalize(data, clim):
     elif 'M' in clim_freq:
         anom = data_use.groupby('time.month') - clim_use
     elif ('A' in clim_freq) | ('Y' in clim_freq):
-        anom = data_use - clim_use
+        anom = data_use.groupby('time.year') - clim_use
         
     return prune(anom)
 
@@ -1236,152 +1394,250 @@ def anomalize(data, clim):
 # ===================================================================================================
 # IO tools
 # ===================================================================================================
-def trunc_time(time, freq):
+def trunc_time(da, freq):
     """ 
-    Truncates values in provided time array to provided frequency. E.g. 2018-01-15T12:00 with 
-    freq = 'M' becomes 2018-01-01. 
+        Truncates values in provided array to provided frequency 
+        Author: Dougie Squire
+        Date: 04/04/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing time coordinate to be truncated
+        freq : str
+            Truncation frequency. Options are 's', 'm', 'h', D', 'M', 'Y'
+            
+        Returns
+        -------
+        truncated : xarray DataArray
+            time-truncated array
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(10)), 
+        ...                  coords=[('time', pd.date_range(start='1/1/2000', 
+        ...                           periods=10, freq='M').shift(5,'D'))])
+        >>> doppyo.utils.trunc_time(A, freq='M') 
+        <xarray.DataArray (time: 10)>
+        array([-0.197528,  1.022739, -0.50139 ,  0.128189, -0.886135,  0.570657,
+               -0.336125, -0.499281,  1.143722,  1.987681])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-02-01 2000-03-01 ... 2000-11-01
     """
     
-    return time.astype('<M8[' + freq + ']')
+    da = da.copy()
+    da['time'] = da.time.astype('<M8[' + freq + ']')
+    
+    return da
 
 
 # ===================================================================================================
-def month_delta(date_in, delta, trunc_to_start=False):
-    """ Increments provided datetime64 array by delta months """
-    
-    date_mod = pd.Timestamp(date_in)
-    
-    m, y = (date_mod.month + delta) % 12, date_mod.year + ((date_mod.month) + delta - 1) // 12
-    
-    if not m: m = 12
-    
-    d = min(date_mod.day, [31,
-        29 if y % 4 == 0 and not y % 400 == 0 else 28,31,30,31,30,31,31,30,31,30,31][m - 1])
-    
-    if trunc_to_start:
-        date_out = trunc_time(np.datetime64(date_mod.replace(day=d,month=m, year=y)),'M')
-    else:
-        date_out = np.datetime64(date_mod.replace(day=d,month=m, year=y))
-    
-    return np.datetime64(date_out,'ns')
-
-
-# ===================================================================================================
-def year_delta(date_in, delta, trunc_to_start=False):
-    """ Increments provided datetime64 array by delta years """
-    
-    date_mod = month_delta(date_in, 12 * delta)
-    
-    if trunc_to_start:
-        date_out = trunc_time(date_mod,'Y')
-    else: date_out = date_mod
+def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_time'):
+    """ 
+        Converts time information from initial date / lead time dimension pair to single datetime 
+        dimension (i.e. timeseries) 
+        Author: Dougie Squire
+        Date: 04/04/2018
         
-    return date_out
-
-
-# ===================================================================================================
-def leadtime_to_datetime(data_in, lead_time_name='lead_time', init_date_name='init_date'):
-    """ Converts time information from lead time/initial date dimension pair to single datetime dimension """
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array in initial date / lead time format to convert to datetime format
+        init_date_name : str, optional
+            Name of initial date dimension
+        lead_time_name : str, optional
+            Name of lead time dimension
+            
+        Returns
+        -------
+        converted : xarray DataArray
+            Array converted to datetime format
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(10)), 
+        ...                  coords=[('time', pd.date_range(start='1/1/2000', periods=10, freq='M'))])
+        >>> B = doppyo.utils.datetime_to_leadtime(A)
+        >>> doppyo.utils.leadtime_to_datetime(B)
+        <xarray.DataArray (time: 10)>
+        array([-0.158172,  1.319148,  0.648378,  0.577859,  0.371392, -1.380317,
+                0.126416,  1.184546,  0.107898,  1.304755])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2000-10-31
+    """
     
     try:
-        init_date = data_in[init_date_name].values[0]
+        init_date = da[init_date_name].values[0]
     except IndexError:
-        init_date = data_in[init_date_name].values
+        init_date = da[init_date_name].values
         
-    lead_times = list(map(int, data_in[lead_time_name].values))
-    freq = data_in[lead_time_name].attrs['units']
+    lead_times = list(map(int, da[lead_time_name].values))
+    freq = da[lead_time_name].attrs['units']
+     
+    datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
     
+    da_out = da.drop(init_date_name)
+    da_out = da_out.rename({lead_time_name : 'time'})
+    da_out['time'] = datetimes
+    
+    return prune(da_out)
+
+
+# ===================================================================================================
+def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_time'):
+    """ 
+        Converts time information from single datetime dimension (i.e. timeseries) to initial date / 
+        lead time dimension pair
+        Author: Dougie Squire
+        Date: 04/04/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to in datetime format to convert to initial date / lead time format
+        init_date_name : str, optional
+            Name of initial date dimension
+        lead_time_name : str, optional
+            Name of lead time dimension
+            
+        Returns
+        -------
+        converted : xarray DataArray
+            Array converted to initial date / lead time format
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(10)), 
+        ...                  coords=[('time', pd.date_range(start='1/1/2000', periods=10, freq='M'))])
+        >>> doppyo.utils.datetime_to_leadtime(A)
+        <xarray.DataArray (lead_time: 10)>
+        array([ 0.450976, -1.671764,  0.681519,  0.836319, -0.005434,  0.144954,
+                0.719887,  0.344615,  0.461055,  0.736307])
+        Coordinates:
+          * lead_time  (lead_time) int64 0 1 2 3 4 5 6 7 8 9
+            init_date  datetime64[ns] 2000-01-31
+
+        Limitations
+        -----------
+        Only compatible with time coordinates that have frequencies that can be determined by pandas.infer_freq().
+        This means that ambiguous frequencies, such as month-centred monthly frequencies must be preprocessed for
+        compatibility (see doppyo.utils.trunc_freq())
+    """
+    
+    init_date = da.time.values[0]
+    lead_times = range(len(da.time))
+
+    freq = pd.infer_freq(da.time.values)
+    
+    if freq is None:
+        raise ValueError('Unable to determine frequency of time coordinate. If using monthly data that is not stored relative to the start or end of each month, first truncate the time coordinate to the start of each month using doppyo.utils.trunc_time(da, freq="M")')
+    
+    # If pandas tries to assign start time to frequency (e.g. QS-OCT), remove this -----
+    if '-' in freq:
+        freq = freq[:freq.find('-')]
+
     # Split frequency into numbers and strings -----
     incr_string = ''.join([i for i in freq if i.isdigit()])
     freq_incr = [int(incr_string) if incr_string else 1][0]
     freq_type = ''.join([i for i in freq if not i.isdigit()])
 
-    # Deal with special cases of monthly and yearly frequencies -----
-    if 'M' in freq_type:
-        datetimes = np.array([month_delta(init_date, freq_incr * ix) for ix in lead_times])
-    elif ('A' in freq_type) | ('Y' in freq_type):
-        datetimes = np.array([year_delta(init_date, freq_incr * ix) for ix in lead_times])
-    else:
-        datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
+    # Specify all lengths great than 1 month in months -----
+    if 'QS' in freq_type:
+        freq = str(3*freq_incr) + 'MS'
+    elif 'Q' in freq_type:
+        freq = str(3*freq_incr) + 'M'
+    elif ('YS' in freq_type) | ('AS' in freq_type):
+        freq = str(12*freq_incr) + 'MS'
+    elif ('Y' in freq_type) | ('A' in freq_type):
+        freq = str(12*freq_incr) + 'M'
+
+    da_out = da.rename({'time' : lead_time_name})
+    da_out[lead_time_name] = lead_times
+    da_out[lead_time_name].attrs['units'] = freq
+
+    da_out.coords[init_date_name] = init_date
     
-    data_out = data_in.drop(init_date_name)
-    data_out = data_out.rename({lead_time_name : 'time'})
-    data_out['time'] = datetimes
-    
-    return prune(data_out)
+    return da_out
 
 
 # ===================================================================================================
-def datetime_to_leadtime(data_in):
-    """ Converts time information from single datetime dimension to init_date/lead_time dimension pair """
-    
-    init_date = data_in.time.values[0]
-    lead_times = range(len(data_in.time))
-    try:
-        freq = pd.infer_freq(data_in.time.values)
-        
-        # If pandas tries to assign start time to frequency (e.g. QS-OCT), remove this -----
-        if '-' in freq:
-            freq = freq[:freq.find('-')]
-        
-        # Split frequency into numbers and strings -----
-        incr_string = ''.join([i for i in freq if i.isdigit()])
-        freq_incr = [int(incr_string) if incr_string else 1][0]
-        freq_type = ''.join([i for i in freq if not i.isdigit()])
-    
-        # Specify all lengths great than 1 month in months -----
-        if 'QS' in freq_type:
-            freq = str(3*freq_incr) + 'MS'
-        elif 'Q' in freq_type:
-            freq = str(3*freq_incr) + 'M'
-        elif ('YS' in freq_type) | ('AS' in freq_type):
-            freq = str(12*freq_incr) + 'MS'
-        elif ('Y' in freq_type) | ('A' in freq_type):
-            freq = str(12*freq_incr) + 'M'
-            
-    except ValueError:
-        dt = (data_in.time.values[1] - data_in.time.values[0]) / np.timedelta64(1, 's')
-        month = data_in.time.dt.month[0]
-        if dt == 60*60*24:
-            freq = 'D'
-        elif ((month == 1) | (month == 3) | (month == 5) | (month == 7) | (month == 8) | (month == 10) | 
-               (month == 12)) & (dt == 31*60*60*24):
-            freq = 'MS'
-        elif ((month == 4) | (month == 6) | (month == 9) | (month == 11)) & (dt == 30*60*60*24):
-            freq = 'MS'
-        elif (month == 2) & ((dt == 28*60*60*24) | (dt == 29*60*60*24)):  
-            freq = 'MS'
-        elif (dt == 365*60*60*24) | (dt == 366*60*60*24):
-            freq = 'A'
-        else:
-            freq = 'NA'
-
-    data_out = data_in.rename({'time' : 'lead_time'})
-    data_out['lead_time'] = lead_times
-    data_out['lead_time'].attrs['units'] = freq
-
-    data_out.coords['init_date'] = init_date
-    
-    return data_out
-
-
-# ===================================================================================================
-def repeat_data(data, repeat_dim, index_to_repeat=0):
+def repeat_datapoint(da, coord, coord_val):
     """ 
-    Returns object the same sizes as data, but with data at index repeat_dim = index_to_repeat repeated 
-    across all other entries in repeat_dim
+        Returns array with data at coord = coord_val repeated across all other elements in coord. 
+        This is useful for generating persistence forecasts
+        Author: Dougie Squire
+        Date: 02/06/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array containing darta to repeat
+        coord : str
+            Coordinate in da over which to repeat the data at coord = coord_val
+        coord_val : value
+            The value of coord giving the data to be repeated
+        
+        Returns
+        -------
+        repeated : xarray DataArray
+            Array with data at coord=coord_val repeated across all other elements in coord
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), 
+        ...                  coords=[('x', np.arange(3)),('y', np.arange(2))])
+        >>> doppyo.utils.repeat_datapoint(A, 'x', 2)
+        <xarray.DataArray (x: 3, y: 2)>
+        array([[-1.805652,  0.526434],
+               [-1.805652,  0.526434],
+               [-1.805652,  0.526434]])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1
     """
 
-    repeat_data = data.loc[{repeat_dim : index_to_repeat}].drop(repeat_dim).squeeze()
+    repeat_data = da.sel({coord : coord_val}, drop=True)
     
-    return (0 * data).groupby(repeat_dim,squeeze=True).apply(calc_difference, data_2=-repeat_data)
+    return (0 * da) + repeat_da
 
 
 # ===================================================================================================
 def get_latlon_region(da, box):
-    '''
-        Returns da over a provided lat-lon region, where box = [lat_min, lat_max, lon_min, lon_max]
-    '''
+    """
+        Returns an array containing those elements of the input array that fall within the provided
+        lat-lon box
+        Author: Dougie Squire
+        Date: 04/04/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to extract lat-lon box from
+        box : array_like
+            Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]
+            
+        Returns
+        -------
+        reduced : xarray DataArray
+            Array containing those elements of the input array that fall within the box
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(180,360)), 
+        ...                  coords=[('lat', np.arange(-90,90,1)),('lon', np.arange(-280,80,1))])
+        >>> doppyo.utils.get_latlon_region(A, [-10, 10, 70, 90])
+        <xarray.DataArray (lat: 21, lon: 21)>
+        array([[ 0.854745,  1.53709 ,  0.491165, ..., -0.675664,  1.572102, -0.931492],
+               [ 0.570822,  0.60621 , -0.125524, ..., -1.731507,  0.853652,  0.845369],
+               [-0.061811,  0.758512,  1.215573, ..., -1.275482,  2.668203,  0.791314],
+               ...,
+               [-0.263597,  0.102755, -2.775252, ..., -0.736136,  0.944762,  0.005952],
+               [ 0.009949,  0.409897, -0.138621, ...,  1.054246,  1.30817 , -0.539534],
+               [ 1.281245, -0.792166, -1.736007, ...,  0.474207, -0.781518,  0.738593]])
+        Coordinates:
+          * lat      (lat) int64 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10
+          * lon      (lon) int64 -280 -279 -278 -277 -276 -275 ... 74 75 76 77 78 79
+    """
 
     # Account for datasets with negative longitudes -----
     if np.any(da['lon'] < 0):
@@ -1395,58 +1651,179 @@ def get_latlon_region(da, box):
     else:
         return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3]))
 
+    
 # ===================================================================================================
-def calc_boxavg_latlon(da, box):
+def latlon_average(da, box):
     '''
-        Returns the average of a given quantity over a provide lat-lon region, where box = [lat_min,
-        lat_max, lon_min, lon_max]
+        Returns the average of the input array over a provide lat-lon box, 
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to average lat-lon box from
+        box : array_like
+            Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]
+            
+        Returns
+        -------
+        reduced : xarray DataArray
+            Array containing those elements of the input array that fall within the box
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(180,360)), 
+        ...                  coords=[('lat', np.arange(-90,90,1)),('lon', np.arange(-280,80,1))])
+        >>> doppyo.utils.latlon_average(A, [-10, 10, 70, 90])
+        <xarray.DataArray ()>
+        array(-0.056776)
     '''
     
     return get_latlon_region(da, box).mean(dim=['lat', 'lon'])
 
 
 # ===================================================================================================
-def stack_by_init_date(data_in, init_dates, N_lead_steps, init_date_name='init_date', lead_time_name='lead_time'):
+def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date', lead_time_name='lead_time'):
     """ 
-    Splits provided data array into n chunks beginning at time=init_date[n] and spanning 
-    N_lead_steps time increments
-    Input Dataset/DataArray must span full range of times required for this operation
+        Stacks provided timeseries array in an inital date / lead time format. Note this process
+        replicates data and can substantially increase memory usage. Lead time frequency will match
+        frequency of input data. Returns nans if requested times lie outside of the available range
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Timeseries array to be stacked
+        init_dates : array_like of datetime objects
+            Initial dates to stack onto
+        N_lead_steps : value
+            Number of lead time steps
+        init_date_name : str, optional
+            Name of initial date dimension
+        lead_time_name : str, optional
+            Name of lead time dimension
+            
+        Returns
+        -------
+        stacked : xarray DataArray
+            Stacked xarray in inital date / lead time format
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3)), 
+        ...                  coords=[('time', pd.date_range(start='2000-01-01', periods=3, freq='MS'))])
+        >>> init_dates = pd.date_range(start='1999-11-01', periods=3, freq='MS')
+        >>> doppyo.utils.stack_by_init_date(A, init_dates=init_dates, N_lead_steps=3)
+        <xarray.DataArray (init_date: 3, lead_time: 3)>
+        array([[      nan,       nan,       nan],
+               [      nan,       nan,       nan],
+               [ 0.509276, -3.046124, -0.665343]])
+        Coordinates:
+          * lead_time  (lead_time) int64 0 1 2
+          * init_date  (init_date) datetime64[ns] 1999-11-01 1999-12-01 2000-01-01
     """
 
     init_list = []
     for init_date in init_dates:
-        start_index = np.where(data_in.time == np.datetime64(init_date))[0].item()
-        end_index = min([start_index + N_lead_steps, len(data_in.time)])
-        init_list.append(
-                      datetime_to_leadtime(
-                          data_in.isel(time=range(start_index, end_index))))
+        start_index = np.where(da.time == np.datetime64(init_date))[0]
+        
+        # If init_date falls outside time bounds, fill with nans -----
+        if start_index.size == 0:
+            da_nan = np.nan * da.isel(time=range(0, N_lead_steps))
+            da_nan['time'] = pd.date_range(init_date, periods=N_lead_steps, freq=pd.infer_freq(da.time.values))
+            init_list.append(datetime_to_leadtime(da_nan))
+        else:
+            start_index = start_index.item()
+            end_index = min([start_index + N_lead_steps, len(da.time)])
+            init_list.append(datetime_to_leadtime(da.isel(time=range(start_index, end_index))))
     
-    data_out = xr.concat(init_list, dim=init_date_name)
-    
-    return data_out
+    return xr.concat(init_list, dim=init_date_name)
 
 
 # ===================================================================================================
-def prune(data,squeeze=False):
-    """ Removes all coordinates that are not dimensions from an xarray object """
+def concat_times(da, init_date_name='init_date', lead_time_name='lead_time', time_name='time'):
+    """
+        Unstack and concatenate all init_date/lead_time rows into single time dimension
+        Author: Dougie Squire
+        Date: 22/04/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to be unstacked and concatenated
+        init_date_name : str, optional
+            Name of initial date dimension
+        lead_time_name : str, optional
+            Name of lead time dimension
+        time_name : str, optional
+            Name of time dimension
+        
+        Returns
+        -------
+        concatenated : xarray DataArray
+            Unstacked and concatenated array
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                  coords=[('init_date', 
+        ...                           pd.date_range(start='1/1/2018', periods=3, freq='M')), 
+        ...                          ('lead_time', np.arange(3))])
+        >>> A['lead_time'].attrs['units'] = 'M'
+        >>> doppyo.utils.concat_times(A)
+        <xarray.DataArray (time: 9)>
+        array([-1.65746 ,  0.57727 ,  0.010619, -0.008245,  0.119201, -0.445606,
+               -0.546745,  0.157267, -1.616096])
+        Coordinates:
+          * time     (time) datetime64[ns] 2018-01-31 2018-02-28 ... 2018-05-31
+    """
     
-    codims = list(set(data.coords)-set(data.dims))
+    da_list = []
+    for init_date in da[init_date_name].values:
+        da_list.append(leadtime_to_datetime(da.sel({init_date_name :init_date}), 
+                                            init_date_name=init_date_name, 
+                                            lead_time_name=lead_time_name))
+    return xr.concat(da_list, dim=time_name)
+
+# ===================================================================================================
+def prune(da, squeeze=False):
+    """ 
+        Removes all coordinates that are not dimensions
+        Author: Dougie Squire
+        Date: 22/04/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to prune
+        squeeze : bool, optional
+            If True, squeeze the array (i.e. remove 1D dimensions) prior to pruning
+            
+        Returns
+        -------
+        pruned : xarray DataArray
+            The pruned array
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,1)), 
+        ...                  coords=[('x', np.arange(3)),('y', np.arange(1))]).expand_dims('z')
+        >>> A.coords['w'] = 1
+        >>> doppyo.utils.prune(A, squeeze=True)
+        <xarray.DataArray (x: 3)>
+        array([-1.323662,  1.464171,  0.480917])
+        Coordinates:
+          * x        (x) int64 0 1 2
+    """
+    
+    if squeeze:
+        da = da.squeeze()
+        
+    codims = list(set(da.coords)-set(da.dims))
 
     for codim in codims:
-        if codim in data.coords:
-            data = data.drop(codim)
-        
-    if squeeze:
-        data = data.squeeze()
-    
-    return data
+        if codim in da.coords:
+            da = da.drop(codim)
 
-
-# ===================================================================================================
-def get_nearest_point(da, lat, lon):
-    """ Returns the nearest grid point to the specified lat/lon location """
-
-    return da.sel(lat=lat,lon=lon,method='nearest')
+    return da
 
 
 # ===================================================================================================
@@ -1462,7 +1839,7 @@ def get_bin_edges(bins):
 
 
 # ===================================================================================================
-def is_datetime(value):
+def _is_datetime(value):
     """ Return True or False depending on whether input is datetime64 or not """
     
     return pd.api.types.is_datetime64_dtype(value)

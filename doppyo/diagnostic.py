@@ -1,6 +1,6 @@
 """
     doppyo functions for computing various ocean, atmosphere, & climate diagnostics
-    Author: Dougie Squire (ocean diagnostic additions Thomas Moore)
+    Authors: Dougie Squire & Thomas Moore
     Date created: 04/04/2018
     Python Version: 3.6
 """
@@ -797,7 +797,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     # Determine the stability parameter using Saltzman's approach -----
     kappa = utils.constants().R_d / utils.constants().C_pd
     p_kap = (1000 / temp[plev]) ** kappa
-    theta_A = utils.calc_average(temp * p_kap, [lat, lon], weights=cos_lat)
+    theta_A = utils.average(temp * p_kap, [lat, lon], weights=cos_lat)
     dtheta_Adp = utils.calc_gradient(theta_A, dim=plev, x=(theta_A[plev] * 100))
     gamma = - p_kap * (utils.constants().R_d) / ((temp[plev] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
     energies = gamma.rename('gamma').to_dataset()
@@ -808,7 +808,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
     if ('Pz' in terms) | (terms is None):
     # Compute the total available potential energy in the zonally averaged temperature
     # distribution, Pz [also commonly called Az] -----
-        temp_A = utils.calc_average(temp, [lat, lon], weights=cos_lat)
+        temp_A = utils.average(temp, [lat, lon], weights=cos_lat)
         temp_Z = temp.mean(dim=lon)
         temp_Za = temp_Z - temp_A
         Pz_int = gamma * utils.constants().C_pd / 2 * temp_Za ** 2  # [J/kg]
@@ -843,10 +843,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                 energies['Cz'] = Cz
         else:
             if 'temp_Za' not in locals():
-                temp_A = utils.calc_average(temp, [lat, lon], weights=cos_lat)
+                temp_A = utils.average(temp, [lat, lon], weights=cos_lat)
                 temp_Z = temp.mean(dim=lon)
                 temp_Za = temp_Z - temp_A
-            omega_A = utils.calc_average(omega, [lat, lon], weights=cos_lat)
+            omega_A = utils.average(omega, [lat, lon], weights=cos_lat)
             omega_Z = omega.mean(dim=lon)
             omega_Za = omega_Z - omega_A
             Cz_int = - (utils.constants().R_d / (temp[plev] * 100)) * omega_Za * temp_Za # [W/kg]
@@ -861,7 +861,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         
         if ('Pe' in terms) | (terms is None):
         # Compute the total available potential energy eddies of wavenumber n, Pn -----
-            Bp, Bn = truncate(utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
+            Bp, Bn = truncate(utils.fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
                               len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
             Pn_int = (gamma * utils.constants().C_pd * abs(Bp) ** 2)
@@ -872,11 +872,11 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
 
         # Compute the rate of transfer of available potential energy to eddies of 
         # wavenumber n from eddies of all other wavenumbers, Sn -----
-            Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
+            Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
                               len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-            Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) /
+            Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) /
                               len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-            Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) /
+            Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) /
                               len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 
             dBpdlat = utils.calc_gradient(Bp, dim=lat, x=(Bp[lat] * degtorad))
@@ -919,10 +919,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         if ('Ke' in terms) | (terms is None):
         # Compute the total kinetic energy in eddies of wavenumber n, Kn -----
             if 'U' not in locals():
-                Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
+                Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
                                   len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'V' not in locals():
-                Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
                                   len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
             Kn_int = abs(Up) ** 2 + abs(Vp) ** 2
@@ -934,7 +934,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         # Compute the rate of transfer of kinetic energy to eddies of wavenumber n from 
         # eddies of all other wavenumbers, Ln -----
             if 'O' not in locals():
-                Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
                                   len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 
             dUpdp = utils.calc_gradient(Up, dim=plev, x=(Up[plev] * 100))
@@ -1004,13 +1004,13 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             if 'temp_Z' not in locals():
                 temp_Z = temp.mean(dim=lon)
             if 'V' not in locals():
-                Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
                                   len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'B' not in locals():
-                Bp, Bn = truncate(utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
+                Bp, Bn = truncate(utils.fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
                                   len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'O' not in locals():
-                Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
                                   len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
             dtemp_Zdlat = utils.calc_gradient(temp_Z, dim=lat, x=(temp_Z[lat] * degtorad))
@@ -1030,12 +1030,12 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
         # to eddy kinetic energy of wavenumber n, Cn -----
             if vgradz:
                 if 'U' not in locals():
-                    Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
+                    Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
                                       len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 if 'V' not in locals():
-                    Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                    Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
                                       len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-                Ap, An = truncate(utils.calc_fft(gh, dim=lon, nfft=len(gh[lon]), twosided=True, shift=True) / 
+                Ap, An = truncate(utils.fft(gh, dim=lon, nfft=len(gh[lon]), twosided=True, shift=True) / 
                                   len(gh[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
 
                 dApdlat = utils.calc_gradient(Ap, dim=lat, x=(Ap[lat] * degtorad))
@@ -1052,10 +1052,10 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                     energies['Cn'] = Cn
             else:
                 if 'O' not in locals():
-                    Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                    Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
                                       len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 if 'B' not in locals():
-                    Bp, Bn = truncate(utils.calc_fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
+                    Bp, Bn = truncate(utils.fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
                                       len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
                 Cn_int = - (utils.constants().R_d / (omega[plev] * 100)) * (Op * Bn + On * Bp) # [W/kg]
                 energies['Cn_int'] = Cn_int
@@ -1071,13 +1071,13 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             if 'u_Z' not in locals():
                 u_Z = u.mean(dim=lon)
             if 'U' not in locals():
-                Up, Un = truncate(utils.calc_fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
+                Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
                                   len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'V' not in locals():
-                Vp, Vn = truncate(utils.calc_fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
+                Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
                                   len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             if 'O' not in locals():
-                Op, On = truncate(utils.calc_fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
+                Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
                                       len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
             dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v[lat] * degtorad))
             du_Zndlat = utils.calc_gradient(u_Z / xr.ufuncs.cos(u[lat] * degtorad), 
@@ -1156,7 +1156,7 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
             temp_z = temp - temp_Z
             omega_z = omega - omega_Z
             oT_Z = (omega_z * temp_z).mean(dim=lon)
-            oT_A = utils.calc_average(omega_z * temp_z, [lat, lon], weights=cos_lat)
+            oT_A = utils.average(omega_z * temp_z, [lat, lon], weights=cos_lat)
             oT_Za = oT_Z - oT_A
             theta_Za = theta_Z - theta_A
             dtheta_Zadp = utils.calc_gradient(theta_Za, dim=plev, x=(theta_Za[plev] * 100))
@@ -1289,11 +1289,11 @@ def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
     # Determine dx if not provided -----
     if dx is None:
         diff = da1[dim].diff(dim)
-        if utils.is_datetime(da1[dim].values):
+        if utils._is_datetime(da1[dim].values):
             # Drop differences on leap days so that still works with 'noleap' calendars -----
             diff = diff.where((diff[dim].dt.month != 3) & (diff[dim].dt.day != 1), drop=True)
         if np.all(diff == diff[0]):
-            if utils.is_datetime(da1[dim].values):
+            if utils._is_datetime(da1[dim].values):
                 dx = diff.values[0] / np.timedelta64(1, 's')
             else:
                 dx = diff.values[0]
@@ -1337,8 +1337,8 @@ def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
         weight = 1
 
     # Compute the spectral density -----
-    da1_fft = utils.calc_fft(da1_windowed, dim=dim, dx=dx)
-    da2_fftc = xr.ufuncs.conj(utils.calc_fft(da2_windowed, dim=dim, dx=dx))
+    da1_fft = utils.fft(da1_windowed, dim=dim, dx=dx)
+    da2_fftc = xr.ufuncs.conj(utils.fft(da2_windowed, dim=dim, dx=dx))
 
     return (weight * 2 * dx * (da1_fft * da2_fftc).mean('n') / nwindow).real
 
@@ -1376,7 +1376,7 @@ def compute_nino3(da_sst_anom):
     
     box = [-5.0,5.0,210.0,270.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.calc_boxavg_latlon(da_sst_anom,box)
+    return utils.latlon_average(da_sst_anom,box)
 
 
 # ===================================================================================================
@@ -1385,7 +1385,7 @@ def compute_nino34(da_sst_anom):
     
     box = [-5.0,5.0,190.0,240.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.calc_boxavg_latlon(da_sst_anom,box)
+    return utils.latlon_average(da_sst_anom,box)
 
 
 # ===================================================================================================
@@ -1394,7 +1394,7 @@ def compute_nino4(da_sst_anom):
     
     box = [-5.0,5.0,160.0,210.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.calc_boxavg_latlon(da_sst_anom,box)
+    return utils.latlon_average(da_sst_anom,box)
 
 
 # ===================================================================================================
@@ -1405,9 +1405,9 @@ def compute_emi(da_sst_anom):
     boxB = [-15.0,5.0,360.0-110.0,360.0-70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxC = [-10.0,20.0,125.0,145.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    da_sstA = utils.calc_boxavg_latlon(da_sst_anom,boxA)
-    da_sstB = utils.calc_boxavg_latlon(da_sst_anom,boxB)
-    da_sstC = utils.calc_boxavg_latlon(da_sst_anom,boxC)
+    da_sstA = utils.latlon_average(da_sst_anom,boxA)
+    da_sstB = utils.latlon_average(da_sst_anom,boxB)
+    da_sstC = utils.latlon_average(da_sst_anom,boxC)
     
     return da_sstA - 0.5*da_sstB - 0.5*da_sstC
 
@@ -1419,8 +1419,8 @@ def compute_dmi(da_sst_anom):
     boxW = [-10.0,10.0,50.0,70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxE = [-10.0,0.0,90.0,110.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    da_W = utils.calc_boxavg_latlon(da_sst_anom,boxW)
-    da_E = utils.calc_boxavg_latlon(da_sst_anom,boxE)
+    da_W = utils.latlon_average(da_sst_anom,boxW)
+    da_E = utils.latlon_average(da_sst_anom,boxE)
     
     return da_W - da_E
 

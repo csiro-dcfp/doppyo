@@ -674,7 +674,7 @@ def compute_mean_additive_bias(da_cmp, da_ref, over_dims):
         over_dims = []
 
     mean_additive_bias = da_cmp.to_dataset(name='mean_additive_bias') \
-                             .apply(utils.calc_difference, data_2=da_ref) \
+                             .apply(utils.subtract, data_2=da_ref) \
                              .mean(dim=over_dims, skipna=True) \
                              ['mean_additive_bias']
 
@@ -708,7 +708,7 @@ def compute_mean_absolute_error(da_cmp, da_ref, over_dims):
         over_dims = []  
     
     mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
-                                  .apply(utils.calc_difference, data_2=da_ref) \
+                                  .apply(utils.subtract, data_2=da_ref) \
                                   ** 2) ** 0.5) \
                                   .mean(dim=over_dims, skipna=True)['mean_absolute_error']
     
@@ -726,7 +726,7 @@ def compute_mean_squared_error(da_cmp, da_ref, over_dims):
         over_dims = []  
         
     mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
-                                .apply(utils.calc_difference, data_2=da_ref) \
+                                .apply(utils.subtract, data_2=da_ref) \
                                 ** 2) \
                                 .mean(dim=over_dims,skipna=True)['mean_squared_error']
                     
