@@ -560,7 +560,7 @@ def compute_eofs(da, sample_dim='time', weight=None, n_modes=20):
     da = [weight[idx].fillna(0) * da[idx] for idx in range(len(da))]
     
     # Stack along everything but the sample dimension -----
-    sensor_dims = [utils.find_other_dims(d, sample_dim) for d in da]
+    sensor_dims = [utils.get_other_dims(d, sample_dim) for d in da]
     da = [d.stack(sensor_dim=sensor_dims[idx])
            .transpose(*[sample_dim, 'sensor_dim'])  for idx, d in enumerate(da)]
     sensor_segs = np.cumsum([0] + [len(d.sensor_dim) for d in da])

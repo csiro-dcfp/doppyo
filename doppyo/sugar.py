@@ -6,6 +6,20 @@
 """
 
 # ===================================================================================================
+# Packages
+# ===================================================================================================
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+import cartopy
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+from cartopy.util import add_cyclic_point
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
+# ===================================================================================================
 def rank_gufunc(x):
     ''' Returns ranked data along specified dimension '''
     
@@ -557,3 +571,175 @@ def get_nearest_point(da, lat, lon):
     """ Returns the nearest grid point to the specified lat/lon location """
 
     return da.sel(lat=lat,lon=lon,method='nearest')
+
+
+# ===================================================================================================
+# visualization tools
+# ===================================================================================================
+def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2, mult_row=1, 
+                mult_col=1, mult_cshift=1, mult_cbar=1, contour=False, cmap='viridis', fontsize=12, invert=False):
+    """ Plots tiles of figures """
+    
+    matplotlib.rc('font', family='sans-serif')
+    matplotlib.rc('font', serif='Helvetica') 
+    matplotlib.rc('text', usetex='false') 
+    matplotlib.rcParams.update({'font.size': fontsize})
+
+    nrow = int(np.ceil(len(data)/ncol));
+
+    fig = plt.figure(figsize=(11*mult_col, nrow*4*mult_row))
+        
+    count = 1
+    for idx,dat in enumerate(data):
+        if ('lat' in dat.dims) and ('lon' in dat.dims):
+            trans = cartopy.crs.PlateCarree()
+            ax = plt.subplot(nrow, ncol, count, projection=cartopy.crs.PlateCarree(central_longitude=180))
+            extent = [dat.lon.min(), dat.lon.max(), 
+                      dat.lat.min(), dat.lat.max()]
+
+            if contour is True:
+                if cmin is not None:
+                    ax.coastlines(color='gray')
+                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,12), origin='lower', transform=trans, 
+                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
+                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,12), origin='lower', transform=trans,
+                              colors='w', linewidths=2)
+                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,12), origin='lower', transform=trans,
+                              colors='k', linewidths=1)
+                else:
+                    ax.coastlines(color='black')
+                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,20), origin='lower', transform=trans, 
+                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
+            else:
+                im = ax.imshow(dat, origin='lower', extent=extent, transform=trans, vmin=vmin, vmax=vmax, cmap=cmap)
+
+            gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), draw_labels=True)
+            gl.xlines = False
+            gl.ylines = False
+            gl.xlabels_top = False
+            if count % ncol == 0:
+                gl.ylabels_left = False
+            elif (count+ncol-1) % ncol == 0: 
+                gl.ylabels_right = False
+            else:
+                gl.ylabels_left = False
+                gl.ylabels_right = False
+            gl.xlocator = mticker.FixedLocator([-90, 0, 90, 180])
+            gl.ylocator = mticker.FixedLocator([-90, -60, 0, 60, 90])
+            gl.xformatter = LONGITUDE_FORMATTER
+            gl.yformatter = LATITUDE_FORMATTER
+            ax.set_title(headings[idx], fontsize=fontsize)
+        else:
+            ax = plt.subplot(nrow, ncol, count)
+            if 'lat' in dat.dims:
+                x_plt = dat['lat']
+                y_plt = dat[find_other_dims(dat,'lat')[0]]
+                # if dat.get_axis_num('lat') > 0:
+                #     dat = dat.transpose()
+            elif 'lon' in dat.dims:
+                x_plt = dat['lon']
+                y_plt = dat[find_other_dims(dat,'lon')[0]]
+                # if dat.get_axis_num('lon') > 0:
+                #     dat = dat.transpose()
+            else: 
+                x_plt = dat[dat.dims[1]]
+                y_plt = dat[dat.dims[0]]
+                
+            extent = [x_plt.min(), x_plt.max(), 
+                      y_plt.min(), y_plt.max()]
+            
+            if contour is True:
+                if cmin is not None:
+                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, 
+                                     vmax=vmax, cmap=cmap, extend='both')
+                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='w', linewidths=2)
+                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='k', linewidths=1)
+                else:
+                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,20), vmin=vmin, 
+                                     vmax=vmax, cmap=cmap, extend='both')
+            else:
+                im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
+                
+            if count % ncol == 0:
+                ax.yaxis.tick_right()
+            elif (count+ncol-1) % ncol == 0: 
+                ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
+            else:
+                ax.set_yticks([])
+            if idx / ncol >= nrow - 1:
+                ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
+            ax.set_title(headings[idx], fontsize=fontsize)
+            
+            if invert:
+                ax.invert_yaxis()
+
+        count += 1
+
+    plt.tight_layout()
+    fig.subplots_adjust(bottom=mult_cshift*0.16)
+    cbar_ax = fig.add_axes([0.15, 0.13, 0.7, mult_cbar*0.020])
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
+    cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
+    cbar.set_ticks(np.linspace(vmin,vmax,5))
+    
+    
+# ===================================================================================================
+def size_GB(xr_object):
+    """
+    How many GB (or GiB) is your xarray object?
+    
+    // Requires an xarray object
+        
+    // Returns:
+    * equivalent GB (GBytes) - 10^9 conversion
+    * equivalent GiB (GiBytes) - 2^ 30 conversion
+        
+    < Thomas Moore - thomas.moore@csiro.au - 10102018 >
+    """ 
+    bytes = xr_object.nbytes
+    Ten2the9 = 10**9
+    Two2the30 = 2**30
+    GBytes = bytes / Ten2the9
+    GiBytes = bytes / Two2the30
+    
+    #print out results
+    print(xr_object.name, "is", GBytes, "GB", 'which is', GiBytes,"GiB")
+    
+    
+    return GBytes,GiBytes
+
+
+# ===================================================================================================
+def get_pres_name(da):
+    """ 
+        Returns name of pressure dimension in input array
+        Author: Dougie Squire
+        Date: 03/03/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to pressure
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to pressure
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
+        ...                          ('pfull', np.arange(2))])
+        >>> doppyo.utils.get_pres_name(A)
+        'pfull'
+    """
+    
+    if 'pfull' in da.dims:
+        return 'pfull'
+    elif 'phalf' in da.dims:
+        return 'phalf'
+    else:
+        raise KeyError('Unable to determine pressure dimension')
+        pass

@@ -5,14 +5,13 @@
     Python Version: 3.6
 """
 
-__all__ = ['timer', 'constant', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 
-           'histogram', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 'multiply',
-           'divide', 'average', 'fft', 'ifft', 'fftfilt', 'load_climatology', 'anomalize', 
-           'trunc_time', 'leadtime_to_datetime', 'datetime_to_leadtime', 
+__all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'histogram', 
+           'get_bin_edges', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 
+           'multiply','divide', 'average', 'fft', 'ifft', 'fftfilt', 'load_mean_climatology', 
+           'anomalize', 'trunc_time', 'leadtime_to_datetime', 'datetime_to_leadtime', 
            'repeat_datapoint', 'get_latlon_region', 'latlon_average', 'stack_by_init_date', 
-           'concat_times', 'prune', 'get_bin_edges', 
-           '_is_datetime', 'find_other_dims', 'get_lon_name', 'get_lat_name', 'get_level_name',
-           'get_pres_name', 'cftime_to_datetime64', 'get_depth_name', 'size_GB']
+           'concat_times', 'prune', 'get_other_dims', 'cftime_to_datetime64', 'get_lon_name', 
+           'get_lat_name', 'get_depth_name', 'get_level_name', 'get_plevel_name', '_is_datetime']
 
 # ===================================================================================================
 # Packages
@@ -30,13 +29,6 @@ from scipy import ndimage
 import dask.array
 import copy
 import warnings
-
-import cartopy
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-from cartopy.util import add_cyclic_point
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 # Load doppyo packages -----
 from doppyo import skill
@@ -246,7 +238,7 @@ def digitize(da, bin_edges):
         --------
         >>> da = xr.DataArray(np.random.normal(size=(20,40)), coords=[('x', np.arange(20)), 
         ...                                                           ('y', np.arange(40))])
-        >>> bins=np.linspace(-2,2,10)
+        >>> bins = np.linspace(-2,2,10)
         >>> bin_edges = doppyo.utils.get_bin_edges(bins)
         >>> doppyo.utils.digitize(da, bin_edges)
         <xarray.DataArray 'digitized' (x: 20, y: 40)>
@@ -293,7 +285,7 @@ def pdf(da, bin_edges, over_dims):
         Examples
         --------
         >>> da = xr.DataArray(np.random.normal(size=(100,100)), coords=[('x', np.arange(100)), ('y', np.arange(100))])
-        >>> bins=np.linspace(-2,2,10)
+        >>> bins = np.linspace(-2,2,10)
         >>> bin_edges = doppyo.utils.get_bin_edges(bins)
         >>> doppyo.utils.pdf(da, bin_edges=bin_edges, over_dims='x')
         <xarray.DataArray (bins: 10, y: 100)>
@@ -344,7 +336,7 @@ def cdf(da, bin_edges, over_dims):
         Examples
         --------
         >>> da = xr.DataArray(np.random.normal(size=(100,100)), coords=[('x', np.arange(100)), ('y', np.arange(100))])
-        >>> bins=np.linspace(-2,2,10)
+        >>> bins = np.linspace(-2,2,10)
         >>> bin_edges = doppyo.utils.get_bin_edges(bins)
         >>> doppyo.utils.cdf(da, bin_edges=bin_edges, over_dims='x')
         <xarray.DataArray (bins: 10, y: 100)>
@@ -394,7 +386,7 @@ def histogram(da, bin_edges, over_dims):
         --------
         >>> da = xr.DataArray(np.random.normal(size=(100,100)), 
         ...                   coords=[('x', np.arange(100)), ('y', np.arange(100))])
-        >>> bins=np.linspace(-2,2,10)
+        >>> bins = np.linspace(-2,2,10)
         >>> bin_edges = doppyo.utils.get_bin_edges(bins)
         >>> doppyo.utils.histogram(da, bin_edges=bin_edges, over_dims='x')
         <xarray.DataArray 'data' (bins: 10, y: 100)>
@@ -456,6 +448,40 @@ def histogram(da, bin_edges, over_dims):
     
     # Add nans where data did not fall in any bin -----
     return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
+
+
+# ===================================================================================================
+def get_bin_edges(bins):
+    """ 
+        Returns bin edges of provided bins 
+        Author: Dougie Squire
+        Date: 06/03/2018
+        
+        Parameters
+        ----------
+        bins : array_like
+            One-dimensional array of bin values to compute bin edges
+        
+        Returns
+        -------
+        edges : array_like
+            Array of bin edges where the first and last edge are computed using the spacing between
+            the first-and-second and second-last-and-last bins, respectively. This array is one
+            element larger than the input array
+            
+        Examples
+        --------
+        >>> bins = np.linspace(-2,2,10)
+        >>> bin_edges = doppyo.utils.get_bin_edges(bins)
+        array([-2.5, -1.5, -0.5,  0.5,  1.5,  2.5])
+    """
+    
+    dbin = np.diff(bins)/2
+    bin_edges = np.concatenate(([bins[0]-dbin[0]], 
+                                 bins[:-1]+dbin, 
+                                 [bins[-1]+dbin[-1]]))
+    
+    return bin_edges
 
 
 # ===================================================================================================
@@ -669,7 +695,7 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
 # ===================================================================================================
 def add(data_1, data_2):
     """ 
-        Returns the addition of two arrays, data_1 + data_2
+        Returns the addition of two arrays, data_1 + data_2. Useful for xr.apply type operations
         Author: Dougie Squire
         Date: 27/06/2018
 
@@ -704,7 +730,7 @@ def add(data_1, data_2):
 # ===================================================================================================
 def subtract(data_1, data_2):
     """ 
-        Returns the difference of two arrays, data_1 - data_2
+        Returns the difference of two arrays, data_1 - data_2. Useful for xr.apply type operations
         Author: Dougie Squire
         Date: 27/06/2018
 
@@ -740,7 +766,7 @@ def subtract(data_1, data_2):
 # ===================================================================================================
 def multiply(data_1, data_2):
     """ 
-        Returns the multiplication of two fields, data_1 * data_2
+        Returns the multiplication of two fields, data_1 * data_2. Useful for xr.apply type operations
         Author: Dougie Squire
         Date: 27/06/2018
         
@@ -776,7 +802,7 @@ def multiply(data_1, data_2):
 # ===================================================================================================
 def divide(data_1, data_2):
     """ 
-        Returns the division of two fields, data_1 / data_2
+        Returns the division of two fields, data_1 / data_2. Useful for xr.apply type operations
         Author: Dougie Squire
         Date: 27/06/2018
         
@@ -1783,6 +1809,7 @@ def concat_times(da, init_date_name='init_date', lead_time_name='lead_time', tim
                                             lead_time_name=lead_time_name))
     return xr.concat(da_list, dim=time_name)
 
+
 # ===================================================================================================
 def prune(da, squeeze=False):
     """ 
@@ -1827,29 +1854,33 @@ def prune(da, squeeze=False):
 
 
 # ===================================================================================================
-def get_bin_edges(bins):
-    ''' Returns bin edges of provided bins '''
-    
-    dbin = np.diff(bins)/2
-    bin_edges = np.concatenate(([bins[0]-dbin[0]], 
-                                 bins[:-1]+dbin, 
-                                 [bins[-1]+dbin[-1]]))
-    
-    return bin_edges
-
-
-# ===================================================================================================
-def _is_datetime(value):
-    """ Return True or False depending on whether input is datetime64 or not """
-    
-    return pd.api.types.is_datetime64_dtype(value)
-
-
-# ===================================================================================================
 # xarray processing tools
 # ===================================================================================================
-def find_other_dims(da, dims_exclude):
-    """ Returns all dimensions in dataset excluding dim_exclude """
+def get_other_dims(da, dims_exclude):
+    """ 
+        Returns all dimensions in provided dataset excluding dim_exclude 
+        Author: Dougie Squire
+        Date: 22/04/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to retreive dimensions from
+        dims_exclude : str or sequence of str
+            Dimensions to exclude
+        
+        Returns
+        -------
+        dims : str or sequence of str
+            Dimensions of input array, excluding dims_exclude
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,2)), coords=[('x', np.arange(3)), 
+        ...                                                        ('y', np.arange(2))])
+        >>> doppyo.utils.get_other_dims(A, 'y')
+        'x'
+    """
     
     dims = da.dims
     
@@ -1861,17 +1892,87 @@ def find_other_dims(da, dims_exclude):
         if isinstance(dims_exclude, str):
             dims_exclude = [dims_exclude]
 
-        other_dims = list(set(dims).difference(set(dims_exclude)))
-        if len(other_dims) > 1:
-            other_dims = tuple(other_dims)
-        if other_dims == []:
-            other_dims = None
+        other_dims = tuple(set(dims).difference(set(dims_exclude)))
+        if len(other_dims) == 0:
+            return None
+        elif len(other_dims) == 1:
+            return other_dims[0]
+        else:
+            return other_dims
+
+
+# ===================================================================================================
+def cftime_to_datetime64(time, shift_year=0):
+    """ 
+        Convert cftime object to datetime64 object, allowing for `NOLEAP` calendar configuration
+        Author: Dougie Squire
+        Date: 04/09/2018
         
-    return other_dims
+        Parameters
+        ----------
+        time : cftime or array_like of cftime
+            Times to be converted to datetime64
+        shift_year: values
+            Number of years to shift times by. cftime objects are generated by xarray when times fall
+            outside of the range 1678-2261. Shifting years to within this range enables conversion to
+            datetime64 within an xarray object
+            
+        Returns
+        --------
+        converted : numpy datetime64 or array_like of numpy datetime64
+            Input times converted from cftime to numpy datetime64
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(12)), 
+        ...                  coords=[('time', np.array([cftime.datetime(0, m, 1) for m in np.arange(1,13)]))])
+        >>> A['time'] = doppyo.utils.cftime_to_datetime64(A['time'], shift_year=2000)
+        >>> A
+        <xarray.DataArray (time: 12)>
+        array([ 0.391673, -1.317681,  1.51771 , -0.195475,  0.525342,  0.390625,
+                1.426725, -0.261821,  1.021318,  1.205761, -0.907714,  1.009402])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-01 2000-02-01 ... 2000-12-01
+
+        Limitations
+        -----------
+        Times must be sequential and monotonic
+    """
+
+    if (time.values[0].timetuple()[0]+shift_year < 1678) | (time.values[-1].timetuple()[0]+shift_year > 2261):
+        raise ValueError('Cannot create datetime64 object for years outside on 1678-2262')
+        
+    return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
+                                                 .strftime(), 'ns') \
+                                                 for i in range(len(time))])
+
 
 # ===================================================================================================
 def get_lon_name(da):
-    """ Returns name of longitude coordinate in da """
+    """ 
+        Returns name of longitude dimension in input array
+        Author: Dougie Squire
+        Date: 03/03/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to longitude
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to longitude
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
+        ...                          ('pfull', np.arange(2))])
+        >>> doppyo.utils.get_lon_name(A)
+        'lon'
+    """
     
     if 'lon' in da.dims:
         return 'lon'
@@ -1886,7 +1987,30 @@ def get_lon_name(da):
 
 # ===================================================================================================
 def get_lat_name(da):
-    """ Returns name of latitude coordinate in da """
+    """ 
+        Returns name of latitude dimension in input array
+        Author: Dougie Squire
+        Date: 03/03/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to latitude
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to latitude
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
+        ...                          ('pfull', np.arange(2))])
+        >>> doppyo.utils.get_lat_name(A)
+        'lat'
+    """
     
     if 'lat' in da.dims:
         return 'lat'
@@ -1901,7 +2025,30 @@ def get_lat_name(da):
     
 # ===================================================================================================
 def get_depth_name(da):
-    """ Returns name of ocean depth coordinate in da """
+    """ 
+        Returns name of depth dimension in input array
+        Author: Thomas Moore
+        Date: 31/10/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to depth
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to depth
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
+        ...                          ('pfull', np.arange(2))])
+        >>> doppyo.utils.get_depth_name(A)
+        'depth'
+    """
     
     if 'depth' in da.dims:
         return 'depth'
@@ -1915,7 +2062,30 @@ def get_depth_name(da):
     
 # ===================================================================================================
 def get_level_name(da):
-    """ Returns name of level coordinate in da """
+    """ 
+        Returns name of atmospheric level dimension in input array
+        Author: Dougie Squire
+        Date: 03/03/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to atmospheric level
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to atmospheric level
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
+        ...                          ('pfull', np.arange(2))])
+        >>> doppyo.utils.get_level_name(A)
+        'level'
+    """
     
     if 'level' in da.dims:
         return 'level'
@@ -1926,175 +2096,66 @@ def get_level_name(da):
     
 # ===================================================================================================
 def get_plevel_name(da):
-    """ Returns name of pressure level coordinate in da """
+    """ 
+        Returns name of pressure level dimension in input array
+        Author: Dougie Squire
+        Date: 03/03/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to pressure level
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to pressure level
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
+        ...                          ('pfull', np.arange(2))])
+        >>> doppyo.utils.get_plevel_name(A)
+        'level'
+    """
     
     if 'level' in da.dims:
         return 'level'
     else:
         raise KeyError('Unable to determine pressure level dimension')
         pass
-    
+
     
 # ===================================================================================================
-def get_pres_name(da):
-    """ Returns name of pressure coordinate in da """
-    
-    if 'pfull' in da.dims:
-        return 'pfull'
-    elif 'phalf' in da.dims:
-        return 'phalf'
-    else:
-        raise KeyError('Unable to determine pressure dimension')
-        pass
-
-
+# General tools    
 # ===================================================================================================
-def cftime_to_datetime64(time,shift_year=0):
+def _is_datetime(object):
     """ 
-    Convert cftime object to datetime64 object
-    
-    Assumes times are sequential
-    """
-
-    if (time.values[0].timetuple()[0]+shift_year < 1678) | (time.values[-1].timetuple()[0]+shift_year > 2261):
-        raise ValueError('Cannot create datetime64 object for years outside on 1678-2262')
+        Return True or False depending on whether input is datetime64 or not 
+        Author: Dougie Squire
+        Date: 19/15/2018
         
-    return np.array([np.datetime64(time.values[i].replace(year=time.values[i].timetuple()[0]+shift_year) \
-                                                 .strftime(), 'ns') \
-                                                 for i in range(len(time))])
-
-
-# ===================================================================================================
-# visualization tools
-# ===================================================================================================
-def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2, mult_row=1, 
-                mult_col=1, mult_cshift=1, mult_cbar=1, contour=False, cmap='viridis', fontsize=12, invert=False):
-    """ Plots tiles of figures """
-    
-    matplotlib.rc('font', family='sans-serif')
-    matplotlib.rc('font', serif='Helvetica') 
-    matplotlib.rc('text', usetex='false') 
-    matplotlib.rcParams.update({'font.size': fontsize})
-
-    nrow = int(np.ceil(len(data)/ncol));
-
-    fig = plt.figure(figsize=(11*mult_col, nrow*4*mult_row))
-        
-    count = 1
-    for idx,dat in enumerate(data):
-        if ('lat' in dat.dims) and ('lon' in dat.dims):
-            trans = cartopy.crs.PlateCarree()
-            ax = plt.subplot(nrow, ncol, count, projection=cartopy.crs.PlateCarree(central_longitude=180))
-            extent = [dat.lon.min(), dat.lon.max(), 
-                      dat.lat.min(), dat.lat.max()]
-
-            if contour is True:
-                if cmin is not None:
-                    ax.coastlines(color='gray')
-                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,12), origin='lower', transform=trans, 
-                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
-                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,12), origin='lower', transform=trans,
-                              colors='w', linewidths=2)
-                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,12), origin='lower', transform=trans,
-                              colors='k', linewidths=1)
-                else:
-                    ax.coastlines(color='black')
-                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,20), origin='lower', transform=trans, 
-                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
-            else:
-                im = ax.imshow(dat, origin='lower', extent=extent, transform=trans, vmin=vmin, vmax=vmax, cmap=cmap)
-
-            gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), draw_labels=True)
-            gl.xlines = False
-            gl.ylines = False
-            gl.xlabels_top = False
-            if count % ncol == 0:
-                gl.ylabels_left = False
-            elif (count+ncol-1) % ncol == 0: 
-                gl.ylabels_right = False
-            else:
-                gl.ylabels_left = False
-                gl.ylabels_right = False
-            gl.xlocator = mticker.FixedLocator([-90, 0, 90, 180])
-            gl.ylocator = mticker.FixedLocator([-90, -60, 0, 60, 90])
-            gl.xformatter = LONGITUDE_FORMATTER
-            gl.yformatter = LATITUDE_FORMATTER
-            ax.set_title(headings[idx], fontsize=fontsize)
-        else:
-            ax = plt.subplot(nrow, ncol, count)
-            if 'lat' in dat.dims:
-                x_plt = dat['lat']
-                y_plt = dat[find_other_dims(dat,'lat')[0]]
-                # if dat.get_axis_num('lat') > 0:
-                #     dat = dat.transpose()
-            elif 'lon' in dat.dims:
-                x_plt = dat['lon']
-                y_plt = dat[find_other_dims(dat,'lon')[0]]
-                # if dat.get_axis_num('lon') > 0:
-                #     dat = dat.transpose()
-            else: 
-                x_plt = dat[dat.dims[1]]
-                y_plt = dat[dat.dims[0]]
-                
-            extent = [x_plt.min(), x_plt.max(), 
-                      y_plt.min(), y_plt.max()]
+        Parameters
+        ----------
+        object : value
+            Object to query
             
-            if contour is True:
-                if cmin is not None:
-                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, 
-                                     vmax=vmax, cmap=cmap, extend='both')
-                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='w', linewidths=2)
-                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='k', linewidths=1)
-                else:
-                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,20), vmin=vmin, 
-                                     vmax=vmax, cmap=cmap, extend='both')
-            else:
-                im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
-                
-            if count % ncol == 0:
-                ax.yaxis.tick_right()
-            elif (count+ncol-1) % ncol == 0: 
-                ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
-            else:
-                ax.set_yticks([])
-            if idx / ncol >= nrow - 1:
-                ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
-            ax.set_title(headings[idx], fontsize=fontsize)
+        Returns
+        -------
+        isdatetime : bool
+            True or False depending on whether input is datetime64 or not
             
-            if invert:
-                ax.invert_yaxis()
-
-        count += 1
-
-    plt.tight_layout()
-    fig.subplots_adjust(bottom=mult_cshift*0.16)
-    cbar_ax = fig.add_axes([0.15, 0.13, 0.7, mult_cbar*0.020])
-    cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
-    cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
-    cbar.set_ticks(np.linspace(vmin,vmax,5))
-    
-    
-# ===================================================================================================
-def size_GB(xr_object):
+        Examples
+        --------
+        >>> A = np.datetime64('2000-01-01')
+        >>> doppyo.utils._is_datetime(A)
+        True
     """
-    How many GB (or GiB) is your xarray object?
     
-    // Requires an xarray object
-        
-    // Returns:
-    * equivalent GB (GBytes) - 10^9 conversion
-    * equivalent GiB (GiBytes) - 2^ 30 conversion
-        
-    < Thomas Moore - thomas.moore@csiro.au - 10102018 >
-    """ 
-    bytes = xr_object.nbytes
-    Ten2the9 = 10**9
-    Two2the30 = 2**30
-    GBytes = bytes / Ten2the9
-    GiBytes = bytes / Two2the30
-    
-    #print out results
-    print(xr_object.name, "is", GBytes, "GB", 'which is', GiBytes,"GiB")
-    
-    
-    return GBytes,GiBytes
+    return pd.api.types.is_datetime64_dtype(value)
+
+
+
+
