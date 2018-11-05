@@ -425,7 +425,13 @@ def histogram(da, bin_edges, over_dims):
         else:
             return ((0 * unstacked) + 1).sum(dim=dims, skipna=True) # da.count has no skipna option in 0.10.8
 
+    if over_dims is None:
+        over_dims = []
     bins = (bin_edges[0:-1]+bin_edges[1:]) / 2
+    
+    # Replace nans with a value not in any bin (np.histogram has difficulty with nans) -----
+    replace_val = 1000 * max(bin_edges) 
+    da = da.copy().fillna(replace_val)
     
     # If histogram is computed over all dimensions, use dask/np.histogram
     if set(da.dims) == set(over_dims):
@@ -439,12 +445,16 @@ def histogram(da, bin_edges, over_dims):
     else:
         # To use groupby_bins, da must have a name -----
         da = da.rename('histogram') 
-
-        hist = da.groupby_bins(da, bins=bin_edges, squeeze=False) \
-                 .apply(_unstack_and_count, dims=over_dims) \
-                 .fillna(0) \
-                 .rename({'histogram_bins' : 'bins'})
-        hist['bins'] = (bin_edges[0:-1]+bin_edges[1:]) / 2
+        
+        group = da.groupby_bins(da, bins=bin_edges, squeeze=False)
+        
+        if list(group) == []:
+            raise ValueError('Input array must contain at least one element that falls in a bin')
+        else:
+            hist =  group.apply(_unstack_and_count, dims=over_dims) \
+                         .fillna(0) \
+                         .rename({'histogram_bins' : 'bins'})
+            hist['bins'] = (bin_edges[0:-1]+bin_edges[1:]) / 2
     
     # Add nans where data did not fall in any bin -----
     return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
@@ -1968,8 +1978,7 @@ def get_lon_name(da):
         --------
         >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
         ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
-        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
-        ...                          ('pfull', np.arange(2))])
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2))])
         >>> doppyo.utils.get_lon_name(A)
         'lon'
     """
@@ -2006,8 +2015,7 @@ def get_lat_name(da):
         --------
         >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
         ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
-        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
-        ...                          ('pfull', np.arange(2))])
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2))])
         >>> doppyo.utils.get_lat_name(A)
         'lat'
     """
@@ -2044,8 +2052,7 @@ def get_depth_name(da):
         --------
         >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
         ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
-        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
-        ...                          ('pfull', np.arange(2))])
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2))])
         >>> doppyo.utils.get_depth_name(A)
         'depth'
     """
@@ -2081,8 +2088,7 @@ def get_level_name(da):
         --------
         >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
         ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
-        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
-        ...                          ('pfull', np.arange(2))])
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2))])
         >>> doppyo.utils.get_level_name(A)
         'level'
     """
@@ -2115,8 +2121,7 @@ def get_plevel_name(da):
         --------
         >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
         ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
-        ...                          ('depth', np.arange(2)), ('level', np.arange(2)), 
-        ...                          ('pfull', np.arange(2))])
+        ...                          ('depth', np.arange(2)), ('level', np.arange(2))])
         >>> doppyo.utils.get_plevel_name(A)
         'level'
     """

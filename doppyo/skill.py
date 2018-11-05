@@ -1,20 +1,22 @@
 """
-    doppyo functions for assessing one data-set relative to another (usually model output to observation)
+    doppyo functions for assessing one dataset relative to another (usually model output to observation)
     Author: Dougie Squire
     Date created: 04/04/2018
     Python Version: 3.6
+    
+    Notes
+    -----
+    In the following we refer to the datasets being assessed as comparison data (da_cmp) and reference
+    data (da_ref). We seek to assess the skill of the former relative to the latter. Usually, da_cmp
+    and da_ref comprise model output (e.g. forecasts) and observations, respectively.
 """
 
-__all__ = ['rank_histogram', 'compute_rps', 'compute_reliability', 'compute_roc', 
-           'compute_discrimination', 'compute_Brier_score', 'compute_contingency_table', 
-           'compute_accuracy_score', 'compute_Heidke_score', 'compute_Peirce_score', 
-           'compute_Gerrity_score', 'compute_bias_score', 'compute_hit_rate', 
-           'compute_false_alarm_ratio', 'compute_false_alarm_rate', 'compute_success_ratio', 
-           'compute_threat_score', 'compute_equit_threat_score', 'compute_odds_ratio',
-           'compute_odds_ratio_skill', 'compute_mean_additive_bias', 
-           'compute_mean_multiplicative_bias', 'compute_mean_absolute_error', 
-           'compute_mean_squared_error', 'compute_rms_error', 'did_event', 'compute_likelihood',
-           'sum_contingency']
+__all__ = ['rank_histogram', 'rps', 'reliability', 'roc', 'discrimination', 'Brier_score', 
+           'contingency', '_sum_contingency', 'accuracy_score', 'Heidke_score', 'Peirce_score', 
+           'Gerrity_score', 'bias_score', 'hit_rate', 'false_alarm_ratio', 'false_alarm_rate', 
+           'success_ratio', 'threat_score', 'equit_threat_score', 'odds_ratio', 
+           'odds_ratio_skill_score', 'mean_additive_bias', 'mean_multiplicative_bias', 
+           'mean_absolute_error', 'mean_squared_error', 'rms_error', 'Pearson_corrcoeff']
 
 # ===================================================================================================
 # Packages
@@ -41,11 +43,11 @@ def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'
         Parameters
         ----------
         da_cmp : xarray DataArray
-            Comparison data. This data is used to rank the reference data. Must include an ensemble 
-            dimension
+            Array containing data to be compared to reference dataset (usually forecasts). This data 
+            is used to rank the reference data. Must include an ensemble dimension
         da_ref : xarray DataArray
-            Reference data. This data is ranked within the comparison data. Dimensions should match
-            those of da_cmp
+            Array containing reference data (usually observations). This data is ranked within the 
+            comparison data. Dimensions should match those of da_cmp
         over_dims : str or sequence of str
             The dimension(s) over which to compute the histogram of ranks
         norm : bool, optional
@@ -60,22 +62,24 @@ def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'
             
         Examples
         --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(100,100,20)), 
-        ...                       coords=[('x', np.arange(100)), ('y', np.arange(100)), ('e', np.arange(20))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(100,100)), 
-        ...                       coords=[('x', np.arange(100)), ('y', np.arange(100))])
-        >>> doppyo.skill.rank_histogram(da_cmp, da_ref, over_dims='x', ensemble_dim='e')
-        <xarray.DataArray (bins: 21, y: 100)>
-        array([[0.04, 0.05, 0.04, ..., 0.06, 0.06, 0.02],
-               [0.04, 0.06, 0.05, ..., 0.04, 0.03, 0.05],
-               [0.06, 0.03, 0.04, ..., 0.01, 0.05, 0.01],
-               ...,
-               [0.05, 0.02, 0.06, ..., 0.05, 0.03, 0.08],
-               [0.08, 0.07, 0.04, ..., 0.04, 0.03, 0.04],
-               [0.07, 0.04, 0.05, ..., 0.08, 0.03, 0.02]])
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
+        ...                                                             ('y', np.arange(3))])
+        >>> doppyo.skill.rank_histogram(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'rank_histogram' (bins: 4, y: 3)>
+        array([[1.      , 0.333333, 0.333333],
+               [0.      , 0.333333, 0.333333],
+               [0.      , 0.      , 0.333333],
+               [0.      , 0.333333, 0.      ]])
         Coordinates:
-          * bins     (bins) float64 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 ...
-          * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
+          * bins     (bins) float64 1.0 2.0 3.0 4.0
+          * y        (y) int64 0 1 2
+
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
     """
     
     def _rank_first(x):
@@ -119,8 +123,48 @@ def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'
 
 
 # ===================================================================================================
-def compute_rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
-    """ Returns the ranked probability score """
+def rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
+    """ 
+        Returns the ranked probability score
+        Author: Dougie Squire
+        Date: 10/05/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        bins : array_like
+            Bins to compute the ranked probability score over
+        over_dims : str or sequence of str, optional
+            Dimensions over which to average the ranked probability score
+        ensemble_dim : str, optional
+            Name of ensemble dimension
+            
+        Returns
+        -------
+        rps : xarray DataArray
+            Array containing ranked probability score 
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
+        ...                                                             ('y', np.arange(3))])
+        >>> bins = np.linspace(-2,2,10)
+        >>> doppyo.skill.rps(da_cmp, da_ref, bins=bins, over_dims='x')
+        <xarray.DataArray 'rps' (y: 3)>
+        array([0.36214 , 0.806584, 0.263374])
+        Coordinates:
+          * y        (y) int64 0 1 2
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
 
     if over_dims is None:
         over_dims = []
@@ -129,35 +173,98 @@ def compute_rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
     bin_edges = utils.get_bin_edges(bins)
 
     # Compute cumulative density functions -----
-    cdf_cmp = utils.compute_cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
-    cdf_ref = utils.compute_cdf(da_ref, bin_edges=bin_edges, over_dims=None)
+    cdf_cmp = utils.cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
+    cdf_ref = utils.cdf(da_ref, bin_edges=bin_edges, over_dims=None)
     
     return utils.integrate((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
-                .mean(dim=over_dims, skipna=True)
+                .mean(dim=over_dims, skipna=True).rename('rps')
 
 
 # ===================================================================================================
-def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, over_dims, nans_as_zeros=True):
+def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5), 
+                nans_as_zeros=True):
     """ 
-    Computes the relative frequency of an event given the comparison likelihood and reference 
-    logical event data 
+        Computes the relative frequency of an event for a range of probability threshold bins
+        given the comparison likelihood and reference logical event data 
+        Author: Dougie Squire
+        Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
+            (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
+            ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the reliability
+        probability_bins : array_like, optional
+            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+        nans_as_zeros : bool, optional
+            Replace output nans (resulting fron bins with no data) with zeros
+            
+        Returns
+        -------
+        reliability : xarray DataSet
+            Dataset containing the following variables:
+            relative_freq; the relative frequency of occurence for each probability threshold bin
+            cmp_number; the number of instances that the comparison data fall within each probability
+            threshold bin
+            ref_occur; the number of instances that the reference data is True when the comparison data
+            falls within each probability threshold bin
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.reliability(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.Dataset>
+        Dimensions:          (probability_bin: 5, y: 3)
+        Coordinates:
+          * y                (y) int64 0 1 2
+          * probability_bin  (probability_bin) float64 0.0 0.25 0.5 0.75 1.0
+        Data variables:
+            relative_freq    (probability_bin, y) float64 0.0 0.5 0.0 ... 1.0 0.0 0.0
+            cmp_number       (probability_bin, y) int64 0 2 1 2 0 1 0 0 0 0 1 1 1 0 0
+            ref_occur        (probability_bin, y) int64 0 1 0 1 0 0 0 0 0 0 0 1 1 0 0
+        
+        To do
+        -----
+        Currently using a for-loop to process each probability bin separately. Is it possible
+        to remove this loop?
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
     """
     
     if over_dims is None:
         over_dims = []
         
     ref_binary = ref_logical.copy()*1
+        
+    # Check that comparison data is likelihoods and reference data is binary -----
+    if ((cmp_likelihood > 1).any().item()) | ((cmp_likelihood < 0).any().item()):
+        raise ValueError('Input "cmp_likelihood" must represent likelihoods and must have values between 0 and 1')
+    if not ((ref_logical == 0) | (ref_logical == 1)).all().item():
+        raise ValueError('Input "ref_logical" must represent logical (True/False) outcomes')
     
     # Initialise probability bins -----
-    cmp_prob_edges = utils.get_bin_edges(cmp_prob)
-    
+    probability_bin_edges = utils.get_bin_edges(probability_bins)
+
     # Loop over probability bins -----
     cmp_number_list = []
     ref_occur_list = []
-    for idx in range(len(cmp_prob_edges)-1):
+    for idx in range(len(probability_bin_edges)-1):
         # Logical of comparisons that fall within probability bin -----
-        cmp_in_bin = (cmp_likelihood >= cmp_prob_edges[idx]) & \
-                     (cmp_likelihood < cmp_prob_edges[idx+1])
+        cmp_in_bin = (cmp_likelihood >= probability_bin_edges[idx]) & \
+                     (cmp_likelihood < probability_bin_edges[idx+1])
         
         # Number of comparisons that fall within probability bin -----
         cmp_number_list.append((1 * cmp_in_bin).sum(dim=over_dims, skipna=True))  
@@ -165,13 +272,13 @@ def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, over_dims, nans_a
         # Number of reference occurences where comparison likelihood is within probability bin -----
         ref_occur_list.append((1 * ((cmp_in_bin == True) & (ref_logical == True))) \
                       .sum(dim=over_dims, skipna=True))
-        
+    
     # Concatenate lists -----
-    cmp_number = xr.concat(cmp_number_list, dim='comparison_probability')
-    cmp_number['comparison_probability'] = cmp_prob       
+    cmp_number = xr.concat(cmp_number_list, dim='probability_bin')
+    cmp_number['probability_bin'] = probability_bins       
 
-    ref_occur = xr.concat(ref_occur_list, dim='comparison_probability')
-    ref_occur['comparison_probability'] = cmp_prob  
+    ref_occur = xr.concat(ref_occur_list, dim='probability_bin')
+    ref_occur['probability_bin'] = probability_bins  
 
     # Reference relative frequency -----
     relative_freq = ref_occur / cmp_number
@@ -184,18 +291,70 @@ def compute_reliability(cmp_likelihood, ref_logical, cmp_prob, over_dims, nans_a
     reliability = relative_freq.to_dataset(name='relative_freq')
     reliability.relative_freq.attrs['name'] = 'relative frequency'
     reliability['cmp_number'] = cmp_number
-    reliability.cmp_number.attrs['name'] = 'number of comparisons'
+    reliability.cmp_number.attrs['name'] = 'number of comparisons in bin'
     reliability['ref_occur'] = ref_occur
-    reliability.ref_occur.attrs['name'] = 'number of reference occurences'
+    reliability.ref_occur.attrs['name'] = 'number of reference occurences when comparisons in bin'
 
     return reliability
 
 
 # ===================================================================================================
-def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
+def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
     """ 
-    Computes the relative operating characteristic of an event given the comparison likelihood and 
-    reference logical event data 
+        Computes the relative operating characteristic of an event for a range of probability 
+        threshold bins given the comparison likelihood and reference logical event data 
+        Author: Dougie Squire
+        Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
+            (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
+            ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the relative operating characteristic
+        probability_bins : array_like, optional
+            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+            
+        Returns
+        -------
+        roc : xarray DataSet
+            Dataset containing the following variables:
+            hit_rate; the hit rate in each probability bin
+            false_alarm_rate; the false alarm rate in each probability bin
+            area; the area under the roc curve (false alarm rate vs hit rate)
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.roc(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.Dataset>
+        Dimensions:           (probability_bin: 5, y: 3)
+        Coordinates:
+          * y                 (y) int64 0 1 2
+          * probability_bin   (probability_bin) float64 0.0 0.25 0.5 0.75 1.0
+        Data variables:
+            hit_rate          (probability_bin, y) float64 1.0 1.0 1.0 ... nan 0.0 0.0
+            false_alarm_rate  (probability_bin, y) float64 1.0 1.0 1.0 ... 0.0 0.0 0.0
+            area              (y) float64 0.0 0.0 0.0
+        
+        To do
+        -----
+        Currently using a for-loop to process each probability bin separately. Is it possible
+        to remove this loop?
+    
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
     """
     
     if over_dims is None:
@@ -204,8 +363,10 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     ref_binary = ref_logical * 1
 
     # Initialise probability bins -----
-    dprob = np.diff(cmp_prob)/2
-    cmp_prob_edges = cmp_prob[:-1]+dprob
+    dprob = np.diff(probability_bins)/2
+    probability_bin_edges = probability_bins[:-1]+dprob
+    if np.any(probability_bin_edges >= 1.0):
+            raise ValueError('No element of probability_bins can exceed 1.0')
 
     # Fill first probability bin with ones -----
     all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
@@ -213,31 +374,28 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
     false_alarm_rate_list = [all_ones]
     
     # Loop over probability bins -----
-    for idx,cmp_prob_edge in enumerate(cmp_prob_edges):
-
-        if cmp_prob_edge >= 1.0:
-            raise ValueError('cmp_prob cannot exceed 1.0')
+    for idx,probability_bin_edge in enumerate(probability_bin_edges):
             
         # Compute contingency table for current probability -----
-        category_edges = [-np.inf, cmp_prob_edge, np.inf]
+        category_edges = [-np.inf, probability_bin_edge, np.inf]
         contingency = compute_contingency_table(cmp_likelihood, ref_binary, 
-                                                category_edges, over_dims=over_dims)
+                                                category_edges, category_edges, over_dims=over_dims)
         
         # Add hit rate and false alarm rate to lists -----
         hit_rate_list.append(compute_hit_rate(contingency,yes_category=2))
         false_alarm_rate_list.append(compute_false_alarm_rate(contingency,yes_category=2))
     
     # Concatenate lists -----
-    hit_rate = xr.concat(hit_rate_list, dim='comparison_probability')
-    hit_rate['comparison_probability'] = cmp_prob
-    false_alarm_rate = xr.concat(false_alarm_rate_list, dim='comparison_probability')
-    false_alarm_rate['comparison_probability'] = cmp_prob
+    hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
+    hit_rate['probability_bin'] = probability_bins
+    false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin')
+    false_alarm_rate['probability_bin'] = probability_bins
     
     # Calculate area under curve -----
-    dx = false_alarm_rate - false_alarm_rate.shift(**{'comparison_probability':1})
+    dx = false_alarm_rate - false_alarm_rate.shift(**{'probability_bin':1})
     dx = dx.fillna(0.0)
-    area = abs(((hit_rate.shift(**{'comparison_probability':1}) + hit_rate) * dx / 2.0) \
-                 .fillna(0.0).sum(dim='comparison_probability'))
+    area = abs(((hit_rate.shift(**{'probability_bin':1}) + hit_rate) * dx / 2.0) \
+                 .fillna(0.0).sum(dim='probability_bin'))
     
     # Package in dataset -----
     roc = hit_rate.to_dataset(name='hit_rate')
@@ -251,23 +409,74 @@ def compute_roc(cmp_likelihood, ref_logical, cmp_prob, over_dims):
 
 
 # ===================================================================================================
-def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, over_dims):
+def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
     """ 
-    Returns the histogram of comparison likelihood when references indicate the event has occurred 
-    and has not occurred
+        Returns the discrimination diagram of an event; the histogram of comparison likelihood when 
+        references indicate the event has occurred and has not occurred
+        Author: Dougie Squire
+        Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
+            (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
+            ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the discrimantion histograms
+        probability_bins : array_like, optional
+            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+            
+        Returns
+        -------
+        discrimination : xarray DataSet
+            Dataset containing the following variables:
+            hist_event; histogram of comparison likelihoods when reference data indicates that the 
+            event has occurred
+            hist_no_event; histogram of comparison likelihoods when reference data indicates that the 
+            event has not occurred
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.discrimination(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.Dataset>
+        Dimensions:        (bins: 5, y: 3)
+        Coordinates:
+          * bins           (bins) float64 0.0 0.25 0.5 0.75 1.0
+          * y              (y) int64 0 1 2
+        Data variables:
+            hist_event     (bins, y) float64 0.0 0.0 nan 0.5 1.0 ... 0.0 nan 0.0 0.0 nan
+            hist_no_event  (bins, y) float64 0.0 0.0 0.0 1.0 ... 0.3333 0.0 0.0 0.3333
+        
+        To do
+        -----
+        Currently using a for-loop to process each probability bin separately. Is it possible
+        to remove this loop?
+    
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
     """
     
     # Initialise probability bins -----
-    cmp_prob_edges = utils.get_bin_edges(cmp_prob)
+    probability_bin_edges = utils.get_bin_edges(probability_bins)
 
     # Compute histogram of comparison likelihoods when reference is True/False -----
-    replace_val = 1000 * max(cmp_prob_edges) # Replace nans with a value not in any bin
-    hist_event = utils.histogram(cmp_likelihood.where(ref_logical == True).fillna(replace_val), 
-                                         cmp_prob_edges, over_dims=over_dims) \
-                                         / (ref_logical == True).sum(dim=over_dims)
-    hist_no_event = utils.histogram(cmp_likelihood.where(ref_logical == False).fillna(replace_val), 
-                                            cmp_prob_edges, over_dims=over_dims) \
-                                            / (ref_logical == False).sum(dim=over_dims)
+    hist_event = utils.histogram(cmp_likelihood.where(ref_logical == True), 
+                                 probability_bin_edges, over_dims=over_dims) / \
+                                 (ref_logical == True).sum(dim=over_dims)
+    hist_no_event = utils.histogram(cmp_likelihood.where(ref_logical == False), 
+                                    probability_bin_edges, over_dims=over_dims) / \
+                                    (ref_logical == False).sum(dim=over_dims)
     
     # Package in dataset -----
     discrimination = hist_event.to_dataset(name='hist_event')
@@ -279,11 +488,59 @@ def compute_discrimination(cmp_likelihood, ref_logical, cmp_prob, over_dims):
 
 
 # ===================================================================================================
-def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
+def Brier_score(cmp_likelihood, ref_logical, over_dims, probability_bins=None):
     """ 
-    Computes the Brier score(s) of an event given the comparison likelihood and reference logical 
-    event data. When comparison probability bins are also provided, also computes the reliability, 
-    resolution and uncertainty components of the Brier score
+        Computes the Brier score(s) of an event given the comparison likelihood and reference logical 
+        event data. When comparison probability bins are also provided, this function also computes 
+        the reliability, resolution and uncertainty components of the Brier score, where Brier = 
+        reliability - resolution + uncertainty
+        Author: Dougie Squire
+        Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
+            (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
+            ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the Brier score
+        probability_bins : array_like, optional
+            Probability threshold bins. If specified, this function also computes the reliability, 
+            resolution and uncertainty components of the Brier score. Defaults to None
+            
+        Returns
+        -------
+        Brier : xarray DataArray or xarray DataSet
+            If probability_bins = None, returns a DataArray containing Brier scores. Otherwise returns 
+            a DataSet containing the reliability, resolution and uncertainty components of the Brier 
+            score, where Brier = reliability - resolution + uncertainty
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.Brier_score(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.DataArray (y: 3)>
+        array([0.148148, 0.444444, 0.222222])
+        Coordinates:
+          * y        (y) int64 0 1 2
+        
+        To do
+        -----
+        Currently using a for-loop to process each probability bin separately. Is it possible
+        to remove this loop?
+    
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
     """
     
     if over_dims is None:
@@ -297,22 +554,22 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
                                                           .rename('Brier_score')
         
     # Calculate components
-    if cmp_prob is not None:
+    if probability_bins is not None:
 
         # Initialise probability bins -----
-        cmp_prob_edges = utils.get_bin_edges(cmp_prob)
+        probability_bin_edges = utils.get_bin_edges(probability_bins)
 
         # Initialise mean_cmp_likelihood array -----
         mean_cmp_likelihood = cmp_likelihood.copy(deep=True)
         
         # Loop over probability bins -----
-        mean_cmp_prob_list = []
+        mean_probability_bin_list = []
         cmp_number_list = []
         ref_occur_list = []
-        for idx in range(len(cmp_prob_edges)-1):
+        for idx in range(len(probability_bin_edges)-1):
             # Logical of comparisons that fall within probability bin -----
-            cmp_in_bin = (cmp_likelihood >= cmp_prob_edges[idx]) & \
-                         (cmp_likelihood < cmp_prob_edges[idx+1])
+            cmp_in_bin = (cmp_likelihood >= probability_bin_edges[idx]) & \
+                         (cmp_likelihood < probability_bin_edges[idx+1])
             
             # Replace likelihood with mean likelihood (so that Brier components add to total) -----
             mean_cmp_likelihood = mean_cmp_likelihood.where(~cmp_in_bin).fillna( \
@@ -320,7 +577,7 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
                                                                         .mean(dim=over_dims, skipna=True))
 
             # Mean comparison probability within current probability bin -----
-            mean_cmp_prob_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
+            mean_probability_bin_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
                                                     .mean(dim=over_dims, skipna=True)) 
 
             # Number of comparisons that fall within probability bin -----
@@ -331,21 +588,21 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
                                     .sum(dim=over_dims)) 
 
         # Concatenate lists -----
-        mean_cmp_prob = xr.concat(mean_cmp_prob_list, dim='comparison_probability')
-        mean_cmp_prob['comparison_probability'] = cmp_prob
-        cmp_number = xr.concat(cmp_number_list, dim='comparison_probability')
-        cmp_number['comparison_probability'] = cmp_prob
-        ref_occur = xr.concat(ref_occur_list, dim='comparison_probability')
-        ref_occur['comparison_probability'] = cmp_prob
+        mean_probability_bin = xr.concat(mean_probability_bin_list, dim='probability_bin')
+        mean_probability_bin['probability_bin'] = probability_bins
+        cmp_number = xr.concat(cmp_number_list, dim='probability_bin')
+        cmp_number['probability_bin'] = probability_bins
+        ref_occur = xr.concat(ref_occur_list, dim='probability_bin')
+        ref_occur['probability_bin'] = probability_bins
 
         # Compute Brier components -----
         base_rate = ref_occur / cmp_number
-        Brier_reliability = (1 / N) * (cmp_number*(mean_cmp_prob - base_rate) ** 2) \
-                                       .sum(dim='comparison_probability', skipna=True)
+        Brier_reliability = (1 / N) * (cmp_number*(mean_probability_bin - base_rate) ** 2) \
+                                       .sum(dim='probability_bin', skipna=True)
             
         sample_clim = ref_binary.mean(dim=over_dims, skipna=True)
         Brier_resolution = (1 / N) * (cmp_number*(base_rate - sample_clim) ** 2) \
-                                      .sum(dim='comparison_probability', skipna=True)
+                                      .sum(dim='probability_bin', skipna=True)
         Brier_uncertainty = sample_clim * (1 - sample_clim)
         
         # When a binned approach is used, compute total Brier using binned probabilities -----
@@ -369,14 +626,61 @@ def compute_Brier_score(cmp_likelihood, ref_logical, over_dims, cmp_prob=None):
 # ===================================================================================================
 # Methods for categorized comparisons
 # ===================================================================================================
-def compute_contingency_table(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
-    """ Return contingency table for given categories """
+def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
+    """ 
+        Return the contingency table between da_cmp and da_ref for given categories
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        category_edges_cmp : array_like
+            Bin edges for categorising da_cmp
+        category_edges_ref : array_like
+            Bin edges for categorising da_ref
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the contingency table
+            
+        Returns
+        -------
+        contingency : xarray DataArray
+            Contingency table of input data
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,5)
+        >>> category_edges_ref = np.linspace(-2,2,5)
+        doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                      category_edges_ref, over_dims=['x','y'])
+        <xarray.DataArray 'contingency' (comparison_category: 4, reference_category: 4)>
+        array([[0, 1, 0, 1],
+               [1, 0, 1, 0],
+               [0, 2, 1, 0],
+               [0, 0, 0, 0]])
+        Coordinates:
+          * comparison_category  (comparison_category) int64 1 2 3 4
+          * reference_category   (reference_category) int64 1 2 3 4
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     if over_dims is None:
         over_dims = []
     
-    cmp_edges = [(category_edges_cmp[i], category_edges_cmp[i+1],i+1) for i in range(len(category_edges_cmp)-1)]
-    ref_edges = [(category_edges_ref[i], category_edges_ref[i+1],i+1) for i in range(len(category_edges_ref)-1)]
+    cmp_edges = [(category_edges_cmp[i], category_edges_cmp[i+1],i+1) 
+                 for i in range(len(category_edges_cmp)-1)]
+    ref_edges = [(category_edges_ref[i], category_edges_ref[i+1],i+1) 
+                 for i in range(len(category_edges_ref)-1)]
     da_list = []
     for category in itertools.product(cmp_edges, ref_edges):
         da_temp = (((da_cmp >= category[0][0]) & (da_cmp < category[0][1])) & \
@@ -386,115 +690,348 @@ def compute_contingency_table(da_cmp, da_ref, category_edges_cmp, category_edges
         da_list.append(da_temp)
     
     if len(da_list) == 1:
-        return da_list[0]
+        return da_list[0].rename('contingency')
     else:
-        return xr.concat(da_list, dim='stack').set_index(stack=['comparison_category', 'reference_category']).unstack('stack')   
+        return xr.concat(da_list, dim='stack') \
+                 .set_index(stack=['comparison_category', 'reference_category']) \
+                 .unstack('stack').rename('contingency') 
+
+    
+# ===================================================================================================
+def _sum_contingency(contingency, category='total'):
+    """ 
+        Returns sums of specified categories in contingency table 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A contingency table of the form output from doppyo.skill.contingency
+        category : str, optional
+            Contingency table category to sum. Options are 'total', 'reference' and 'comparison'
+            
+        Returns
+        -------
+        summed : 
+            Sum of all counts in specified category
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill._sum_contingency(contingency, category='reference')
+        <xarray.DataArray 'contingency' (x: 3, category: 2)>
+        array([[0, 3],
+               [2, 1],
+               [2, 1]])
+        Coordinates:
+          * x         (x) int64 0 1 2
+          * category  (category) int64 1 2
+    """
+    
+    if category == 'total':
+        N = contingency.sum(dim=('reference_category','comparison_category'), skipna=True)
+    elif category == 'reference':
+        N = contingency.sum(dim='comparison_category', skipna=True) \
+                       .rename({'reference_category' : 'category'})
+    elif category == 'comparison':
+        N = contingency.sum(dim='reference_category', skipna=True) \
+                       .rename({'comparison_category' : 'category'})    
+    else: raise ValueError(f'"{category}" is not a recognised category')
+        
+    return N
+
 
 # ===================================================================================================
-def compute_accuracy_score(contingency):
-    """ Returns the accuracy score given a contingency table """
+def accuracy_score(contingency):
+    """ 
+        Returns the accuracy score given a contingency table
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A contingency table of the form output from doppyo.skill.contingency
+            
+        Returns
+        -------
+        accuracy_score : xarray DataArray
+            An array containing the accuracy scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,5)
+        >>> category_edges_ref = np.linspace(-2,2,5)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.accuracy_score(contingency)
+        <xarray.DataArray 'accuracy_score' (x: 3)>
+        array([0.      , 0.333333, 0.333333])
+        Coordinates:
+          * x        (x) int64 0 1 2
+
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     hits = contingency.where(contingency.reference_category == contingency.comparison_category) \
            .sum(dim=('reference_category','comparison_category'), skipna=True)
-    N = sum_contingency(contingency, 'total')
+    N = _sum_contingency(contingency, 'total')
     
     return (hits / N).rename('accuracy_score')
 
 
 # ===================================================================================================
-def compute_Heidke_score(contingency):
-    """ Returns the Heidke skill score given a contingency table """
+def Heidke_score(contingency):
+    """ 
+        Returns the Heidke skill score given a contingency table 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A contingency table of the form output from doppyo.skill.contingency
+            
+        Returns
+        -------
+        Heidke_score : xarray DataArray
+            An array containing the Heidke scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,5)
+        >>> category_edges_ref = np.linspace(-2,2,5)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.Heidke_score(contingency)
+        <xarray.DataArray 'Heidke_score' (x: 3)>
+        array([-0.285714,  0.      ,  0.142857])
+        Coordinates:
+          * x        (x) int64 0 1 22
+
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     numer_1 = contingency.where(contingency.reference_category == contingency.comparison_category) \
               .sum(dim=('reference_category','comparison_category'), skipna=True) / \
-              sum_contingency(contingency, 'total')
-    numer_2 = (sum_contingency(contingency, 'reference') * \
-               sum_contingency(contingency, 'comparison')).sum(dim='category', skipna=True) / \
-              (sum_contingency(contingency, 'total')**2)
+              _sum_contingency(contingency, 'total')
+    numer_2 = (_sum_contingency(contingency, 'reference') * \
+               _sum_contingency(contingency, 'comparison')).sum(dim='category', skipna=True) / \
+              (_sum_contingency(contingency, 'total')**2)
     denom = 1 - numer_2
 
     return ((numer_1 - numer_2) / denom).rename('Heidke_score')
 
 
 # ===================================================================================================
-def compute_Peirce_score(contingency):
-    """ Returns the Hanssen and Kuipers discriminant given a contingency table """
+def Peirce_score(contingency):
+    """ 
+        Returns the Peirce score (also called Hanssen and Kuipers discriminant) given a contingency 
+        table 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A contingency table of the form output from doppyo.skill.contingency
+            
+        Returns
+        -------
+        Peirce_score : xarray DataArray
+            An array containing the Peirce scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,5)
+        >>> category_edges_ref = np.linspace(-2,2,5)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.Peirce_score(contingency)
+        <xarray.DataArray 'Peirce_score' (x: 3)>
+        array([-0.25,  0.  , -0.5 ])
+        Coordinates:
+          * x        (x) int64 0 1 2
+
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     numer_1 = contingency.where(contingency.reference_category == contingency.comparison_category) \
               .sum(dim=('reference_category','comparison_category'), skipna=True) / \
-              sum_contingency(contingency, 'total')
+              _sum_contingency(contingency, 'total')
 
-    numer_2 = (sum_contingency(contingency, 'reference') * \
-               sum_contingency(contingency, 'comparison')).sum(dim='category', skipna=True) / \
-              (sum_contingency(contingency, 'total')**2)
+    numer_2 = (_sum_contingency(contingency, 'reference') * \
+               _sum_contingency(contingency, 'comparison')).sum(dim='category', skipna=True) / \
+              (_sum_contingency(contingency, 'total')**2)
 
-    denom = 1 - (sum_contingency(contingency, 'reference')**2).sum(dim='category', skipna=True) / \
-                (sum_contingency(contingency, 'total')**2)
+    denom = 1 - (_sum_contingency(contingency, 'reference')**2).sum(dim='category', skipna=True) / \
+                (_sum_contingency(contingency, 'total')**2)
 
     return ((numer_1 - numer_2) / denom).rename('Peirce_score')
 
+
 # ===================================================================================================
-def calc_Gerrity_S(a):
-    """ Returns Gerrity scoring matrix, S """
-    
-    categories = a.category.values
-    K = len(categories)
-
-    # Loop over reference categories
-    ref_list = []
-    for ref_category in categories:
+def Gerrity_score(contingency):
+    """ 
+        Returns Gerrity equitable score given a contingency table 
+        Author: Dougie Squire
+        Date: 12/05/2018
         
-        # Loop over comparison categories
-        cmp_list = []
-        for cmp_category in categories:
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A contingency table of the form output from doppyo.skill.contingency
             
-            i = ref_category
-            j = cmp_category
+        Returns
+        -------
+        Gerrity_score : xarray DataArray
+            An array containing the Gerrity scores
             
-            if i == j:
-                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category', skipna=True) + \
-                                                a.sel(category=range(j,K)).sum(dim='category', skipna=True)))
-            elif i > j:
-                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category', skipna=True) - \
-                                                (i - j) + a.sel(category=range(i,K)).sum(dim='category', skipna=True)))
-            else:
-                cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category', skipna=True) - \
-                                                (j - i) + a.sel(category=range(j,K)).sum(dim='category', skipna=True)))
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,5)
+        >>> category_edges_ref = np.linspace(-2,2,5)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.Gerrity_score(contingency)
+        <xarray.DataArray 'Gerrity_score' (x: 3)>
+        array([-2.777778e-01,  0.000000e+00, -5.551115e-17])
+        Coordinates:
+          * x        (x) int64 0 1 2
+
+        To do
+        -----
+        Currently computes the Gerrity scoring matrix using nested for-loops. Is it possible 
+        to remove these?
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
-        # Concatenate comparison categories -----
-        cmp = xr.concat(cmp_list, dim='comparison_category')
-        cmp['comparison_category'] = categories
-        
-        # Add to reference list -----
-        ref_list.append(cmp)
-        
-    # Concatenate reference categories -----
-    S = xr.concat(ref_list, dim='reference_category')
-    S['reference_category'] = categories
-        
-    return S
+    def _Gerrity_S(a):
+        """ Returns Gerrity scoring matrix, S """
 
+        categories = a.category.values
+        K = len(categories)
 
-def compute_Gerrity_score(contingency):
-    """ Returns Gerrity equitable score given a contingency table """
+        # Loop over reference categories
+        ref_list = []
+        for ref_category in categories:
+
+            # Loop over comparison categories
+            cmp_list = []
+            for cmp_category in categories:
+
+                i = ref_category
+                j = cmp_category
+
+                if i == j:
+                    cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category', skipna=True) + \
+                                                    a.sel(category=range(j,K)).sum(dim='category', skipna=True)))
+                elif i > j:
+                    cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,j))).sum(dim='category', skipna=True) - \
+                                                    (i - j) + a.sel(category=range(i,K)).sum(dim='category', skipna=True)))
+                else:
+                    cmp_list.append((1 / (K - 1)) * ((1 / a.sel(category=range(1,i))).sum(dim='category', skipna=True) - \
+                                                    (j - i) + a.sel(category=range(j,K)).sum(dim='category', skipna=True)))
+
+            # Concatenate comparison categories -----
+            cmp = xr.concat(cmp_list, dim='comparison_category')
+            cmp['comparison_category'] = categories
+
+            # Add to reference list -----
+            ref_list.append(cmp)
+
+        # Concatenate reference categories -----
+        S = xr.concat(ref_list, dim='reference_category')
+        S['reference_category'] = categories
+
+        return S
     
     # Compute 'a' -----
-    sum_p = (sum_contingency(contingency, 'reference') / \
-             sum_contingency(contingency, 'total'))
+    sum_p = (_sum_contingency(contingency, 'reference') / \
+             _sum_contingency(contingency, 'total'))
     a = ((1 - sum_p.cumsum('category', skipna=True)) / sum_p.cumsum('category', skipna=True))
     
     # Compute 'S' -----
-    S = calc_Gerrity_S(a)
+    S = _Gerrity_S(a)
     
     return ((contingency * S).sum(dim=('reference_category','comparison_category'), skipna=True) / \
-           sum_contingency(contingency, 'total')).rename('Gerrity_score')
+            _sum_contingency(contingency, 'total')).rename('Gerrity_score')
 
 
 # ===================================================================================================
 # Methods for dichotomously categorized comparisons
 # ===================================================================================================
-def compute_bias_score(contingency, yes_category=2):
-    """ Returns the bias score given dichotomous contingency data """
+def bias_score(contingency, yes_category=2):
+    """ 
+        Returns the bias score given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        yes_category : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        bias_score : xarray DataArray
+            An array containing the bias scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.bias_score(contingency)
+        <xarray.DataArray 'bias_score' (x: 3)>
+        array([0.5     , 0.333333, 1.      ])
+        Coordinates:
+          * x        (x) int64 0 1 2
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
@@ -512,13 +1049,49 @@ def compute_bias_score(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_hit_rate(contingency, yes_category=2):
-    """ Returns the probability of detection given dichotomous contingency data """
+def hit_rate(contingency, yes_category=2):
+    """ 
+        Returns the hit rate (probability of detection) given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        yes_category : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        hit_rate : xarray DataArray
+            An array containing the hit rates
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.hit_rate(contingency)
+        <xarray.DataArray 'hit_rate' (x: 3)>
+        array([ 0., nan,  1.])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('Hit rate is defined for dichotomous contingency data only')
     
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -529,13 +1102,49 @@ def compute_hit_rate(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_false_alarm_ratio(contingency, yes_category=2):
-    """ Returns the false alarm ratio given dichotomous contingency data """
+def false_alarm_ratio(contingency, yes_category=2):
+    """ 
+        Returns the false alarm ratio given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        yes_category : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        false_alarm_ratio : xarray DataArray
+            An array containing the false alarm ratios
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.false_alarm_ratio(contingency)
+        <xarray.DataArray 'false_alarm_ratio' (x: 3)>
+        array([nan, nan,  0.])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('False alarm ratio is defined for dichotomous contingency data only')
     
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -546,13 +1155,49 @@ def compute_false_alarm_ratio(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_false_alarm_rate(contingency, yes_category=2):
-    """ Returns the false alarm rate given dichotomous contingency data """
+def false_alarm_rate(contingency, yes_category=2):
+    """ 
+        Returns the false alarm rate given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        yes_category : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        false_alarm_rate : xarray DataArray
+            An array containing the false alarm rates
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.false_alarm_rate(contingency)
+        <xarray.DataArray 'false_alarm_rate' (x: 3)>
+        array([ 0.,  0., nan])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('False alarm rate is defined for dichotomous contingency data only')
         
     false_alarms = contingency.sel(comparison_category=yes_category, 
                                    reference_category=no_category, drop=True)
@@ -563,13 +1208,49 @@ def compute_false_alarm_rate(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_success_ratio(contingency, yes_category=2):
-    """ Returns the success ratio given dichotomous contingency data """
+def success_ratio(contingency, yes_category=2):
+    """ 
+        Returns the success ratio given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        success_ratio : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        success_ratio : xarray DataArray
+            An array containing the success ratios
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.success_ratio(contingency)
+        <xarray.DataArray 'success_ratio' (x: 3)>
+        array([nan, nan,  1.])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('Success ratio is defined for dichotomous contingency data only')
         
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -580,13 +1261,49 @@ def compute_success_ratio(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_threat_score(contingency, yes_category=2):
-    """ Returns the threat score given dichotomous contingency data """
+def threat_score(contingency, yes_category=2):
+    """ 
+        Returns the threat score given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        success_ratio : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        threat_score : xarray DataArray
+            An array containing the threat scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.threat_score(contingency)
+        <xarray.DataArray 'threat_score' (x: 3)>
+        array([0. , 0. , 0.5])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('Threat score is defined for dichotomous contingency data only')
         
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -599,13 +1316,49 @@ def compute_threat_score(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_equit_threat_score(contingency, yes_category=2):
-    """ Returns the equitable threat score given dichotomous contingency data """
+def equit_threat_score(contingency, yes_category=2):
+    """ 
+        Returns the equitable threat score given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        success_ratio : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        equit_threat_score : xarray DataArray
+            An array containing the equitable threat scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.equit_threat_score(contingency)
+        <xarray.DataArray 'equit_threat_score' (x: 3)>
+        array([0., 0., 0.])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('Equitable threat score is defined for dichotomous contingency data only')
         
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -613,19 +1366,55 @@ def compute_equit_threat_score(contingency, yes_category=2):
                              reference_category=yes_category, drop=True)
     false_alarms = contingency.sel(comparison_category=yes_category, 
                                    reference_category=no_category, drop=True)
-    hits_random = ((hits + misses) * (hits + false_alarms)) / sum_contingency(contingency, 'total')
+    hits_random = ((hits + misses) * (hits + false_alarms)) / _sum_contingency(contingency, 'total')
     
     return ((hits - hits_random) / (hits + misses + false_alarms + hits_random)).rename('equit_threat_score')
 
 
 # ===================================================================================================
-def compute_odds_ratio(contingency, yes_category=2):
-    """ Returns the odds ratio given dichotomous contingency data """
+def odds_ratio(contingency, yes_category=2):
+    """ 
+        Returns the odds ratio given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        success_ratio : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        odds_ratio : xarray DataArray
+            An array containing the equitable odds ratios
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.odds_ratio(contingency)
+        <xarray.DataArray 'odds_ratio' (x: 3)>
+        array([ 0.,  0., nan])
+        Coordinates:
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
 
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('Odds ratio is defined for dichotomous contingency data only')
         
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -640,13 +1429,49 @@ def compute_odds_ratio(contingency, yes_category=2):
 
 
 # ===================================================================================================
-def compute_odds_ratio_skill(contingency, yes_category=2):
-    """ Returns the odds ratio skill score given dichotomous contingency data """
+def odds_ratio_skill_score(contingency, yes_category=2):
+    """ 
+        Returns the odds ratio skill score given dichotomous contingency data 
+        Author: Dougie Squire
+        Date: 12/05/2018
+        
+        Parameters
+        ----------
+        contingency : xarray DataArray
+            A 2 category contingency table of the form output from doppyo.skill.contingency
+        success_ratio : value, optional
+            The coordinate value of the category corresponding to 'yes'
+            
+        Returns
+        -------
+        odds_ratio_skill_score : xarray DataArray
+            An array containing the equitable odds ratio skill scores
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> category_edges_cmp = np.linspace(-2,2,3)
+        >>> category_edges_ref = np.linspace(-2,2,3)
+        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        ...                                        category_edges_ref, over_dims='y')
+        >>> doppyo.skill.odds_ratio_skill_score(contingency)
+        <xarray.DataArray 'odds_ratio_skill' (x: 3)>
+        array([-1., -1., nan])
+        Coordinates:
+          * x        (x) int64 0 1 2
+
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     no_category = abs(yes_category - 2) + 1
     
     if len(contingency.comparison_category) > 2:
-        raise ValueError('Bias score is defined for dichotomous contingency data only')
+        raise ValueError('Odd ratio skill score is defined for dichotomous contingency data only')
         
     hits = contingency.sel(comparison_category=yes_category, 
                            reference_category=yes_category, drop=True)
@@ -664,8 +1489,42 @@ def compute_odds_ratio_skill(contingency, yes_category=2):
 # ===================================================================================================
 # Methods for continuous variables
 # ===================================================================================================
-def compute_mean_additive_bias(da_cmp, da_ref, over_dims):
-    """ Returns the additive bias between comparison and reference datasets """
+def mean_additive_bias(da_cmp, da_ref, over_dims):
+    """ 
+        Returns the additive bias between comparison and reference datasets
+        Author: Dougie Squire
+        Date: 28/04/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the mean additive bias
+            
+        Returns
+        -------
+        mean_additive_bias : xarray DataArray
+            Array containing the mean additive biases
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.skill.mean_additive_bias(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'mean_additive_bias' (y: 3)>
+        array([0.328462, 0.172263, 0.402438])
+        Coordinates:
+          * y        (y) int64 0 1 2
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
     if isinstance(over_dims, str):
         over_dims = [over_dims]
@@ -673,82 +1532,238 @@ def compute_mean_additive_bias(da_cmp, da_ref, over_dims):
     if over_dims == None:
         over_dims = []
 
-    mean_additive_bias = da_cmp.to_dataset(name='mean_additive_bias') \
-                             .apply(utils.subtract, data_2=da_ref) \
-                             .mean(dim=over_dims, skipna=True) \
-                             ['mean_additive_bias']
-
-    return mean_additive_bias
+    return (da_cmp - da_ref).mean(dim=over_dims, skipna=True) \
+                            .rename('mean_additive_bias')
 
 
 # ===================================================================================================
-def compute_mean_multiplicative_bias(da_cmp, da_ref, over_dims):
-    """ Returns the multiplicative bias between comparison and reference datasets """
-    
-    if isinstance(over_dims, str):
-        over_dims = [over_dims]
-        
-    if over_dims == None:
-        over_dims = []  
-
-    mean_multiplicative_bias = (da_cmp / da_ref).mean(dim=over_dims, skipna=True) \
-                               .rename('mean_multiplicative_bias')
-
-    return mean_multiplicative_bias
-
-    
-# ===================================================================================================
-def compute_mean_absolute_error(da_cmp, da_ref, over_dims):
-    """ Returns the mean absolute error between comparison and reference datasets """
-    
-    if isinstance(over_dims, str):
-        over_dims = [over_dims]
-
-    if over_dims == None:
-        over_dims = []  
-    
-    mean_absolute_error = ((da_cmp.to_dataset(name='mean_absolute_error') \
-                                  .apply(utils.subtract, data_2=da_ref) \
-                                  ** 2) ** 0.5) \
-                                  .mean(dim=over_dims, skipna=True)['mean_absolute_error']
-    
-    return mean_absolute_error
-
-
-# ===================================================================================================
-def compute_mean_squared_error(da_cmp, da_ref, over_dims):
-    """ Returns the mean sqaured error between comparison and reference datasets """
-    
-    if isinstance(over_dims, str):
-        over_dims = [over_dims]
-
-    if over_dims == None:
-        over_dims = []  
-        
-    mean_squared_error = (da_cmp.to_dataset(name='mean_squared_error') \
-                                .apply(utils.subtract, data_2=da_ref) \
-                                ** 2) \
-                                .mean(dim=over_dims,skipna=True)['mean_squared_error']
-                    
-    return mean_squared_error
-
-
-# ===================================================================================================
-def compute_rms_error(da_cmp, da_ref, over_dims):
-    """ Returns the mean sqaured error between comparison and reference datasets """
-    
-    return ((compute_mean_squared_error(da_cmp, da_ref, over_dims=over_dims)) ** 0.5) \
-           .rename('root_mean_squared_error')
-
-
-# ===================================================================================================
-def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True):
+def mean_multiplicative_bias(da_cmp, da_ref, over_dims):
     """ 
-    Returns the Pearson correlation over the specified dimensions. 
+        Returns the multiplicative bias between comparison and reference datasets 
+        Author: Dougie Squire
+        Date: 28/04/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the mean multiplicative bias
+            
+        Returns
+        -------
+        mean_multiplicative_bias : xarray DataArray
+            Array containing the mean multiplicative biases
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.skill.mean_multiplicative_bias(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'mean_multiplicative_bias' (y: 3)>
+        array([ 2.108882,  4.356835, -0.83234 ])
+        Coordinates:
+          * y        (y) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
     
-    If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is computed
-    over all dimensions in over_dims that appear in both da_cmp and da_ref, and then averaged over any
-    remaining dimensions in over_dims
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+        
+    if over_dims == None:
+        over_dims = []  
+
+    return (da_cmp / da_ref).mean(dim=over_dims, skipna=True) \
+                            .rename('mean_multiplicative_bias')
+
+    
+# ===================================================================================================
+def mean_absolute_error(da_cmp, da_ref, over_dims):
+    """ 
+        Returns the mean absolute error between comparison and reference datasets 
+        Author: Dougie Squire
+        Date: 28/04/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the mean absolute error
+            
+        Returns
+        -------
+        mean_absolute_error : xarray DataArray
+            Array containing the mean absolute error
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.skill.mean_absolute_error(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'mean_absolute_error' (y: 3)>
+        array([1.030629, 1.265555, 0.770711])
+        Coordinates:
+          * y        (y) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+    
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+
+    if over_dims == None:
+        over_dims = []  
+    
+    return abs(da_cmp - da_ref).mean(dim=over_dims, skipna=True) \
+                               .rename('mean_absolute_error')
+
+
+# ===================================================================================================
+def mean_squared_error(da_cmp, da_ref, over_dims):
+    """ 
+        Returns the mean sqaured error between comparison and reference datasets 
+        Author: Dougie Squire
+        Date: 28/04/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the mean squared error
+            
+        Returns
+        -------
+        mean_squared_error : xarray DataArray
+            Array containing the mean squared error
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.skill.mean_squared_error(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'mean_squared_error' (y: 3)>
+        array([1.257412, 1.725008, 0.721863])
+        Coordinates:
+          * y        (y) int64 0 1 2
+          
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+    
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+
+    if over_dims == None:
+        over_dims = []  
+        
+    return xr.ufuncs.square(da_cmp - da_ref).mean(dim=over_dims,skipna=True) \
+                                            .rename('mean_squared_error')
+
+
+# ===================================================================================================
+def rms_error(da_cmp, da_ref, over_dims):
+    """ 
+        Returns the root mean sqaured error between comparison and reference datasets 
+        Author: Dougie Squire
+        Date: 28/04/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the root mean squared error
+            
+        Returns
+        -------
+        rms_error : xarray DataArray
+            Array containing the root mean squared error
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.skill.rms_error(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'root_mean_squared_error' (y: 3)>
+        array([1.964753, 1.426566, 1.20612 ])
+        Coordinates:
+          * y        (y) int64 0 1 2
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+    
+    return xr.ufuncs.sqrt(mean_squared_error(da_cmp, da_ref, over_dims=over_dims)) \
+                    .rename('root_mean_squared_error')
+
+
+# ===================================================================================================
+def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
+    """ 
+        Returns the Pearson correlation coefficients over the specified dimensions. 
+        Author: Dougie Squire
+        Date: 28/04/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the correlation coefficients
+        subtract_local_mean : bool, optional
+            If True, this function will subtract the mean computed over over_dims. Otherwise, no mean
+            field is removed prior to computing the correlation
+            
+        Returns
+        -------
+        Pearson_corrcoeff : xarray DataArray
+            Array containing the Pearson correlation coefficients
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(100,3)), 
+        ...                       coords=[('x', np.arange(100)), ('y', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(100,3)), 
+        ...                       coords=[('x', np.arange(100)), ('y', np.arange(3))])
+        >>> doppyo.skill.Pearson_corrcoeff(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'Pearson_corrcoeff' (y: 3)>
+        array([-0.040584, -0.037983, -0.020941])
+        Coordinates:
+          * y        (y) int64 0 1 2
+          
+        Notes
+        -----
+        If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is 
+        computed over all dimensions in over_dims that appear in both da_cmp and da_ref, and then 
+        averaged over any remaining dimensions in over_dims
+        See http://www.cawcr.gov.au/projects/verification/
     """
     
     if over_dims is None:
@@ -771,50 +1786,7 @@ def compute_Pearson_corrcoef(da_cmp, da_ref, over_dims, subtract_local_mean=True
         norm = ((da_cmp ** 2).mean(intersection_dims) ** 0.5) * \
                 ((da_ref ** 2).mean(intersection_dims) ** 0.5)
 
-    return (cov / norm).mean(difference_dims).rename('Pearson_corrcoef')
-
-
-# ===================================================================================================
-# General verification functions
-# ===================================================================================================
-def did_event(da, event):
-    """ Returns array containing True/False where event occurs/does not occur """
-    
-    eval_expr = event.replace(">", "da >").replace("<", "da <").replace("==", "da ==") \
-                     .replace("=", "da ==").replace('&&', '&').replace('||', '|') \
-                     .replace("and", "&").replace("or", "|")
-    eval_expr = '(' + eval_expr + ').rename("event_logical")'
-    
-    return eval(eval_expr)
-
-
-# ===================================================================================================
-def compute_likelihood(da_logical, dim='ensemble'):
-    """ Returns array of likelihoods computed along dim from logical event data """
-    
-    if dim == None:
-        likelihood = da_logical
-    else:
-        likelihood = da_logical.mean(dim=dim).rename('likelihood')
-    return likelihood
-
-
-# ===================================================================================================
-def sum_contingency(contingency, category='total'):
-    """ Returns sums of specified categories in contingency table """
-    
-    if category == 'total':
-        N = contingency.sum(dim=('reference_category','comparison_category'), skipna=True)
-    elif category == 'reference':
-        N = contingency.sum(dim='comparison_category', skipna=True) \
-                       .rename({'reference_category' : 'category'})
-    elif category == 'comparison':
-        N = contingency.sum(dim='reference_category', skipna=True) \
-                       .rename({'comparison_category' : 'category'})    
-    else: raise ValueError(f'"{category}" is not a recognised category')
-        
-    return N
-
+    return (cov / norm).mean(difference_dims).rename('Pearson_corrcoeff')
 
 
     

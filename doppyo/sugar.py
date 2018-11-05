@@ -743,3 +743,38 @@ def get_pres_name(da):
     else:
         raise KeyError('Unable to determine pressure dimension')
         pass
+    
+    
+# ===================================================================================================    
+def did_event(da, event):
+    """ 
+        Returns array containing True/False where event occurs/does not occur 
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+    
+    eval_expr = event.replace(">", "da >").replace("<", "da <").replace("==", "da ==") \
+                     .replace("=", "da ==").replace('&&', '&').replace('||', '|') \
+                     .replace("and", "&").replace("or", "|")
+    eval_expr = '(' + eval_expr + ').rename("event_logical")'
+    
+    return eval(eval_expr)
+
+
+# ===================================================================================================
+def compute_likelihood(da_logical, dim='ensemble'):
+    """ 
+        Returns array of likelihoods computed along dim from logical event data 
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+    
+    if dim == None:
+        likelihood = da_logical
+    else:
+        likelihood = da_logical.mean(dim=dim).rename('likelihood')
+    return likelihood
