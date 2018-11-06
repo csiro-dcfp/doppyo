@@ -2227,8 +2227,38 @@ def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
 def _int_over_atmos(da, lat_name, lon_name, plevel_name, lon_dim=None):
     """ 
         Returns integral of da over the mass of the atmosphere 
+        Author: Dougie Squire
+        Date: 15/07/2018
         
-        If a longitudinal dimension does not exist, this must be provided as lon_dim
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array to integrate over the mass of the atmosphere
+        lat_name : str
+            Name of latitude dimension
+        lon_name : str
+            Name of longitude dimension
+        plevel_name : str
+            Name of pressure level dimension
+        lon_dim : xarray DataArray, optional
+            Value of longitude to use in the integration. Must be broadcastable onto da. If not
+            provided, the coordinate associated with the longitudinal dimension of da will be used
+            (if it exists). This option is made available because it is often desirable to integrate
+            a zonally averaged quantity, which has no longitudinal dimension
+            
+        Returns
+        -------
+        mass_integral : xarray DataArray
+            Array containing the integral of the input array over the mass of the atmosphere
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(90,90,9)),
+        ...                  coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)),
+        ...                          ('level', np.arange(100,1000,100))])
+        >>> doppyo.diagnostic._int_over_atmos(A, lat_name='lat', lon_name='lon', plevel_name='level')
+        <xarray.DataArray 'mass_integral' ()>
+        array(21.194873)
     """
     
     degtorad = utils.constants().pi / 180
@@ -2254,4 +2284,4 @@ def _int_over_atmos(da, lat_name, lon_name, plevel_name, lon_dim=None):
         da_zx = (lon_extent.max(lon_name) - lon_extent.min(lon_name)) * da_z
     da_zxy = utils.integrate(da_zx, over_dim=lat_name, x=da[lat_name] * lat_m)
     
-    return da_zxy / (4 * utils.constants().pi * utils.constants().R_earth ** 2)
+    return (da_zxy / (4 * utils.constants().pi * utils.constants().R_earth ** 2)).rename('mass_integral')
