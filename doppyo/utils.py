@@ -7,7 +7,7 @@
 
 __all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'histogram', 
            'get_bin_edges', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 
-           'multiply','divide', 'average', 'fft', 'ifft', 'fftfilt', 'isosurface',
+           'multiply', 'divide', 'average', 'fft', 'ifft', 'fftfilt', 'isosurface',
            'load_mean_climatology', 'anomalize', 'trunc_time', 'leadtime_to_datetime', 
            'datetime_to_leadtime', 'repeat_datapoint', 'get_latlon_region', 'latlon_average', 
            'stack_by_init_date', 'concat_times', 'prune', 'get_other_dims', 'cftime_to_datetime64', 

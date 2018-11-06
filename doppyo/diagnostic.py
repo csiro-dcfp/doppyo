@@ -5,9 +5,9 @@
     Python Version: 3.6
 """
 
-__all__ = ['isotherm_depth','velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 
+__all__ = ['isotherm_depth', 'velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 
            'wave_activity_flux', 'Brunt_Vaisala', 'Rossby_wave_number', 'Eady_growth_rate', 
-           'thermal_wind','eofs', 'mean_merid_mass_streamfunction', 'atmos_energy_cycle', 'pwelch', 
+           'thermal_wind', 'eofs', 'mean_merid_mass_streamfunction', 'atmos_energy_cycle', 'pwelch', 
            'inband_variance', 'nino3', 'nino34', 'nino4', 'emi', 'dmi', 'soi', '_int_over_atmos']
 
 # ===================================================================================================
