@@ -7,11 +7,12 @@
 
 __all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'histogram', 
            'get_bin_edges', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 
-           'multiply','divide', 'average', 'fft', 'ifft', 'fftfilt', 'load_mean_climatology', 
-           'anomalize', 'trunc_time', 'leadtime_to_datetime', 'datetime_to_leadtime', 
-           'repeat_datapoint', 'get_latlon_region', 'latlon_average', 'stack_by_init_date', 
-           'concat_times', 'prune', 'get_other_dims', 'cftime_to_datetime64', 'get_lon_name', 
-           'get_lat_name', 'get_depth_name', 'get_level_name', 'get_plevel_name', '_is_datetime']
+           'multiply','divide', 'average', 'fft', 'ifft', 'fftfilt', 'isosurface',
+           'load_mean_climatology', 'anomalize', 'trunc_time', 'leadtime_to_datetime', 
+           'datetime_to_leadtime', 'repeat_datapoint', 'get_latlon_region', 'latlon_average', 
+           'stack_by_init_date', 'concat_times', 'prune', 'get_other_dims', 'cftime_to_datetime64', 
+           'get_time_name', 'get_lon_name', 'get_lat_name', 'get_depth_name', 'get_level_name', 
+           'get_plevel_name', '_is_datetime']
 
 # ===================================================================================================
 # Packages
@@ -516,8 +517,7 @@ def differentiate_wrt(da, dim, x):
         dim : str
             The dimension to be used to compute the gradient
         x : xarray DataArray
-            Array containing values to differentiate with respect to. Must have the same dimensions
-            as da
+            Array containing values to differentiate with respect to. Must be broadcastable da
             
         Returns
         -------
@@ -552,9 +552,6 @@ def differentiate_wrt(da, dim, x):
         xarray.DataArray.differentiate()
         numpy.gradient()
     """ 
-    
-    if not (set(da.dims) == set(x.dims)):
-        raise ValueError('da and x must have the same dimensions')
         
     # Replace dimension values if specified -----
     da_n = da.copy()
@@ -1237,9 +1234,63 @@ def fftfilt(da, dim, method, dx, x_cut):
 
 
 # ===================================================================================================
+def isosurface(da, coord, target):
+    """
+        Returns the values of a coordinate in the input array where the input array values equals
+        a prescribed target. E.g. returns the depth of the 20 degC isotherm. Returns nans for all
+        points in input array where isosurface is not defined. If 
+        Author: Thomas Moore
+        Date: 02/10/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array of values to be isosurfaced
+        coord : str
+            Name of coordinate to contruct isosurface about
+        target : value
+            Isosurface value
+            
+        Returns
+        -------
+        isosurface : xarray DataArray
+            Values of coord where da is closest to target. If multiple occurences of target occur 
+            along coord, only the maximum value of coord is returned
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(5,5)), 
+        ...                  coords=[('x', np.arange(5)), ('y', np.arange(5))])
+        >>> isosurface(A, coord='x', target=0)
+        >>> doppyo.utils.isosurface(A, coord='x', target=0)
+        <xarray.DataArray 'isosurface' (y: 5)>
+        array([ 4.,  1., nan,  3.,  4.])
+        Coordinates:
+          * y        (y) int64 0 1 2 3 4
+  
+        Limitations
+        -----------
+        If multiple occurences of target occur along coord, only the maximum value of coord is
+        returned
+        
+        To do
+        -----
+        The current version includes no interpolation between grid spacing. This should be added as
+        an option in the future
+    """
+    
+    # Find isosurface -----
+    mask = da > target
+    da_mask = mask * da[coord]
+    isosurface = da_mask.max(coord)
+
+    return isosurface.where(da.max(dim=coord) > target).rename('isosurface')
+
+
+# ===================================================================================================
 # Climatology tools
 # ===================================================================================================
-def load_mean_climatology(clim, freq, variable=None, **kwargs):
+def load_mean_climatology(clim, freq, variable=None, time_name=None, **kwargs):
     """ 
         Returns pre-saved climatology at desired frequency.
         Author: Dougie Squire
@@ -1256,6 +1307,9 @@ def load_mean_climatology(clim, freq, variable=None, **kwargs):
             Desired frequency of climatology (daily or longer) e.g. 'D', 'M'
         variable : str, optional
             Variable to load. If None, all variables are returned
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name 
+            automatically
         **kwargs : dict
             Additional arguments to pass to load command
         
@@ -1312,6 +1366,9 @@ def load_mean_climatology(clim, freq, variable=None, **kwargs):
         raise ValueError(f'"{clim}" is not an available climatology. Available options are "jra_1958-2016", "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", "cafe_c2_atmos_500-549", "cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", "HadISST_1870-2018","REMSS_2002-2018"')
         
     ds = xr.open_dataset(data_loc, **kwargs)
+    
+    if time_name is None:
+        time_name = get_time_name(ds)
         
     if variable is not None:
         try:
@@ -1320,18 +1377,18 @@ def load_mean_climatology(clim, freq, variable=None, **kwargs):
             raise ValueError(f'"{variable}" is not a variable in "{clim}"')
     
     # Resample if required -----    
-    load_freq = pd.infer_freq(ds['time'].values)
+    load_freq = pd.infer_freq(ds[time_name].values)
     if load_freq != freq:
         if variable == 'precip':
-            ds = ds.resample(time=freq).sum(dim='time')
+            ds = ds.resample({time_name : freq}).sum(dim=time_name)
         else:
-            ds = ds.resample(time=freq).mean(dim='time')
+            ds = ds.resample({time_name : freq}).mean(dim=time_name)
 
     return ds
 
 
 # ===================================================================================================
-def anomalize(data, clim):
+def anomalize(data, clim, time_name=None):
     """ 
         Returns anomalies of data about clim
         Author: Dougie Squire
@@ -1343,6 +1400,9 @@ def anomalize(data, clim):
             Array to compute anomalies from
         clim : xarray DataArray
             Array to compute anomalies about
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name 
+            automatically
             
         Returns
         -------
@@ -1367,16 +1427,18 @@ def anomalize(data, clim):
     
     data_use = data.copy(deep=True)
     clim_use = clim.copy(deep=True)
+    if time_name is None:
+        time_name = get_time_name(data_use)
     
     def _contains_int(string):
         """ Checks if string contains an integer """
         return any(char.isdigit() for char in string)
     
     # If clim is saved on a time dimension, deal with accordingly ----- 
-    if 'time' in clim_use.dims:
+    if time_name in clim_use.dims:
         # Find frequency (assume this is annual average if only one time value exists) -----
-        if len(clim_use.time) > 1:
-            clim_freq = pd.infer_freq(clim_use.time.values[:3])
+        if len(clim_use[time_name]) > 1:
+            clim_freq = pd.infer_freq(clim_use[time_name].values[:3])
             if _contains_int(clim_freq):
                 raise ValueError('Cannot anomalize about multiple day/month/year climatologies')
         else:
@@ -1385,21 +1447,23 @@ def anomalize(data, clim):
         # Build daily, monthly or annual climatologies -----
         if 'D' in clim_freq:
             # Contruct month-day array (to deal with leap years) -----
-            clim_mon = np.array([str(i).zfill(2) + '-' for i in clim_use.time.dt.month.values])
-            clim_day = np.array([str(i).zfill(2)  for i in clim_use.time.dt.day.values])
-            clim_use['time'] = np.core.defchararray.add(clim_mon, clim_day)
+            clim_mon = np.array([str(i).zfill(2) + '-' for i in clim_use[time_name].dt.month.values])
+            clim_day = np.array([str(i).zfill(2)  for i in clim_use[time_name].dt.day.values])
+            clim_use[time_name] = np.core.defchararray.add(clim_mon, clim_day)
             
-            clim_use = clim_use.groupby('time', squeeze=False).mean(dim='time')
+            clim_use = clim_use.groupby(time_name, squeeze=False).mean(dim=time_name)
             deal_with_leap = True
         elif 'M' in clim_freq:
-            clim_use = clim_use.groupby('time.month', squeeze=False).mean(dim='time')
+            clim_use = clim_use.groupby(time_name+'.month', squeeze=False).mean(dim=time_name)
         elif ('A' in clim_freq) | ('Y' in clim_freq):
-            clim_use = prune(clim_use.groupby('time.year', squeeze=False).mean(dim='time').squeeze())
+            clim_use = prune(clim_use.groupby(time_name+'.year', squeeze=False).mean(dim=time_name).squeeze())
     elif 'dayofyear' in clim_use.dims:
         clim_freq = 'D'
         deal_with_leap = False
     elif 'month' in clim_use.dims:
         clim_freq = 'M'
+    elif 'season' in clim_use.dims:
+        clim_freq = 'seas'
     elif 'year' in clim_use.dims:
         clim_freq = 'A'
     else:
@@ -1408,21 +1472,23 @@ def anomalize(data, clim):
     
     # Subtract the climatology from the full field -----
     if ('D' in clim_freq) and (deal_with_leap is True):
-        time_keep = data_use.time
+        time_keep = data_use[time_name]
 
         # Contruct month-day arrays -----
-        data_mon = np.array([str(i).zfill(2) + '-' for i in data_use.time.dt.month.values])
-        data_day = np.array([str(i).zfill(2)  for i in data_use.time.dt.day.values])
-        data_use['time'] = np.core.defchararray.add(data_mon, data_day)
+        data_mon = np.array([str(i).zfill(2) + '-' for i in data_use[time_name].dt.month.values])
+        data_day = np.array([str(i).zfill(2)  for i in data_use[time_name].dt.day.values])
+        data_use[time_name] = np.core.defchararray.add(data_mon, data_day)
 
-        anom = data_use.groupby('time') - clim_use
-        anom['time'] = time_keep
+        anom = data_use.groupby(time_name) - clim_use
+        anom[time_name] = time_keep
     elif ('D' in clim_freq) and (deal_with_leap is False):
-        anom = data_use.groupby('time.dayofyear') - clim_use
+        anom = data_use.groupby(time_name+'.dayofyear') - clim_use
     elif 'M' in clim_freq:
-        anom = data_use.groupby('time.month') - clim_use
+        anom = data_use.groupby(time_name+'.month') - clim_use
+    elif 'seas' in clim_freq:
+        anom = data_use.groupby(time_name+'.season') - clim_use
     elif ('A' in clim_freq) | ('Y' in clim_freq):
-        anom = data_use.groupby('time.year') - clim_use
+        anom = data_use.groupby(time_name+'.year') - clim_use
         
     return prune(anom)
 
@@ -1430,7 +1496,7 @@ def anomalize(data, clim):
 # ===================================================================================================
 # IO tools
 # ===================================================================================================
-def trunc_time(da, freq):
+def trunc_time(da, freq, time_name=None):
     """ 
         Truncates values in provided array to provided frequency 
         Author: Dougie Squire
@@ -1442,6 +1508,9 @@ def trunc_time(da, freq):
             Array containing time coordinate to be truncated
         freq : str
             Truncation frequency. Options are 's', 'm', 'h', D', 'M', 'Y'
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name 
+            automatically
             
         Returns
         -------
@@ -1461,14 +1530,17 @@ def trunc_time(da, freq):
           * time     (time) datetime64[ns] 2000-02-01 2000-03-01 ... 2000-11-01
     """
     
+    if time_name is None:
+        time_name = get_time_name(da)
+        
     da = da.copy()
-    da['time'] = da.time.astype('<M8[' + freq + ']')
+    da[time_name] = da[time_name].astype('<M8[' + freq + ']')
     
     return da
 
 
 # ===================================================================================================
-def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_time'):
+def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_time', time_name='time'):
     """ 
         Converts time information from initial date / lead time dimension pair to single datetime 
         dimension (i.e. timeseries) 
@@ -1483,6 +1555,8 @@ def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_ti
             Name of initial date dimension
         lead_time_name : str, optional
             Name of lead time dimension
+        time_name : str, optional
+            Name of time dimension to create
             
         Returns
         -------
@@ -1513,14 +1587,14 @@ def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_ti
     datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
     
     da_out = da.drop(init_date_name)
-    da_out = da_out.rename({lead_time_name : 'time'})
-    da_out['time'] = datetimes
+    da_out = da_out.rename({lead_time_name : time_name})
+    da_out[time_name] = datetimes
     
     return prune(da_out)
 
 
 # ===================================================================================================
-def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_time'):
+def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_time', time_name='time'):
     """ 
         Converts time information from single datetime dimension (i.e. timeseries) to initial date / 
         lead time dimension pair
@@ -1532,9 +1606,11 @@ def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_ti
         da : xarray DataArray
             Array to in datetime format to convert to initial date / lead time format
         init_date_name : str, optional
-            Name of initial date dimension
+            Name of initial date dimension to create
         lead_time_name : str, optional
-            Name of lead time dimension
+            Name of lead time dimension to create
+        time_name : str, optional
+            Name of time dimension
             
         Returns
         -------
@@ -1560,10 +1636,10 @@ def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_ti
         compatibility (see doppyo.utils.trunc_freq())
     """
     
-    init_date = da.time.values[0]
-    lead_times = range(len(da.time))
+    init_date = da[time_name].values[0]
+    lead_times = range(len(da[time_name]))
 
-    freq = pd.infer_freq(da.time.values)
+    freq = pd.infer_freq(da[time_name].values)
     
     if freq is None:
         raise ValueError('Unable to determine frequency of time coordinate. If using monthly data that is not stored relative to the start or end of each month, first truncate the time coordinate to the start of each month using doppyo.utils.trunc_time(da, freq="M")')
@@ -1587,7 +1663,7 @@ def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_ti
     elif ('Y' in freq_type) | ('A' in freq_type):
         freq = str(12*freq_incr) + 'M'
 
-    da_out = da.rename({'time' : lead_time_name})
+    da_out = da.rename({time_name : lead_time_name})
     da_out[lead_time_name] = lead_times
     da_out[lead_time_name].attrs['units'] = freq
 
@@ -1718,7 +1794,8 @@ def latlon_average(da, box):
 
 
 # ===================================================================================================
-def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date', lead_time_name='lead_time'):
+def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date', 
+                       lead_time_name='lead_time', time_name='time'):
     """ 
         Stacks provided timeseries array in an inital date / lead time format. Note this process
         replicates data and can substantially increase memory usage. Lead time frequency will match
@@ -1736,6 +1813,8 @@ def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date',
             Name of initial date dimension
         lead_time_name : str, optional
             Name of lead time dimension
+        time_name : str, optional
+            Name of time dimension
             
         Returns
         -------
@@ -1759,17 +1838,17 @@ def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date',
 
     init_list = []
     for init_date in init_dates:
-        start_index = np.where(da.time == np.datetime64(init_date))[0]
+        start_index = np.where(da[time_name] == np.datetime64(init_date))[0]
         
         # If init_date falls outside time bounds, fill with nans -----
         if start_index.size == 0:
-            da_nan = np.nan * da.isel(time=range(0, N_lead_steps))
-            da_nan['time'] = pd.date_range(init_date, periods=N_lead_steps, freq=pd.infer_freq(da.time.values))
+            da_nan = np.nan * da.isel({time_name:range(0, N_lead_steps)})
+            da_nan[time_name] = pd.date_range(init_date, periods=N_lead_steps, freq=pd.infer_freq(da[time_name].values))
             init_list.append(datetime_to_leadtime(da_nan))
         else:
             start_index = start_index.item()
-            end_index = min([start_index + N_lead_steps, len(da.time)])
-            init_list.append(datetime_to_leadtime(da.isel(time=range(start_index, end_index))))
+            end_index = min([start_index + N_lead_steps, len(da[time_name])])
+            init_list.append(datetime_to_leadtime(da.isel({time_name:range(start_index, end_index)})))
     
     return xr.concat(init_list, dim=init_date_name)
 
@@ -1956,6 +2035,39 @@ def cftime_to_datetime64(time, shift_year=0):
                                                  .strftime(), 'ns') \
                                                  for i in range(len(time))])
 
+
+# ===================================================================================================
+def get_time_name(da):
+    """ 
+        Returns name of time dimension in input array
+        Author: Dougie Squire
+        Date: 03/03/2018
+        
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with coordinate corresponding to time
+        
+        Returns
+        -------
+        name : str
+            Name of dimension corresponding to time
+        
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(2,2,2,2,2)), 
+        ...                  coords=[('lat', np.arange(2)), ('lon', np.arange(2)), 
+        ...                          ('depth', np.arange(2)), ('time', np.arange(2))])
+        >>> doppyo.utils.get_time_name(A)
+        'time'
+    """
+    
+    if 'time' in da.dims:
+        return 'time'
+    else:
+        raise KeyError('Unable to determine longitude dimension')
+        pass
+    
 
 # ===================================================================================================
 def get_lon_name(da):
@@ -2159,7 +2271,52 @@ def _is_datetime(object):
         True
     """
     
-    return pd.api.types.is_datetime64_dtype(value)
+    return pd.api.types.is_datetime64_dtype(object)
+
+
+# ===================================================================================================
+def _equal_coords(da_1, da_2):
+    """ 
+        Returns True if coordinates of da_1 and da_2 are equal (or flipped) 
+        Author: Dougie Squire
+        Date: 19/15/2018
+        
+        Parameters
+        ----------
+        da_1 : xarray DataArray
+            First array to compare coordinates
+        da_2 : xarray DataArray
+            Second array to compare coordinates
+            
+        Returns
+        -------
+        equal : bool
+            True if coordinates of da_1 and da_2 are equal (or flipped), False otherwise
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
+        ...                                                        ('y', np.arange(3))])
+        >>> B = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
+        ...                                                        ('y', np.arange(3))])
+        >>> doppyo.utils._equal_coords(A,B)
+        True
+    """
+    
+    da1_coords = da_1.coords.to_dataset()
+    da2_coords = da_2.coords.to_dataset()
+    
+    if da1_coords.equals(da2_coords):
+        return True
+    elif list(set(da_1.coords) - set(da_2.coords)) != []:
+        return False
+    else:
+        # Check if coordinates are the same but reversed -----
+        bool_list = [(da1_coords[coord].equals(da2_coords[coord])) | \
+                     (da1_coords[coord].equals(da2_coords[coord] \
+                                       .sel({coord:slice(None, None, -1)}))) \
+                     for coord in da1_coords.coords]
+        return np.all(bool_list)
 
 
 

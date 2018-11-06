@@ -778,3 +778,637 @@ def compute_likelihood(da_logical, dim='ensemble'):
     else:
         likelihood = da_logical.mean(dim=dim).rename('likelihood')
     return likelihood
+
+
+# ===================================================================================================
+def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral=False, n_wavenumbers=20,
+                       integrate=True, loop_triple_terms=False, lat_name=None, lon_name=None, 
+                       plevel_name=None):
+    """
+        Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in `Marques 
+        et al. 2011 Global diagnostic energetics of five state-of-the-art climate models. Climate 
+        Dynamics`. Note that this decomposition is in the space domain. A space-time decomposition 
+        can also be carried out (though not in Fourier space, but this is not implemented here (see 
+        `Oort. 1964 On Estimates of the atmospheric energy cycle. Monthly Weather Review`).
+
+        Parameters
+        ----------
+        temp : xarray DataArray
+            Array containing fields of temperature with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        omega : xarray DataArray
+            Array containing fields of vertical velocity (pressure coordinates) with at least coordinates 
+            latitude, longitude and level (following standard naming - see Limitations)
+        gh : xarray DataArray
+            Array containing fields of geopotential height with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        terms : str or sequence of str
+            List of terms to compute. If None, returns all terms. Available options are:
+            Pz; total available potential energy in the zonally averaged temperature distribution
+            Kz; total kinetic energy in zonally averaged motion
+            Pe; total eddy available potential energy [= sum_n Pn (n > 0 only) for spectral=True] (Note that 
+            for spectral=True, an additional term, Sn, quantifying the rate of transfer of available potential 
+            energy to eddies of wavenumber n from eddies of all other wavenumbers is also returned)
+            Ke; total eddy kinetic energy [= sum_n Kn (n > 0 only) for spectral=True] (Note that for 
+            spectral=True, an additional term, Ln, quantifying the rate of transfer of kinetic energy to eddies 
+            of wavenumber n from eddies of all other wavenumbers is also returned)
+            Cz; rate of conversion of zonal available potential energy to zonal kinetic energy
+            Ca; rate of transfer of total available potential energy in the zonally averaged temperature 
+            distribution (Pz) to total eddy available potential energy (Pe) [= sum_n Rn (n > 0 only) for 
+            spectral=True]
+            Ce; rate of transfer of total eddy available potential energy (Pe) to total eddy kinetic energy 
+            (Ke) [= sum_n Cn (n > 0 only) for spectral=True]
+            Ck; rate of transfer of total eddy kinetic energy (Ke) to total kinetic energy in zonally 
+            averaged motion (Kz) [= sum_n Mn (n > 0 only) for spectral=True]
+            Gz; rate of generation of zonal available potential energy due to the zonally averaged heating (Pz).
+            Note that this term is computed as a residual (Cz + Ca) and cannot be returned in spectral space. 
+            If Gz is requested with spectral=True, Gz is returned in real-space only
+            Ge; rate of generation of eddy available potential energy (Pe). Note that this term is computed as 
+            a residual (Ce - Ca) and cannot be returned in spectral space. If Ge is requested with spectral=True, 
+            Ge is returned in real-space only
+            Dz; rate of viscous dissipation of zonal kinetic energy (Kz). Note that this term is computed as a 
+            residual (Cz - Ck) and cannot be returned in spectral space. If Dz is requested with spectral=True, Dz 
+            is returned in real-space only
+            De; rate of dissipation of eddy kinetic energy (Ke). Note that this term is computed as a residual 
+            (Ce - Ck) and cannot be returned in spectral space. If De is requested with spectral=True, De is 
+            returned in real-space only
+        vgradz : bool, optional
+            If True, uses `v-grad-z` approach for computing terms relating to conversion
+            of potential energy to kinetic energy. Otherwise, defaults to using the 
+            `omaga-alpha` approach (see reference above for details)
+        spectral : bool, optional
+            If True, computes all terms as a function of wavenumber on longitudinal bands. To use this 
+            option, longitudes must be regularly spaced. Note that Ge and De are computed as residuals and
+            cannot be computed in spectral space
+        n_wavenumbers : int, optional
+            Number of wavenumbers to retain either side of wavenumber=0. Obviously only does anything if 
+            spectral=True
+        integrate : bool, optional
+            If True, computes and returns the integral of each term over the mass of the 
+            atmosphere. Otherwise, only the integrands are returned.
+
+        Returns
+        -------
+        atmos_energy_cycle : xarray Dataset
+            
+            
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        Pressure levels must be provided in units of hPa
+            
+        Notes
+        -----
+        The following notation is used below (stackable, e.g. *_ZT indicates the time average of the zonal 
+        average):
+        *_A -> area average over an isobaric surface
+        *_a -> departure from area average
+        *_Z -> zonal average
+        *_z -> departure from zonal average
+        *_T -> time average
+        *_t -> departure from time average
+        Additionally, capital variables indicate Fourier transforms:
+        F(u) = U
+        F(v) = V
+        F(omega) = O
+        F(gh) = A
+        F(temp) = B
+    """
+    
+    def _flip_n(da):
+        """ Flips data along wavenumber coordinate """
+
+        daf = da.copy()
+        daf['n'] = -daf['n']
+
+        return daf.sortby(daf['n'])
+
+
+    def _truncate(F, n_truncate, dim):
+        """ 
+            Converts spatial frequency dim to wavenumber, n, and truncates all wavenumbers greater than 
+            n_truncate 
+        """
+        F[dim] = 360 * F[dim]
+        F = F.rename({dim : 'n'})
+        F = F.where(abs(F.n) <= n_truncate, drop=True)
+        return F, _flip_n(F)
+
+
+    def _triple_terms(A, B, C):
+        """ 
+            Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
+        """
+
+        # Use rolling operator to build shifted terms -----
+        Am = A.rename({'n' : 'm'})
+        Cnm = C.rolling(n=len(C.n), center=True).construct('m', fill_value=0)
+        Cnm['m'] = -C['n'].values
+
+        # Drop m = 0 and n < 0 -----
+        Am = Am.where(Am['m'] != 0, drop=True) 
+        Cnm = Cnm.where(Cnm['m'] != 0, drop=True)
+
+        return (B * (Am * Cnm)).sum(dim='m', skipna=False)
+
+
+    def _triple_terms_loop(A, B, C):
+        """ 
+            Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
+        """
+
+        # Loop over all m's and perform rolling sum -----
+        ms = A['n'].where(A['n'] != 0, drop=True).values
+        ABC = A.copy() * 0
+        for m in ms:
+            Am = A.sel(n=m)
+            Cnm = C.shift(n=int(m)).fillna(0)
+            ABC = ABC + (Am * B * Cnm)
+
+        return ABC
+    
+    if terms is None:
+        terms = ['Pz', 'Kz', 'Pe', 'Ke', 'Cz', 'Ca', 'Ce', 'Ck', 'Gz', 'Ge', 'Dz', 'De']
+    if isinstance(terms, str):
+        terms = [terms]
+    
+    # Initialize some things -----
+    if lat_name is None:
+        lat_name = utils.get_lat_name(temp)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(temp)
+    if plevel_name is None:
+        plevel_name = utils.get_plevel_name(temp)
+    
+    degtorad = utils.constants().pi / 180
+    tan_lat = xr.ufuncs.tan(temp[lat_name] * degtorad)
+    cos_lat = xr.ufuncs.cos(temp[lat_name] * degtorad) 
+    
+    # Determine the stability parameter using Saltzman's approach -----
+    kappa = utils.constants().R_d / utils.constants().C_pd
+    p_kap = (1000 / temp[plevel_name]) ** kappa
+    theta_A = utils.average(temp * p_kap, [lat_name, lon_name], weights=cos_lat)
+    dtheta_Adp = utils.differentiate_wrt(theta_A, dim=plevel_name, x=(theta_A[plevel_name] * 100))
+    gamma = - p_kap * (utils.constants().R_d) / ((temp[plevel_name] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
+    energies = gamma.rename('gamma').to_dataset()
+    
+    # Compute zonal terms
+    # ========================
+    
+    if ('Pz' in terms):
+    # Compute the total available potential energy in the zonally averaged temperature
+    # distribution, Pz [also commonly called Az] -----
+        temp_A = utils.average(temp, [lat_name, lon_name], weights=cos_lat)
+        temp_Z = temp.mean(dim=lon_name)
+        temp_Za = temp_Z - temp_A
+        Pz_int = gamma * utils.constants().C_pd / 2 * temp_Za ** 2  # [J/kg]
+        energies['Pz_int'] = Pz_int
+        if integrate:
+            Pz = _int_over_atmos(Pz_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [J/m^2]
+            energies['Pz'] = Pz
+    
+    if ('Kz' in terms):
+    # Compute the total kinetic energy in zonally averaged motion, Kz [also commonly 
+    # called Kz] -----
+        u_Z = u.mean(dim=lon_name)
+        v_Z = v.mean(dim=lon_name)
+        Kz_int = 0.5 * (u_Z ** 2 + v_Z ** 2) # [J/kg]
+        energies['Kz_int'] = Kz_int
+        if integrate:
+            Kz = _int_over_atmos(Kz_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name]) # [J/m^2]
+            energies['Kz'] = Kz
+    
+    if ('Cz' in terms):
+    # Compute the rate of conversion of zonal available potential energy (Pz) to zonal kinetic
+    # energy (Kz), Cz [also commonly called Cz] -----
+        if vgradz:
+            if 'v_Z' not in locals():
+                v_Z = v.mean(dim=lon_name)
+            gh_Z = gh.mean(dim=lon_name)
+            dghdlat = utils.differentiate_wrt(gh_Z, dim=lat_name, x=(gh_Z[lat_name] * degtorad))
+            Cz_int = - (utils.constants().g / utils.constants().R_earth) * v_Z * dghdlat # [W/kg]
+            energies['Cz_int'] = Cz_int
+            if integrate:
+                Cz = _int_over_atmos(Cz_int, lat_name, lon_name, plevel_name, lon_dim=gh[lon_name]) # [W/m^2]
+                energies['Cz'] = Cz
+        else:
+            if 'temp_Za' not in locals():
+                temp_A = utils.average(temp, [lat_name, lon_name], weights=cos_lat)
+                temp_Z = temp.mean(dim=lon_name)
+                temp_Za = temp_Z - temp_A
+            omega_A = utils.average(omega, [lat_name, lon_name], weights=cos_lat)
+            omega_Z = omega.mean(dim=lon_name)
+            omega_Za = omega_Z - omega_A
+            Cz_int = - (utils.constants().R_d / (temp[plevel_name] * 100)) * omega_Za * temp_Za # [W/kg]
+            energies['Cz_int'] = Cz_int
+            if integrate:
+                Cz = _int_over_atmos(Cz_int, lat_name, lon_name, plevel_name, lon_dim=omega[lon_name]) # [W/m^2]
+                energies['Cz'] = Cz
+    
+    # Compute eddy terms in Fourier space if spectral=True
+    # ==========================================================
+    if spectral:
+        
+        if ('Pe' in terms):
+        # Compute the total available potential energy eddies of wavenumber n, Pn -----
+            Bp, Bn = _truncate(utils.fft(temp, dim=lon_name, nfft=len(temp[lon_name]), twosided=True, shift=True) / 
+                              len(temp[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+
+            Pn_int = (gamma * utils.constants().C_pd * abs(Bp) ** 2)
+            energies['Pn_int'] = Pn_int
+            if integrate:
+                Pn = _int_over_atmos(Pn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [J/m^2]
+                energies['Pn'] = Pn
+
+        # Compute the rate of transfer of available potential energy to eddies of 
+        # wavenumber n from eddies of all other wavenumbers, Sn -----
+            Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) /
+                               len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) /
+                               len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) /
+                               len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                
+            dBpdlat = utils.differentiate_wrt(Bp, dim=lat_name, x=(Bp[lat_name] * degtorad))
+            dBndlat = utils.differentiate_wrt(Bn, dim=lat_name, x=(Bn[lat_name] * degtorad))
+            dBpdp = utils.differentiate_wrt(Bp, dim=plevel_name, x=(Bp[plevel_name] * 100))
+            dBndp = utils.differentiate_wrt(Bn, dim=plevel_name, x=(Bn[plevel_name] * 100))
+
+            if loop_triple_terms:
+                BpBnUp = _triple_terms_loop(Bp, Bn, Up)
+                BpBpUn = _triple_terms_loop(Bp, Bp, Un)
+                BpglBnVp = _triple_terms_loop(Bp, dBndlat, Vp)
+                BpglBpVn = _triple_terms_loop(Bp, dBpdlat, Vn)
+                BpgpBnOp = _triple_terms_loop(Bp, dBndp, Op)
+                BpgpBpOn = _triple_terms_loop(Bp, dBpdp, On)
+                BpBnOp = _triple_terms_loop(Bp, Bn, Op)
+                BpBpOn = _triple_terms_loop(Bp, Bp, On)
+            else:
+                BpBnUp = _triple_terms(Bp, Bn, Up)
+                BpBpUn = _triple_terms(Bp, Bp, Un)
+                BpglBnVp = _triple_terms(Bp, dBndlat, Vp)
+                BpglBpVn = _triple_terms(Bp, dBpdlat, Vn)
+                BpgpBnOp = _triple_terms(Bp, dBndp, Op)
+                BpgpBpOn = _triple_terms(Bp, dBpdp, On)
+                BpBnOp = _triple_terms(Bp, Bn, Op)
+                BpBpOn = _triple_terms(Bp, Bp, On)
+
+            Sn_int = -gamma * utils.constants().C_pd * (1j * Bp['n']) / \
+                         (utils.constants().R_earth * xr.ufuncs.cos(Bp[lat_name] * degtorad)) * \
+                         (BpBnUp + BpBpUn) + \
+                     gamma * utils.constants().C_pd / utils.constants().R_earth * \
+                         (BpglBnVp + BpglBpVn) + \
+                     gamma * utils.constants().C_pd * (BpgpBnOp + BpgpBpOn) + \
+                     gamma * utils.constants().R_d / Bp[plevel_name] * \
+                         (BpBnOp + BpBpOn)
+            energies['Sn_int'] = Sn_int
+            if integrate:
+                Sn = abs(_int_over_atmos(Sn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name])) # [W/m^2]
+                energies['Sn'] = Sn
+                
+        if ('Ke' in terms):
+        # Compute the total kinetic energy in eddies of wavenumber n, Kn -----
+            if 'U' not in locals():
+                Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) /
+                                   len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            if 'V' not in locals():
+                Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                   len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+
+            Kn_int = abs(Up) ** 2 + abs(Vp) ** 2
+            energies['Kn_int'] = Kn_int
+            if integrate:
+                Kn = _int_over_atmos(Kn_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name]) # [J/m^2]
+                energies['Kn'] = Kn
+
+        # Compute the rate of transfer of kinetic energy to eddies of wavenumber n from 
+        # eddies of all other wavenumbers, Ln -----
+            if 'O' not in locals():
+                Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                   len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                
+            dUpdp = utils.differentiate_wrt(Up, dim=plevel_name, x=(Up[plevel_name] * 100))
+            dVpdp = utils.differentiate_wrt(Vp, dim=plevel_name, x=(Vp[plevel_name] * 100))
+            dOpdp = utils.differentiate_wrt(Op, dim=plevel_name, x=(Op[plevel_name] * 100))
+            dOndp = utils.differentiate_wrt(On, dim=plevel_name, x=(On[plevel_name] * 100))
+            dVpcdl = utils.differentiate_wrt(Vp * cos_lat, dim=lat_name, x=(Vp[lat_name] * degtorad))
+            dVncdl = utils.differentiate_wrt(Vn * cos_lat, dim=lat_name, x=(Vn[lat_name] * degtorad))
+            dUpdl = utils.differentiate_wrt(Up, dim=lat_name, x=(Up[lat_name] * degtorad))
+            dVpdl = utils.differentiate_wrt(Vp, dim=lat_name, x=(Vp[lat_name] * degtorad))
+
+            if loop_triple_terms:
+                UpUnUp = _triple_terms_loop(Up, Un, Up)
+                UpUpUn = _triple_terms_loop(Up, Up, Un)
+                VpVnUp = _triple_terms_loop(Vp, Vn, Up)
+                VpVpUn = _triple_terms_loop(Vp, Vp, Un)
+                VpUnUp = _triple_terms_loop(Vp, Un, Up)
+                VpUpUn = _triple_terms_loop(Vp, Up, Un)
+                UpVnUp = _triple_terms_loop(Up, Vn, Up)
+                UpVpUn = _triple_terms_loop(Up, Vp, Un)
+                gpUpUngpOp = _triple_terms_loop(dUpdp, Un, dOpdp)
+                gpUpUpgpOn = _triple_terms_loop(dUpdp, Up, dOndp)
+                gpVpVngpOp = _triple_terms_loop(dVpdp, Vn, dOpdp)
+                gpVpVpgpOn = _triple_terms_loop(dVpdp, Vp, dOndp)
+                glUpUnglVpc = _triple_terms_loop(dUpdl, Un, dVpcdl)
+                glUpUpglVnc = _triple_terms_loop(dUpdl, Up, dVncdl)
+                glVpVnglVpc = _triple_terms_loop(dVpdl, Vn, dVpcdl)
+                glVpVpglVnc = _triple_terms_loop(dVpdl, Vp, dVncdl)
+            else:
+                UpUnUp = _triple_terms(Up, Un, Up)
+                UpUpUn = _triple_terms(Up, Up, Un)
+                VpVnUp = _triple_terms(Vp, Vn, Up)
+                VpVpUn = _triple_terms(Vp, Vp, Un)
+                VpUnUp = _triple_terms(Vp, Un, Up)
+                VpUpUn = _triple_terms(Vp, Up, Un)
+                UpVnUp = _triple_terms(Up, Vn, Up)
+                UpVpUn = _triple_terms(Up, Vp, Un)
+                gpUpUngpOp = _triple_terms(dUpdp, Un, dOpdp)
+                gpUpUpgpOn = _triple_terms(dUpdp, Up, dOndp)
+                gpVpVngpOp = _triple_terms(dVpdp, Vn, dOpdp)
+                gpVpVpgpOn = _triple_terms(dVpdp, Vp, dOndp)
+                glUpUnglVpc = _triple_terms(dUpdl, Un, dVpcdl)
+                glUpUpglVnc = _triple_terms(dUpdl, Up, dVncdl)
+                glVpVnglVpc = _triple_terms(dVpdl, Vn, dVpcdl)
+                glVpVpglVnc = _triple_terms(dVpdl, Vp, dVncdl)
+
+            Ln_int = -(1j * Up['n']) / (utils.constants().R_earth * cos_lat) * \
+                         (UpUnUp - UpUpUn) + \
+                     (1j * Vp['n']) / (utils.constants().R_earth * cos_lat) * \
+                         (VpVnUp - VpVpUn) - \
+                     tan_lat / utils.constants().R_earth * \
+                         (VpUnUp + VpUpUn) + \
+                     tan_lat / utils.constants().R_earth * \
+                         (UpVnUp + UpVpUn) + \
+                     (gpUpUngpOp + gpUpUpgpOn) + \
+                     (gpVpVngpOp + gpVpVpgpOn) + \
+                     1 / (utils.constants().R_earth * cos_lat) * \
+                         (glUpUnglVpc + glUpUpglVnc + glVpVnglVpc + glVpVpglVnc)
+            energies['Ln_int'] = Ln_int
+            if integrate:
+                Ln = abs(_int_over_atmos(Ln_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name])) # [W/m^2]
+                energies['Ln'] = Ln
+        
+        if ('Ca' in terms):
+        # Compute the rate of transfer of zonal available potential energy to eddy 
+        # available potential energy in wavenumber n, Rn -----
+            if 'temp_Z' not in locals():
+                temp_Z = temp.mean(dim=lon_name)
+            if 'V' not in locals():
+                Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                   len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            if 'B' not in locals():
+                Bp, Bn = _truncate(utils.fft(temp, dim=lon_name, nfft=len(temp[lon_name]), twosided=True, shift=True) / 
+                                   len(temp[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            if 'O' not in locals():
+                Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                   len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+
+            dtemp_Zdlat = utils.differentiate_wrt(temp_Z, dim=lat_name, x=(temp_Z[lat_name] * degtorad))
+            theta = temp * p_kap
+            theta_Z = theta.mean(dim=lon_name)
+            theta_Za = theta_Z - theta_A
+            dtheta_Zadp = utils.differentiate_wrt(theta_Za, dim=plevel_name, x=(theta_Za[plevel_name] * 100))
+            Rn_int = gamma * utils.constants().C_pd * ((dtemp_Zdlat / utils.constants().R_earth) * (Vp * Bn + Vn * Bp) + 
+                                                       (p_kap * dtheta_Zadp) * (Op * Bn + On * Bp)) # [W/kg]
+            energies['Rn_int'] = Rn_int
+            if integrate:
+                Rn = abs(_int_over_atmos(Rn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name])) # [W/m^2]
+                energies['Rn'] = Rn
+
+        if ('Ce' in terms):
+        # Compute the rate of conversion of available potential energy of wavenumber n 
+        # to eddy kinetic energy of wavenumber n, Cn -----
+            if vgradz:
+                if 'U' not in locals():
+                    Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) / 
+                                       len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                if 'V' not in locals():
+                    Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                       len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                Ap, An = _truncate(utils.fft(gh, dim=lon_name, nfft=len(gh[lon_name]), twosided=True, shift=True) / 
+                                   len(gh[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+
+                dApdlat = utils.differentiate_wrt(Ap, dim=lat_name, x=(Ap[lat_name] * degtorad))
+                dAndlat = utils.differentiate_wrt(An, dim=lat_name, x=(An[lat_name] * degtorad))
+
+                Cn_int = (((-1j * utils.constants().g * Up['n']) / \
+                           (utils.constants().R_earth * xr.ufuncs.cos(Up[lat_name] * degtorad))) * \
+                                (Ap * Un - An * Up)) - \
+                         ((utils.constants().g / utils.constants().R_earth) * \
+                                (dApdlat * Vn + dAndlat * Vp)) # [W/kg]
+                energies['Cn_int'] = Cn_int
+                if integrate:
+                    Cn = abs(_int_over_atmos(Cn_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name])) # [W/m^2]
+                    energies['Cn'] = Cn
+            else:
+                if 'O' not in locals():
+                    Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                       len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                if 'B' not in locals():
+                    Bp, Bn = _truncate(utils.fft(temp, dim=lon_name, nfft=len(temp[lon_name]), twosided=True, shift=True) / 
+                                       len(temp[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                Cn_int = - (utils.constants().R_d / (omega[plevel_name] * 100)) * (Op * Bn + On * Bp) # [W/kg]
+                energies['Cn_int'] = Cn_int
+                if integrate:
+                    Cn = abs(_int_over_atmos(Cn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name])) # [W/m^2]
+                    energies['Cn'] = Cn
+    
+        if ('Ck' in terms):
+        # Compute the rate of transfer of kinetic energy to the zonally averaged flow 
+        # from eddies of wavenumber n, Mn -----
+            if 'v_Z' not in locals():
+                v_Z = v.mean(dim=lon_name)
+            if 'u_Z' not in locals():
+                u_Z = u.mean(dim=lon_name)
+            if 'U' not in locals():
+                Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) / 
+                                   len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            if 'V' not in locals():
+                Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                   len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            if 'O' not in locals():
+                Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                   len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            dv_Zdlat = utils.differentiate_wrt(v_Z, dim=lat_name, x=(v[lat_name] * degtorad))
+            du_Zndlat = utils.differentiate_wrt(u_Z / xr.ufuncs.cos(u[lat_name] * degtorad), 
+                                            dim=lat_name, x=(u[lat_name] * degtorad))
+            dv_Zdp = utils.differentiate_wrt(v_Z, dim=plevel_name, x=(v[plevel_name] * 100))
+            du_Zdp = utils.differentiate_wrt(u_Z, dim=plevel_name, x=(u[plevel_name] * 100))
+
+            Mn_int = (-2 * Up * Un * v_Z * tan_lat / utils.constants().R_earth) + \
+                     (2 * Vp * Vn * dv_Zdlat / utils.constants().R_earth + (Vp * On + Vn * Op) * dv_Zdp) + \
+                     ((Up * On + Un * Op) * du_Zdp) + \
+                     ((Up * Vn + Un * Vp) * xr.ufuncs.cos(u[lat_name] * degtorad) / \
+                         utils.constants().R_earth * du_Zndlat) # [W/kg]
+            energies['Mn_int'] = Mn_int
+            if integrate:
+                Mn = abs(_int_over_atmos(Mn_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name])) # [W/m^2]
+                energies['Mn'] = Mn
+        
+    else:
+        
+        if ('Pe' in terms):
+        # Compute the total eddy available potential energy, Pe [also commonly called 
+        # Ae] -----
+            if 'temp_Z' not in locals():
+                temp_Z = temp.mean(dim=lon_name)
+            temp_z = temp - temp_Z
+            Pe_int = gamma * utils.constants().C_pd / 2 * (temp_z ** 2).mean(dim=lon_name)  # [J/kg]
+            energies['Pe_int'] = Pe_int
+            if integrate:
+                Pe = _int_over_atmos(Pe_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [J/m^2]
+                energies['Pe'] = Pe
+        
+        if ('Ke' in terms):
+        # Compute the total eddy kinetic energy, Ke -----
+            if 'u_Z' not in locals():
+                    u_Z = u.mean(dim=lon_name)
+            if 'v_Z' not in locals():
+                    v_Z = v.mean(dim=lon_name)
+            u_z = u - u_Z
+            v_z = v - v_Z
+            Ke_int = 0.5 * (u_z ** 2 + v_z ** 2).mean(dim=lon_name) # [J/kg]
+            energies['Ke_int'] = Ke_int
+            if integrate:
+                Ke = _int_over_atmos(Ke_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name]) # [J/m^2]
+                energies['Ke'] = Ke
+                
+        if ('Ca' in terms):
+        # Compute the rate of transfer of total available potential energy in the zonally 
+        # averaged temperature distribution (Pz) to total eddy available potential energy 
+        # (Pe), Ca -----
+            if 'v_Z' not in locals():
+                v_Z = v.mean(dim=lon_name)
+            if 'temp_Z' not in locals():
+                temp_Z = temp.mean(dim=lon_name)
+            if 'omega_Z' not in locals():
+                omega_Z = omega.mean(dim=lon_name)
+            if 'theta_Z' not in locals():
+                theta = temp * p_kap
+                theta_Z = theta.mean(dim=lon_name)
+            if 'dtemp_Zdlat' not in locals():
+                dtemp_Zdlat = utils.differentiate_wrt(temp_Z, dim=lat_name, x=(temp_Z[lat_name] * degtorad))
+            v_z = v - v_Z
+            temp_z = temp - temp_Z
+            omega_z = omega - omega_Z
+            oT_Z = (omega_z * temp_z).mean(dim=lon_name)
+            oT_A = utils.average(omega_z * temp_z, [lat_name, lon_name], weights=cos_lat)
+            oT_Za = oT_Z - oT_A
+            theta_Za = theta_Z - theta_A
+            dtheta_Zadp = utils.differentiate_wrt(theta_Za, dim=plevel_name, x=(theta_Za[plevel_name] * 100))
+            Ca_int = - gamma * utils.constants().C_pd * \
+                           (((v_z * temp_z).mean(dim=lon_name) * dtemp_Zdlat / utils.constants().R_earth) + \
+                            (p_kap * oT_Za * dtheta_Zadp)) # [W/kg]
+            energies['Ca_int'] = Ca_int
+            if integrate:
+                Ca = _int_over_atmos(Ca_int, lat_name, lon_name, plevel_name, lon_dim=v[lon_name]) # [W/m^2]
+                energies['Ca'] = Ca
+            
+        if ('Ce' in terms):
+        # Compute the rate of transfer of total eddy available potential energy (Pe) to 
+        # total eddy kinetic energy (Ke), Ce -----
+            if 'temp_Z' not in locals():
+                temp_Z = temp.mean(dim=lon_name)
+            if 'omega_Z' not in locals():
+                omega_Z = omega.mean(dim=lon_name)
+            temp_z = temp - temp_Z
+            omega_z = omega - omega_Z
+            Ce_int = - (utils.constants().R_d / (temp[plevel_name] * 100)) * \
+                           (omega_z * temp_z).mean(dim=lon_name) # [W/kg]  
+            energies['Ce_int'] = Ce_int
+            if integrate:
+                Ce = _int_over_atmos(Ce_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
+                energies['Ce'] = Ce
+        
+        if ('Ck' in terms):
+        # Compute the rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
+        # energy in zonally averaged motion (Kz), Ck -----
+            if 'u_Z' not in locals():
+                    u_Z = u.mean(dim=lon_name)
+            if 'v_Z' not in locals():
+                    v_Z = v.mean(dim=lon_name)
+            if 'omega_Z' not in locals():
+                omega_Z = omega.mean(dim=lon_name)
+            u_z = u - u_Z
+            v_z = v - v_Z
+            omega_z = omega - omega_Z
+            du_Zndlat = utils.differentiate_wrt(u_Z / cos_lat, dim=lat_name, x=(u_Z[lat_name] * degtorad))
+            dv_Zdlat = utils.differentiate_wrt(v_Z, dim=lat_name, x=(v_Z[lat_name] * degtorad))
+            du_Zdp = utils.differentiate_wrt(u_Z, dim=plevel_name, x=(u_Z[plevel_name] * 100))
+            dv_Zdp = utils.differentiate_wrt(v_Z, dim=plevel_name, x=(v_Z[plevel_name] * 100))
+            Ck_int = (u_z * v_z).mean(dim=lon_name)  * cos_lat * du_Zndlat / utils.constants().R_earth + \
+                     (u_z * omega_z).mean(dim=lon_name) * du_Zdp + \
+                     (v_z ** 2).mean(dim=lon_name) * dv_Zdlat / utils.constants().R_earth + \
+                     (v_z * omega_z).mean(dim=lon_name) * dv_Zdp - \
+                     (u_z ** 2).mean(dim=lon_name) * v_Z * tan_lat / utils.constants().R_earth
+            energies['Ck_int'] = Ck_int
+            if integrate:
+                Ck = _int_over_atmos(Ck_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
+                energies['Ck'] = Ck
+                
+    if ('Gz' in terms):
+    # Compute the rate of generation of zonal available potential energy due to the zonally
+    # averaged heating, Gz -----
+        if ('Cz' not in terms) | ('Ca' not in terms):
+            raise ValueError('The rate of generation of zonal available potential energy, Gz, is computed from the sum of Cz and Ca. Please add these to the list, terms=[<terms>].')
+        if spectral:
+            warnings.warn('Rate of generation of zonal available potential energy is computed from the sum of Cz and Ca and cannot be computed in Fourier space. Returning Gz in real-space.')
+            Ca_int = Rn_int.where(Rn_int.n > 0, drop=True).sum(dim='n').real # sum Rn to get Ca
+        Gz_int = Cz_int + Ca_int
+        energies['Gz_int'] = Gz_int
+        if integrate:
+            Gz = _int_over_atmos(Gz_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
+            energies['Gz'] = Gz
+
+    if ('Ge' in terms):
+    # Compute the rate of generation of eddy available potential energy (Ae), Ge -----
+        if ('Ce' not in terms) | ('Ca' not in terms):
+            raise ValueError('The rate of generation of eddy available potential energy, Ge, is computed from the residual of Ce and Ca. Please add these to the list, terms=[<terms>].')
+        if spectral:
+            warnings.warn('The rate of generation of eddy available potential energy is computed from the residual of Ce and Ca and cannot be computed in Fourier space. Returning Ge in real-space.')
+            Ce_int = Cn_int.where(Cn_int.n > 0, drop=True).sum(dim='n').real # sum Cn to get Ce
+            if 'Ca_int' not in locals():
+                Ca_int = Rn_int.where(Rn_int.n > 0, drop=True).sum(dim='n').real # sum Rn to get Ca
+        Ge_int = Ce_int - Ca_int
+        energies['Ge_int'] = Ge_int
+        if integrate:
+            Ge = _int_over_atmos(Ge_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
+            energies['Ge'] = Ge
+    
+    if ('Dz' in terms):
+    # Compute the rate of viscous dissipation of zonal kinetic energy, Dz -----
+        if ('Cz' not in terms) | ('Ck' not in terms):
+            raise ValueError('The rate of viscous dissipation of zonal kinetic energy, Dz, is computed from the residual of Cz and Ck. Please add these to the list, terms=[<terms>].')
+        if spectral:   
+            warnings.warn('The rate of viscous dissipation of zonal kinetic energy, Dz, is computed from the residual of Cz and Ck and cannot be computed in Fourier space. Returning De in real-space.')
+            Ck_int = Mn_int.where(Mn_int.n > 0, drop=True).sum(dim='n').real # sum Mn to get Ck
+        Dz_int = Cz_int - Ck_int
+        energies['Dz_int'] = Dz_int
+        if integrate:
+            Dz = _int_over_atmos(Dz_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
+            energies['Dz'] = Dz
+
+    if ('De' in terms):
+    # Compute the rate of dissipation of eddy kinetic energy (Ke), De -----
+        if ('Ce' not in terms) | ('Ck' not in terms):
+            raise ValueError('The rate of viscous dissipation of eddy kinetic energy, De, is computed from the residual of Ce and Ck. Please add these to the list, terms=[<terms>].')
+        if spectral:
+            warnings.warn('The rate of viscous dissipation of eddy kinetic energy, De, is computed from the residual of Ce and Ck and cannot be computed in Fourier space. Returning De in real-space.')
+            if 'Ce_int' not in locals():
+                Ce_int = Cn_int.where(Cn_int.n > 0, drop=True).sum(dim='n').real # sum Cn to get Ce
+            if 'Ck_int' not in locals():
+                Ck_int = Mn_int.where(Mn_int.n > 0, drop=True).sum(dim='n').real # sum Mn to get Ck
+        De_int = Ce_int - Ck_int
+        energies['De_int'] = De_int
+        if integrate:
+            De = _int_over_atmos(De_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
+            energies['De'] = De
+    
+    return energies

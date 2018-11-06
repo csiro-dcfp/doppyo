@@ -5,15 +5,16 @@
     Python Version: 3.6
 """
 
-__all__ = [ 'compute_isotherm_depth','compute_velocitypotential', 'compute_streamfunction', 'compute_rws', 'compute_divergent', 
-           'compute_waf', 'BruntVaisala', 'compute_ks2', 'Eady', 'compute_thermal_wind',
-           'compute_eofs', 'compute_mmms', 'compute_atmos_energy_cycle', 'pwelch', 'compute_inband_variance', 
-           'compute_nino3', 'compute_nino34', 'compute_nino4', 'compute_emi', 'compute_dmi']
+__all__ = ['isotherm_depth','velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 
+           'wave_activity_flux', 'Brunt_Vaisala', 'Rossby_wave_number', 'Eady_growth_rate', 
+           'thermal_wind','eofs', 'mean_merid_mass_streamfunction', 'atmos_energy_cycle', 'pwelch', 
+           'inband_variance', 'nino3', 'nino34', 'nino4', 'emi', 'dmi', 'soi', '_int_over_atmos']
 
 # ===================================================================================================
 # Packages
 # ===================================================================================================
 import collections
+import warnings
 import numpy as np
 import xarray as xr
 import windspharm as wsh
@@ -25,112 +26,286 @@ from doppyo import utils
 # ===================================================================================================
 # Ocean diagnostics
 # ===================================================================================================
-def compute_isotherm_depth(ocean_temp,target_temp=20):
+def isotherm_depth(temp, target_temp=20, depth_name=None):
     """ 
-        Version 1: No interpolation between grid spacing. Fast result but stepwise on model z-grid.
-        Usage: isotherm_depth,isotherm_depth_masked,cold_mask = compute_isotherm_depth(ocean_temp,25)
+        Returns the depth of an isotherm given a target temperature. If no temperatures in the column
+        exceed the target temperature, a nan is returned at that point
+        Author: Thomas Moore
+        Date: 02/10/2018
+        
+        Parameters
+        ----------
+        temp : xarray DataArray
+            Array containing values of temperature with at least a depth dimension
+        target_temp : value, optional
+            Value of temperature used to compute isotherm depth. Default value is 20 degC
+        depth_name : str, optional
+            Name of depth coordinate. If None, doppyo will attempt to determine depth_name
+            automatically
+            
+        Returns
+        -------
+        isotherm_depth : xarray DataArray
+            Array containing the depth of the requested isotherm
 
-        // Requires a data array (ocean_temp) with:
-        * at least 3D field of ocean temperature 
-        * the z axis must be depth with standard naming (depth_coord) - although we'll try to deal with
-        other names.
+        Examples
+        --------
+        >>> temp = xr.DataArray(20 + np.random.normal(scale=5, size=(4,4,10)), 
+        ...                     coords=[('lat', np.arange(-90,90,45)), ('lon', np.arange(0,360,90)), 
+        ...                             ('depth', np.arange(2000,0,-200))])
+        >>> doppyo.diagnostic.isotherm_depth(temp)
+        <xarray.DataArray 'isosurface' (lat: 4, lon: 4)>
+        array([[ 400., 1600., 2000.,  800.],
+               [1800., 2000., 1800., 2000.],
+               [2000., 2000., 2000., 1600.],
+               [1400., 2000., 2000., 2000.]])
+        Coordinates:
+          * lat      (lat) int64 -90 -45 0 45
+          * lon      (lon) int64 0 90 180 270
         
-        // Returns a dataset (isotherm) with:
-        * the depth of an isotherm (isotherm_depth) given a target temperature 
-        (target_temp).  Default target_temp is 20C.
-        * a mask (cold_mask) where points with maximum column temperatures
-        less than the target temperature are masked out 
-        * the isotherm depth with the mask applied (isotherm_depth_masked).
-        
-        < Thomas Moore - thomas.moore@csiro.au - 02102018 >       
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        If multiple occurences of target occur along the depth coordinate, only the maximum value of 
+        coord is returned
+        The current version includes no interpolation between grid spacing. This should be added as
+        an option in the future
     """
-
-    # get coord names -----
-    depth_coord = utils.get_depth_name(ocean_temp)
-    lat = utils.get_lat_name(ocean_temp)
-    lon = utils.get_lon_name(ocean_temp)
-
-    # find isotherm -----
-    mask = (ocean_temp > target_temp)
-    depth_mask = mask * ocean_temp[depth_coord]
-    isotherm_depth = depth_mask.max(depth_coord)
-
-    # mask out cold regions -----
-    max_column_temperature = ocean_temp.max(dim=depth_coord)
-    cold_mask = (max_column_temperature*0).where(max_column_temperature < target_temp, other=1)
     
-    # fully mask the results -----
-    isotherm_depth_masked = isotherm_depth.where(cold_mask == 1)
-    
-    # Combine into dataset -----
-    isotherm = isotherm_depth.to_dataset(name='isotherm_depth')
-    isotherm['isotherm_depth_masked'] = isotherm_depth_masked
-    isotherm['cold_mask'] = cold_mask
-    
-    return isotherm
+    if depth_name is None:
+        depth_name = utils.get_depth_name(temp)
+
+    return utils.isosurface(temp, coord=depth_name, target=target_temp).rename('isotherm_depth')
 
 
 # ===================================================================================================
 # Flow field diagnostics
 # ===================================================================================================
-def compute_velocitypotential(u, v):
+def velocity_potential(u, v, lat_name=None, lon_name=None):
     """ 
-        Returns the velocity potential given fields of u and v.
+        Returns the velocity potential given fields of u and v
+        Author: Dougie Squire
+        Date: 11/07/2018
         
-        u and v must have at least latitude and longitude dimensions with standard naming
+        Parameters
+        ----------
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
+            (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude and 
+            longitude (following standard naming - see Limitations)
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+            
+        Returns
+        -------
+        velocity_potential : xarray DataArray
+            Array containing values of velocity potential
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> doppyo.diagnostic.velocity_potential(u, v)
+        <xarray.DataArray 'velocity_potential' (lat: 6, lon: 4)>
+        array([[  431486.75 ,   431486.75 ,   431486.75 ,   431486.75 ],
+               [ -240990.94 , -3553409.   ,  -970673.56 ,  2341744.5  ],
+               [ 3338223.5  ,  1497203.9  , -1723363.2  ,   117656.31 ],
+               [ 1009613.5  ,  1571693.6  ,   326689.3  ,  -235390.69 ],
+               [ -931064.8  ,  -124736.375, -2516887.8  , -3323216.   ],
+               [-1526244.   , -1526244.   , -1526244.   , -1526244.   ]], dtype=float32)
+        Coordinates:
+          * lat      (lat) int64 75 45 15 -15 -45 -75
+          * lon      (lon) int64 45 135 225 315
+        Attributes:
+            units:          m**2 s**-1
+            standard_name:  atmosphere_horizontal_velocity_potential
+            long_name:      velocity potential
+        
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
+        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
+        is regular or Gaussian.
+        These calculations are not yet dask-compatible.
+        
+        To Do
+        -----
+        Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
     
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
 
-    if not u.coords.to_dataset().equals(v.coords.to_dataset()):
-        raise ValueError('u and v coordinates do not match')
+    if not utils._equal_coords(u, v):
+        raise ValueError('u and v coordinates must match')
 
     # Create a VectorWind instance -----
     w = wsh.xarray.VectorWind(u, v)
 
     # Compute the velocity potential -----
-    phi = w.velocitypotential()
-        
-    return phi
+    return w.velocitypotential().rename('phi')
 
 
 # ===================================================================================================
-def compute_streamfunction(u, v):
+def stream_function(u, v, lat_name=None, lon_name=None):
     """ 
-        Returns the streamfunction given fields of u and v.
+        Returns the stream function given fields of u and v
+        Author: Dougie Squire
+        Date: 11/07/2018
         
-        u and v must have at least latitude and longitude dimensions with standard naming
+        Parameters
+        ----------
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
+            (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude and 
+            longitude (following standard naming - see Limitations)
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+            
+        Returns
+        -------
+        stream_function : xarray DataArray
+            Array containing values of stream function
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> doppyo.diagnostic.stream_function(u, v)
+        <xarray.DataArray 'psi' (lat: 6, lon: 4)>
+        array([[ -690643.6 ,  -690643.6 ,  -690643.6 ,  -690643.6 ],
+               [-2041977.8 , -1060127.  , -3052305.8 , -4034156.5 ],
+               [ 4112389.2 ,  4630193.5 , -5212595.5 , -5730399.5 ],
+               [  528500.75,  4670647.5 ,  2589393.  , -1552753.9 ],
+               [-2686391.2 ,  -707369.25,  4204334.  ,  2225311.5 ],
+               [ 1703481.9 ,  1703481.9 ,  1703481.9 ,  1703481.9 ]], dtype=float32)
+        Coordinates:
+          * lat      (lat) int64 75 45 15 -15 -45 -75
+          * lon      (lon) int64 45 135 225 315
+        Attributes:
+            units:          m**2 s**-1
+            standard_name:  atmosphere_horizontal_streamfunction
+            long_name:      streamfunction
+        
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
+        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
+        is regular or Gaussian.
+        These calculations are not yet dask-compatible.
+        
+        To Do
+        -----
+        Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
 
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
 
-    if not u.coords.to_dataset().equals(v.coords.to_dataset()):
-        raise ValueError('u and v coordinates do not match')
+    if not utils._equal_coords(u, v):
+        raise ValueError('u and v coordinates must match')
         
     # Create a VectorWind instance -----
     w = wsh.xarray.VectorWind(u, v)
 
     # Compute the streamfunction -----
-    psi = w.streamfunction()
-        
-    return psi
+    return w.stream_function().rename('psi')
 
 
 # ===================================================================================================
-def compute_rws(u, v):
+def Rossby_wave_source(u, v, lat_name=None, lon_name=None):
     """ 
-        Returns the Rossby wave source given fields of u and v.
+        Returns the Rossby wave source given fields of u and v
+        Author: Dougie Squire
+        Date: 11/07/2018
         
-        u and v must have at least latitude and longitude dimensions with standard naming
+        Parameters
+        ----------
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
+            (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude and 
+            longitude (following standard naming - see Limitations)
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+            
+        Returns
+        -------
+        Rossby_wave_source : xarray DataArray
+            Array containing values of Rossby wave source
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> doppyo.diagnostic.Rossby_wave_source(u, v)
+        <xarray.DataArray 'rws' (lat: 6, lon: 4)>
+        array([[ 4.382918,  4.382918,  4.382918,  4.382918],
+               [-2.226769,  5.020311, -2.600087, -9.838818],
+               [ 2.1693  , -2.133569,  0.498156,  4.818402],
+               [-1.404836,  0.192032,  0.112654, -1.494616],
+               [-0.103261,  4.518184,  0.648616, -4.05276 ],
+               [ 4.070806,  4.070806,  4.070806,  4.070806]])
+        Coordinates:
+          * lat      (lat) int64 75 45 15 -15 -45 -75
+          * lon      (lon) int64 45 135 225 315
+        Attributes:
+            units:      1e-11/s^2
+            long_name:  Rossby wave source
+        
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
+        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
+        is regular or Gaussian.
+        These calculations are not yet dask-compatible.
+        
+        To Do
+        -----
+        Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
 
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
 
-    if not u.coords.to_dataset().equals(v.coords.to_dataset()):
-        raise ValueError('u and v coordinates do not match')
+    if not utils._equal_coords(u, v):
+        raise ValueError('u and v coordinates must match')
         
     # Create a VectorWind instance -----
     w = wsh.xarray.VectorWind(u, v)
@@ -143,58 +318,177 @@ def compute_rws(u, v):
 
     # Combine the components to form the Rossby wave source term -----
     rws = 1e11 * (-eta * div - (uchi * etax + vchi * etay)).rename('rws')
-    rws.attrs['units'] = '1e-11/s^2'
+    rws.attrs['units'] = '1e-11 / s**2'
     rws.attrs['long_name'] = 'Rossby wave source'
     
     return rws
 
 
 # ===================================================================================================
-def compute_divergent(u, v):
+def divergent(u, v, lat_name=None, lon_name=None):
     """ 
-        Returns the irrotational (divergent) component of u and v.
+        Returns the irrotational (divergent) component of u and v
+        Author: Dougie Squire
+        Date: 11/07/2018
         
-        u and v must have at least latitude and longitude dimensions with standard naming
+        Parameters
+        ----------
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
+            (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude and 
+            longitude (following standard naming - see Limitations)
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+            
+        Returns
+        -------
+        divergent : xarray Dataset
+            Dataset containing the following variables:
+            u_chi; array containing the irrotational component of u
+            v_chi; array containing the irrotational component of v
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90))])
+        >>> doppyo.diagnostic.divergent(u, v)
+        <xarray.Dataset>
+        Dimensions:  (lat: 6, lon: 4)
+        Coordinates:
+          * lat      (lat) int64 75 45 15 -15 -45 -75
+          * lon      (lon) int64 45 135 225 315
+        Data variables:
+            u_chi     (lat, lon) float32 0.5355302 -0.45865965 ... -0.7270669 -0.64930713
+            v_chi     (lat, lon) float32 -0.45865965 -0.5355302 ... 0.64930713 -0.7270669
+        
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
+        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
+        is regular or Gaussian.
+        These calculations are not yet dask-compatible.
+        
+        To Do
+        -----
+        Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
 
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
 
-    if not u.coords.to_dataset().equals(v.coords.to_dataset()):
-        raise ValueError('u and v coordinates do not match')
+    if not utils._equal_coords(u, v):
+        raise ValueError('u and v coordinates must match')
             
     # Create a VectorWind instance -----
     w = wsh.xarray.VectorWind(u, v)
 
     # Compute the irrotational components -----
-    uchi, vchi = w.irrotationalcomponent()
+    u_chi, v_chi = w.irrotationalcomponent()
     
     # Combine into dataset -----
-    div = uchi.rename('uchi').to_dataset()
-    div['vchi'] = vchi
+    div = u_chi.rename('u_chi').to_dataset()
+    div['v_chi'] = v_chi
     
     return div
 
 
 # ===================================================================================================
-def compute_waf(psi_anom, u, v, p_lev=None):
+def wave_activity_flux(psi_anom, u, v, plevel=None, lat_name=None, lon_name=None):
     """ 
-        Returns the stationary component of the wave activity flux, following,
-            Takaya and Nakamura, 2001, A Formulation of a Phase-Independent Wave-Activity Flux 
-            for Stationary and Migratory Quasigeostrophic Eddies on a Zonally Varying Basic Flow,
-        using zonal and meridional velocity fields on one or more isobaric surface(s).
+        Returns the stationary component of the wave activity flux, following Takaya and Nakamura, 
+        (2001) using zonal and meridional velocity fields on one or more isobaric surface(s)
+        Author: Dougie Squire
+        Date: 11/07/2018
         
-        psi_anom, u and v must have at least latitude and longitude dimensions with standard naming
-        Pressure level(s) [hPa] are extracted from the psi_anom/u/v coordinate, or, in the absence 
-        of such a coordinate, are provided by p_lev, The pressure coordinate, when supplied, must 
-        use standard naming conventions, 'level' or 'plev'
+        Parameters
+        ----------
+        psi_anom : xarray DataArray
+            Array containing fields of stream function anomalies with at least coordinates latitude 
+            and longitude (following standard naming - see Limitations)
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
+            (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude and 
+            longitude (following standard naming - see Limitations)
+        plevel : value, optional
+            Value of the pressure level corresponding to the provided arrays. If None, pressure
+            level(s) are extracted from the psi_anom/u/v coordinate. Pressure levels must be provided
+            in units of hPa
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+            
+        Returns
+        -------
+        wave_activity_flux : xarray Dataset
+            Dataset containing the following variables:
+            u_waf; array containing the zonal component of the wave activity flux
+            v_waf; array containing the meridonal component of the wave activity flux
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(6,4,2,24)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('level', [100,500]), 
+        ...                          ('time', pd.date_range('2000-01-01',periods=24,freq='M'))])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4,2,24)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('level', [100,500]), 
+        ...                          ('time', pd.date_range('2000-01-01',periods=24,freq='M'))])
+        >>> u_clim = u.groupby('time.month').mean(dim='time')
+        >>> v_clim = v.groupby('time.month').mean(dim='time')
+        >>> u_anom = doppyo.utils.anomalize(u, u_clim)
+        >>> v_anom = doppyo.utils.anomalize(v, v_clim)
+        >>> psi_anom = doppyo.diagnostic.stream_function(u_anom, v_anom)
+        >>> doppyo.diagnostic.wave_activity_flux(psi_anom, u, v)
+        <xarray.Dataset>
+        Dimensions:  (lat: 6, level: 2, lon: 4, time: 24)
+        Coordinates:
+          * level    (level) int64 100 500
+          * lat      (lat) int64 -75 -45 -15 15 45 75
+          * lon      (lon) int64 45 135 225 315
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+        Data variables:
+            u_waf     (level, lat, lon, time) float64 0.003852 0.0001439 ... -0.06913
+            v_waf     (level, lat, lon, time) float64 0.01495 3.032e-05 ... 0.02944
+        
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        Pressure levels must be provided in units of hPa
+        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
+        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
+        is regular or Gaussian.
+        These calculations are not yet dask-compatible
+        
+        To Do
+        -----
+        Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
     
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
-
-    if not (u.coords.to_dataset().equals(v.coords.to_dataset()) & \
-            u.coords.to_dataset().equals(psi_anom.coords.to_dataset())):
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
+        
+    if not (utils._equal_coords(u, v) & utils._equal_coords(u, psi_anom)):
         raise ValueError('psi_anom, u and v coordinates must match')
     
     # Get plev from dimension if it exists -----
@@ -202,42 +496,42 @@ def compute_waf(psi_anom, u, v, p_lev=None):
         plev_name = utils.get_level_name(u)
         plev = u[plev_name] / 1000 # Takaya and Nakmura p.610
     except KeyError:
-        if p_lev is None:
+        if plevel is None:
             raise TypeError('Cannot determine pressure level(s) of provided data. This should' +
                             'be stored as a coordinate, "level" or "plev" in the provided' +
                             'objects. Alternatively, for single level computations, the' + 
-                            'pressure can be provided using the p_lev argument')
+                            'pressure can be provided using the plevel argument')
         else:
-            plev = p_lev / 1000 # Takaya and Nakmura p.610
+            plev = plevel / 1000 # Takaya and Nakmura p.610
     
     # Create a VectorWind instance (use gradient function) -----
     w = wsh.xarray.VectorWind(u, v)
     
-    # Compute the various streamfunction gradients required -----
+    # Compute the various stream function gradients required -----
     psi_x, psi_y = w.gradient(psi_anom)
     psi_xx, psi_xy = w.gradient(psi_x)
     psi_yx, psi_yy = w.gradient(psi_y)
     
     # Compute the wave activity flux -----
     vel = (u * u + v * v) ** 0.5
-    uwaf = (0.5 * plev * (u * (psi_x * psi_x - psi_anom * psi_xx) + 
-                          v * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('uwaf')
-    uwaf.attrs['units'] = 'm^2/s^2'
-    uwaf.attrs['long_name'] = 'Zonal Rossby wave activity flux'
-    vwaf = (0.5 * plev * (v * (psi_y * psi_y - psi_anom * psi_yy) + 
-                          u * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('vwaf')
-    vwaf.attrs['units'] = 'm^2/s^2'
-    vwaf.attrs['long_name'] = 'Meridional Rossby wave activity flux'
+    u_waf = (0.5 * plev * (u * (psi_x * psi_x - psi_anom * psi_xx) + 
+                          v * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('u_waf')
+    u_waf.attrs['units'] = 'm^2/s^2'
+    u_waf.attrs['long_name'] = 'Zonal Rossby wave activity flux'
+    v_waf = (0.5 * plev * (v * (psi_y * psi_y - psi_anom * psi_yy) + 
+                          u * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('v_waf')
+    v_waf.attrs['units'] = 'm^2/s^2'
+    v_waf.attrs['long_name'] = 'Meridional Rossby wave activity flux'
         
     # Combine into dataset -----
-    waf = uwaf.to_dataset()
-    waf['vwaf'] = vwaf
+    waf = u_waf.to_dataset()
+    waf['v_waf'] = v_waf
     
     return waf
 
 
 # ===================================================================================================
-def BruntVaisala(temp, plevel_name=None):
+def Brunt_Vaisala(temp, plevel_name=None):
     """
         Returns the Brunt Väisälä frequency
         Author: Dougie Squire
@@ -259,47 +553,37 @@ def BruntVaisala(temp, plevel_name=None):
         
         Examples
         --------
-        >>> temp = xr.DataArray(np.random.normal(size=(100,100,100)), 
-        ...                     coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
-        >>> doppyo.diagnostic.BruntVaisala(temp)
-        <xarray.DataArray 'nsq' (level: 100, lat: 100, lon: 100)>
-        array([[[-6.440575e-02,  8.507044e-01, ...,  2.439879e-01, -2.703915e-01],
-                [-9.956548e-02,  4.659944e-02, ...,  1.125894e-01,  8.680479e-02],
-                ...,
-                [-1.402951e-01,  1.864266e+00, ..., -1.013359e-01,  1.892111e-01],
-                [-6.434526e-01, -9.490949e-02, ...,  2.852764e-01, -2.348707e-01]],
+        >>> temp = xr.DataArray(np.random.normal(size=(4,4,2)), 
+        ...                     coords=[('lat', np.arange(-90,90,45)), ('lon', np.arange(0,360,90)), 
+        ...                             ('level', [100,200])])
+        >>> doppyo.diagnostic.Brunt_Vaisala(temp)
+        <xarray.DataArray 'nsq' (level: 2, lon: 4, lat: 4)>
+        array([[[-2.928266e-01, -2.709919e+01,  2.826585e-02,  6.083374e-01],
+                [ 3.260879e-01,  1.933501e-01, -9.033669e+00, -1.468327e+00],
+                [-1.957892e+00,  2.408426e-01,  5.597183e-01, -2.548981e+01],
+                [-3.234550e-01, -1.907664e+00,  2.506510e-01, -7.385499e-01]],
 
-               [[-8.803910e-01, -7.542996e-02, ...,  5.650788e-01, -5.570075e+02],
-                [ 1.183424e-01,  7.111900e-02, ..., -3.451816e-02,  1.443370e-01],
-                ...,
-                [-8.943706e-02,  8.560311e-03, ..., -2.046340e+01, -1.291341e+01],
-                [-1.204200e+00, -8.616088e-02, ...,  3.391413e-01, -1.174251e-01]],
-
-               ...,
-
-               [[ 1.358592e+02,  2.111141e+01, ...,  1.755355e+02,  3.878441e+00],
-                [-1.200583e+02, -8.901648e+00, ..., -1.662999e+01, -5.048908e+02],
-                ...,
-                [-2.378197e+00, -2.869639e+02, ..., -1.554855e+00,  1.059697e+01],
-                [-7.653866e+01, -5.533192e+01, ..., -3.528339e+02,  2.076783e+01]],
-
-               [[-2.458317e+01,  2.400232e+03, ..., -4.991260e+01,  4.255249e+01],
-                [-1.508371e+02, -2.132226e+03, ..., -2.149874e+01, -2.904825e+01],
-                ...,
-                [-2.384498e+02,  4.558282e+01, ...,  2.307316e+04, -3.189341e+00],
-                [-7.459385e+00, -1.400366e+02, ..., -1.528724e+01,  3.107310e+01]]])
+               [[-1.136451e-01, -1.796130e+00, -1.095550e-02,  5.748574e+00],
+                [ 4.407484e+02,  4.736099e-01, -5.086917e-01, -6.610682e-01],
+                [-2.458302e+00,  6.864762e+00,  2.633289e+00, -4.246873e-01],
+                [-1.839424e+01, -1.194455e+00,  5.659980e+02, -2.567729e+00]]])
         Coordinates:
-          * level    (level) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
-          * lat      (lat) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
-          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+          * lat      (lat) int64 -90 -45 0 45
+          * lon      (lon) int64 0 90 180 270
+          * level    (level) int64 100 200
         Attributes:
             long_name:  Brunt-Vaisala frequency squared
             units:      s^-2
 
         Limitations
         -----------
-        The coordinates of all data inputs must follow standard naming (see doppyo.utils.get_lat_name(), 
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
         doppyo.utils.get_lon_name(), etc)
+        Pressure levels must be provided in units of hPa
+        
+        To do
+        -----
+        Add switch for atmosphere/ocean input
     """
 
     R = utils.constants().R_d
@@ -320,18 +604,103 @@ def BruntVaisala(temp, plevel_name=None):
 
 
 # ===================================================================================================
-def compute_ks2(u, v, u_clim):
+def Rossby_wave_number(u, v, u_clim, lat_name=None, lon_name=None):
     """ 
         Returns the square of the stationary Rossby wave number, Ks**2
+        Author: Dougie Squire
+        Date: 11/07/2018
         
-        u, v and u_clim must have at least latitude and longitude dimensions with standard naming
+        Parameters
+        ----------
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
+            (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude and 
+            longitude (following standard naming - see Limitations)
+        u_clim : xarray DataArray
+            Array containing climatological fields of zonal velocity with at least coordinates latitude 
+            and longitude (following standard naming - see Limitations)    
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+            
+        Returns
+        -------
+        Rossby_wave_number : xarray DataArray
+            Array containing the square of the Rossby wave source
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(6,4,24)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('time', pd.date_range('2000-01-01',periods=24,freq='M'))])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4,24)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('time', pd.date_range('2000-01-01',periods=24,freq='M'))])
+        >>> u_clim = u.groupby('time.month').mean(dim='time')
+        >>> u_clim = doppyo.utils.anomalize(0*u, -u_clim)
+        >>> doppyo.diagnostic.Rossby_wave_number(u, v, u_clim)
+        <xarray.DataArray 'ks2' (lat: 6, lon: 4, time: 24)>
+        array([[[ 8.077277e-01,  1.885835e-01, ...,  6.383953e-01, -4.686696e-01],
+                [-3.756420e-01,  1.210226e+00, ..., -2.055076e+00, -2.291500e+00],
+                [ 8.786361e-01,  4.181778e-01, ..., -2.071749e+00,  4.018699e-01],
+                [ 8.218020e-01,  5.197270e+00, ...,  5.181735e+00,  7.112056e-01]],
+
+               [[-5.323813e+02, -2.894449e+02, ..., -5.063012e+03, -3.921559e+02],
+                [ 3.167388e+02, -5.406136e+02, ..., -1.987485e+03, -2.692395e+02],
+                [ 2.916992e+03,  2.318578e+02, ...,  8.611478e+02,  8.559919e+02],
+                [-4.380459e+02, -5.035198e+02, ..., -1.844072e+03, -2.856807e+02]],
+
+               ...,
+
+               [[ 3.832781e+02, -1.272144e+03, ...,  3.900539e+02, -5.402686e+02],
+                [-2.494814e+02, -2.041985e+02, ...,  3.426493e+02, -5.557717e+02],
+                [-6.290198e+03,  1.606871e+03, ...,  2.894713e+03,  3.284330e+02],
+                [-3.325505e+02, -2.406172e+02, ..., -3.270787e+03, -1.040641e+03]],
+
+               [[ 1.401437e+00,  6.053096e-01, ...,  1.725558e-01, -7.287578e+01],
+                [-8.905873e-01,  1.469694e-01, ...,  1.308367e+00, -7.136195e-01],
+                [ 4.318194e+01, -1.850361e-01, ..., -2.447798e-01, -4.454747e-01],
+                [ 1.247740e+00,  9.826164e-02, ...,  2.808380e+00,  1.254609e+00]]])
+        Coordinates:
+          * lat      (lat) int64 75 45 15 -15 -45 -75
+          * lon      (lon) int64 45 135 225 315
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+        Attributes:
+            units:      real number
+            long_name:  Square of Rossby stationary wavenumber
+
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
+        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
+        is regular or Gaussian.
+        These calculations are not yet dask-compatible.
+        
+        To Do
+        -----
+        Make dask-compatible by either developing the windspharm package, or using a kernel approach
+        
+        Notes
+        -----
+        The input u_clim must have the same dimensions as u and v. One can project a mean climatology, 
+        A_clim, over the time dimension in A using
+        >>> doppyo.utils.anomalize(0*A, -A_clim)
     """
 
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
 
-    if not u.coords.to_dataset().equals(v.coords.to_dataset()):
-        raise ValueError('u and v coordinates do not match')
+    if not (utils._equal_coords(u, v) & utils._equal_coords(u, u_clim)):
+        raise ValueError('u, v and u_clim coordinates must match')
 
     # Create a VectorWind instance -----
     w = wsh.xarray.VectorWind(u, v)
@@ -349,7 +718,7 @@ def compute_ks2(u, v, u_clim):
 
 
 # ===================================================================================================
-def Eady(u, v, gh, nsq, level_name=None):
+def Eady_growth_rate(u, v, gh, nsq, lat_name=None, lon_name=None, level_name=None):
     """ 
         Returns the square of the Eady growth rate
         Author: Dougie Squire
@@ -369,6 +738,12 @@ def Eady(u, v, gh, nsq, level_name=None):
         nsq : xarray DataArray
             Array containing fields of Brunt Väisälä frequency with at least coordinates latitude, 
             longitude and level (following standard naming - see Limitations)
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
         level_name : str, optional
             Name of level coordinate. If None, doppyo will attempt to determine level_name
             automatically
@@ -376,63 +751,61 @@ def Eady(u, v, gh, nsq, level_name=None):
         Returns
         -------
         Eady^2 : xarray DataArray
-            Array with same dimensions as input arrays containing the square of the Eady growth rate
+            Array containing the square of the Eady growth rate
         
         Examples
         --------
-        >>> u = xr.DataArray(np.random.normal(size=(100,100,100)), 
-        ...                  coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
-        >>> v = xr.DataArray(np.random.normal(size=(100,100,100)), 
-        ...                  coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
-        >>> temp = xr.DataArray(np.random.normal(size=(100,100,100)), 
-        ...                     coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
-        >>> gh = xr.DataArray(np.random.normal(size=(100,100,100)), 
-        ...                   coords=[('level', np.arange(100)), ('lat', np.arange(100)), ('lon', np.arange(100))])
-        >>> nsq = doppyo.diagnostic.BruntVaisala(temp)
-        >>> doppyo.diagnostic.Eady(u, v, gh, nsq)
-        <xarray.DataArray (lat: 100, level: 100, lon: 100)>
-        array([[[-0.000000e+00, -0.000000e+00, ..., -0.000000e+00,  0.000000e+00],
-                [-0.000000e+00, -0.000000e+00, ..., -0.000000e+00,  0.000000e+00],
-                ...,
-                [-0.000000e+00,  0.000000e+00, ...,  0.000000e+00, -0.000000e+00],
-                [-0.000000e+00,  0.000000e+00, ...,  0.000000e+00, -0.000000e+00]],
+        >>> u = xr.DataArray(np.random.normal(size=(6,4,2)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('level', [200, 500])])
+        >>> v = xr.DataArray(np.random.normal(size=(6,4,2)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('level', [200, 500])])
+        >>> temp = xr.DataArray(np.random.normal(size=(6,4,2)), 
+        ...                     coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                             ('level', [200, 500])])
+        >>> gh = xr.DataArray(np.random.normal(size=(6,4,2)), 
+        ...                   coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                           ('level', [200, 500])])
+        >>> nsq = doppyo.diagnostic.Brunt_Vaisala(temp)
+        >>> doppyo.diagnostic.Eady_growth_rate(u, v, gh, nsq)
+        <xarray.DataArray 'Eady^2' (level: 2, lon: 4, lat: 6)>
+        array([[[-5.371897e-08,  1.338133e-11, -7.254014e-13, -8.196598e-12,
+                  2.062633e-09, -7.200158e-12],
+                [ 9.906932e-10, -7.349832e-09, -2.558847e-12, -1.695842e-09,
+                  4.986779e-09, -3.090147e-09],
+                [ 3.948602e-07,  1.397756e-09,  1.508010e-10,  1.481968e-10,
+                  5.627093e-11,  7.463454e-10],
+                [ 4.326971e-09, -2.528522e-09, -1.243954e-13, -3.138463e-11,
+                 -6.801250e-09, -6.286382e-10]],
 
-               [[ 5.226499e-11,  7.126141e-12, ..., -4.379406e-13,  7.448277e-13],
-                [ 4.799243e-12,  2.932465e-14, ..., -6.538057e-14,  1.843478e-13],
-                ...,
-                [-2.892538e-15, -1.029624e-15, ..., -3.250589e-14, -1.876167e-15],
-                [-1.616244e-12,  2.055856e-17, ...,  5.519865e-14,  3.894556e-17]],
-
-               ...,
-
-               [[ 6.575283e-08, -7.037373e-10, ..., -7.763162e-10, -3.256715e-09],
-                [-5.909895e-07,  1.346452e-09, ..., -1.871157e-08, -5.904951e-11],
-                ...,
-                [-1.613081e-10, -8.011633e-09, ..., -2.132814e-10,  1.315870e-11],
-                [-1.762877e-11, -1.742130e-11, ..., -1.142285e-11, -1.631656e-12]],
-
-               [[ 2.920811e-11,  1.475637e-09, ...,  3.355625e-06, -4.365391e-10],
-                [ 2.805286e-09,  3.148309e-11, ...,  1.802772e-11, -2.081402e-10],
-                ...,
-                [-1.441918e-13,  7.279281e-13, ...,  1.501911e-13,  3.652270e-14],
-                [ 1.775775e-11, -6.472930e-08, ...,  3.317168e-12,  6.530305e-12]]])
+               [[-8.580527e-10,  7.040065e-12, -3.760004e-13, -1.213131e-12,
+                  2.437557e-11, -6.522981e-11],
+                [ 6.119671e-09, -1.644123e-09, -5.124997e-11,  1.725101e-08,
+                  2.574158e-08, -3.101566e-10],
+                [ 1.601742e-06,  1.994867e-11,  3.341006e-11,  1.641253e-11,
+                  5.601919e-08,  5.527214e-11],
+                [ 4.700271e-09, -1.422149e-11, -1.302035e-12, -2.153002e-11,
+                 -4.607096e-10, -3.813686e-09]]])
         Coordinates:
-          * lat      (lat) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
-          * level    (level) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
-          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 9 ... 90 91 92 93 94 95 96 97 98 99
+          * lat      (lat) int64 -75 -45 -15 15 45 75
+          * lon      (lon) int64 45 135 225 315
+          * level    (level) int64 200 500
         Attributes:
             units:      s^-2
             long_name:  Square of Eady growth rate
-            
+    
         Limitations
         -----------
-        The coordinates of all data inputs must follow standard naming (see doppyo.utils.get_lat_name(), 
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
         doppyo.utils.get_lon_name(), etc)
     """
     
     degtorad = utils.constants().pi / 180
-    lat_name = utils.get_lat_name(u)
-    lon_name = utils.get_lon_name(u)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(u)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(u)
     if level_name is None:
         level_name = utils.get_level_name(u)
     
@@ -446,9 +819,11 @@ def Eady(u, v, gh, nsq, level_name=None):
 
 
 # ===================================================================================================
-def thermal_wind(gh, plevel_lower, plevel_upper, plevel_name=None):
+def thermal_wind(gh, plevel_lower, plevel_upper, lat_name=None, lon_name=None, plevel_name=None):
     """ 
         Returns the thermal wind, (u_tw, v_tw) = 1/f x k x grad(thickness), where f = 2*Omega*sin(lat)
+        Author: Dougie Squire
+        Date: 15/07/2018
         
         Parameters
         ----------
@@ -461,40 +836,51 @@ def thermal_wind(gh, plevel_lower, plevel_upper, plevel_name=None):
         plevel_upper : value
             Value of upper pressure level used to compute termal wind. Must exist in level coordinate of
             gh
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
         plevel_name : str, optional
             Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
             automatically
             
         Returns
         -------
-        thermal_wind : xarray DataArray
-            New DataArray object containing the differentiate data
+        thermal_wind : xarray Dataset
+            Dataset containing the following variables:
+            u_tw; array containing the zonal component of the thermal wind
+            v_tw; array containing the meridonal component of the thermal wind
         
         Examples
         --------
-        >>> gh = xr.DataArray(np.random.normal(size=(20,180,360)), 
-        ...                   coords=[('level', np.arange(20)), ('lat', np.arange(-90,90,1)), 
-        ...                   ('lon', np.arange(0,360,1))])
-        >>> doppyo.diagnostic.thermal_wind(gh, plevel_lower=5, plevel_upper=10)
+        >>> gh = xr.DataArray(np.random.normal(size=(3,4,4)), 
+        ...                   coords=[('level', [400, 500, 600]), ('lat', np.arange(-90,90,45)), 
+        ...                   ('lon', np.arange(0,360,90))])
+        >>> doppyo.diagnostic.thermal_wind(gh, plevel_lower=400, plevel_upper=600)
         <xarray.Dataset>
-        Dimensions:  (lat: 180, lon: 360)
+        Dimensions:  (lat: 4, lon: 4)
         Coordinates:
-            level    float64 7.5
-          * lon      (lon) int64 0 1 2 3 4 5 6 7 8 ... 352 353 354 355 356 357 358 359
-          * lat      (lat) int64 -90 -89 -88 -87 -86 -85 -84 ... 83 84 85 86 87 88 89
+            level    float64 500.0
+          * lon      (lon) int64 0 90 180 270
+          * lat      (lat) int64 -90 -45 0 45
         Data variables:
-            u_tw     (lon, lat) float64 0.04964 -0.0321 0.008728 ... -0.04973 -0.1208
-            v_tw     (lat, lon) float64 -3.182e+14 3.389e+14 1.305e+15 ... -0.8222 5.368
-            
+            u_tw     (lon, lat) float64 0.003727 0.0006837 inf ... inf -0.0001238
+            v_tw     (lat, lon) float64 4.515e+12 -1.443e+12 ... -0.000569 -0.0002777
+
         Limitations
         -----------
-        The coordinates of gh must follow standard naming (see doppyo.utils.get_lat_name(), 
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
         doppyo.utils.get_lon_name(), etc)
+        Pressure levels must be provided in units of hPa
     """
     
     degtorad = utils.constants().pi / 180
-    lon_name = utils.get_lon_name(gh)
-    lat_name = utils.get_lat_name(gh)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(gh)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(gh)
     if plevel_name is None:
         plevel_name = utils.get_plevel_name(gh)
     
@@ -526,22 +912,65 @@ def thermal_wind(gh, plevel_lower, plevel_upper, plevel_name=None):
 
 
 # ===================================================================================================
-def compute_eofs(da, sample_dim='time', weight=None, n_modes=20):
+def eofs(da, sample_dim='time', weight=None, n_modes=20):
     """
         Returns the empirical orthogonal functions (EOFs), and associated principle component 
-        timeseries (PCs) and explained variances of da. When da is a list of xarray objects, 
-        returns the joint EOFs associated with each object. In this case, all xarray objects 
-        in da must have sample_dim dimensions of equal length.
+        timeseries (PCs), and explained variances of provided array. Follows notation used in 
+        "Bjornsson H. and Venegas S. A. 1997 A Manual for EOF and SVD analyses of Climatic Data", 
+        whereby,
+        (phi, sqrt_lambdas, EOFs) = svd(data) and PCs = phi * sqrt_lambdas
+        Author: Dougie Squire
+        Date: 19/18/2018
         
-        All dimensions other than sample_dim are treated as sensor dimensions.
-        weight=None uses cos(lat)^2 weighting. If weight is specified, it must be the same 
-        length as da with each element broadcastable onto each element of da
-        
-        Follows notation used in "Bjornsson H. and Venegas S. A. A Manual for EOF and SVD 
-        analyses of Climatic Data"
-
-        Note that the approach implemented here is non-lazy. I'm am not sure if there is a 
-        good way to do this in a lazy way.
+        Parameters
+        ----------
+        da : xarray DataArray or sequence of xarray DataArrays
+            Array to use to compute EOFs. When input array is a list of xarray objects, returns the 
+            joint EOFs associated with each object. In this case, all xarray objects in da must have 
+            sample_dim dimensions of equal length.
+        sample_dim : str, optional
+            EOFs sample dimension
+        weight : xarray DataArray or sequence of xarray DataArrays, optional
+            Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used. If weight 
+            is specified, it must be the same length as da with each element broadcastable onto each 
+            element of da
+        n_modes : values, optional
+            Number of EOF modes to return
+            
+        Returns
+        -------
+        eofs : xarray Dataset
+            Dataset containing the following variables:
+            EOFs; array containing the empirical orthogonal functions
+            PCs; array containing the associated principle component timeseries
+            lambdas; array containing the eigenvalues of the covariance of the input data
+            explained_var; array containing the fraction of the total variance explained by each EOF 
+            mode
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(6,4,40)), 
+        ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+        ...                          ('time', pd.date_range('2000-01-01', periods=40, freq='M'))])
+        >>> doppyo.diagnostic.eofs(A)
+        <xarray.Dataset>
+        Dimensions:        (lat: 6, lon: 4, mode: 20, time: 40)
+        Coordinates:
+          * time           (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2003-04-30
+          * mode           (mode) int64 1 2 3 4 5 6 7 8 9 ... 12 13 14 15 16 17 18 19 20
+          * lat            (lat) int64 -75 -45 -15 15 45 75
+          * lon            (lon) int64 45 135 225 315
+        Data variables:
+            EOFs           (mode, lat, lon) float64 -0.05723 -0.01997 ... 0.08166
+            PCs            (time, mode) float64 1.183 -1.107 -0.5385 ... -0.08552 0.1951
+            lambdas        (mode) float64 87.76 80.37 68.5 58.14 ... 8.269 6.279 4.74
+            explained_var  (mode) float64 0.1348 0.1234 0.1052 ... 0.009644 0.00728
+            
+        Limitations
+        -----------
+        This function is a wrapper on scipy.sparse.linalg.svds which is a naive implementation 
+        using ARPACK. Thus, the approach implemented here is non-lazy and could incur large 
+        increases in memory usage.
     """
     
     if isinstance(da, xr.core.dataarray.DataArray):
@@ -605,381 +1034,469 @@ def compute_eofs(da, sample_dim='time', weight=None, n_modes=20):
     
 
 # ===================================================================================================
-def compute_mmms(v):
+def mean_merid_mass_streamfunction(v, lat_name=None, lon_name=None, plevel_name=None):
     """
-        Returns the mean meridional mass streamfunction averaged over all provided longitudes
+        Returns the mean meridional mass stream function averaged over all provided longitudes
+        Author: Dougie Squire
+        Date: 15/07/2018
         
-        Pressures must be in hPa
+        Parameters
+        ----------
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+        plevel_name : str, optional
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
+            automatically
+            
+        Returns
+        -------
+        mmms : xarray DataArray
+            New DataArray object containing the mean meridional mass stream function
+        
+        Examples
+        --------
+        >>> v = xr.DataArray(np.random.normal(size=(2,4,4)), 
+        ...                   coords=[('level', [400, 600]), ('lat', np.arange(-90,90,45)), 
+        ...                   ('lon', np.arange(0,360,90))])
+        >>> doppyo.diagnostic.mean_merid_mass_streamfunction(v)
+        <xarray.DataArray 'mmms' (lat: 4, level: 2)>
+        array([[ 0.000000e+00, -1.336316e-07],
+               [ 0.000000e+00, -1.447547e+10],
+               [ 0.000000e+00, -3.208457e+09],
+               [ 0.000000e+00, -2.562681e+10]])
+        Coordinates:
+          * lat      (lat) int64 -90 -45 0 45
+          * level    (level) int64 400 600
+
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        Pressure levels must be provided in units of hPa
     """
     
     degtorad = utils.constants().pi / 180
 
-    lat = utils.get_lat_name(v)
-    lon = utils.get_lon_name(v)
-    plev = utils.get_level_name(v)
-    cos_lat = xr.ufuncs.cos(v[lat] * degtorad) 
+    if lat_name is None:
+        lat_name = utils.get_lat_name(v)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(v)
+    if plevel_name is None:
+        plevel_name = utils.get_plevel_name(v)
+    cos_lat = xr.ufuncs.cos(v[lat_name] * degtorad) 
 
-    v_Z = v.mean(dim=lon)
+    v_Z = v.mean(dim=lon_name)
     
     return (2 * utils.constants().pi * utils.constants().R_earth * cos_lat * \
-                utils.integrate(v_Z, over_dim=plev, x=(v_Z[plev] * 100), cumulative=True) \
-                / utils.constants().g)
+                utils.integrate(v_Z, over_dim=plevel_name, x=(v_Z[plevel_name] * 100), cumulative=True) \
+                / utils.constants().g).rename('mmms')
 
 
 # ===================================================================================================
-def int_over_atmos(da, lat_n, lon_n, plev_n, lon_dim=None):
-    """ 
-        Returns integral of da over the mass of the atmosphere 
+def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral=False, n_wavenumbers=20,
+                       integrate=True, lat_name=None, lon_name=None, plevel_name=None):
+    """
+        Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in `Marques 
+        et al. 2011 Global diagnostic energetics of five state-of-the-art climate models. Climate 
+        Dynamics`. Note that this decomposition is in the space domain. A space-time decomposition 
+        can also be carried out (though not in Fourier space, but this is not implemented here (see 
+        `Oort. 1964 On Estimates of the atmospheric energy cycle. Monthly Weather Review`).
+        Author: Dougie Squire
+        Date: 15/07/2018
         
-        If a longitudinal dimension does not exist, this must be provided as lon_dim
-    """
-    
-    degtorad = utils.constants().pi / 180
-    
-    if lon_dim is None:
-        lat = da[lat_n]
-        lon = da[lon_n]
-        da = da.sortby([lat, lon])
-    else:
-        lat = da[lat_n]
-        lon = lon_dim
-        da = da.sortby(lat)
+        Parameters
+        ----------
+        temp : xarray DataArray
+            Array containing fields of temperature with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        u : xarray DataArray
+            Array containing fields of zonal velocity with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        v : xarray DataArray
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        omega : xarray DataArray
+            Array containing fields of vertical velocity (pressure coordinates) with at least coordinates 
+            latitude, longitude and level (following standard naming - see Limitations)
+        gh : xarray DataArray
+            Array containing fields of geopotential height with at least coordinates latitude, longitude 
+            and level (following standard naming - see Limitations)
+        terms : str or sequence of str
+            List of terms to compute. If None, returns all terms. Available options are:
+            Pz; total available potential energy in the zonally averaged temperature distribution
+            Kz; total kinetic energy in zonally averaged motion
+            Pe; total eddy available potential energy [= sum_n Pn (n > 0 only) for spectral=True] (Note that 
+            for spectral=True, an additional term, Sn, quantifying the rate of transfer of available potential 
+            energy to eddies of wavenumber n from eddies of all other wavenumbers is also returned)
+            Ke; total eddy kinetic energy [= sum_n Kn (n > 0 only) for spectral=True] (Note that for 
+            spectral=True, an additional term, Ln, quantifying the rate of transfer of kinetic energy to eddies 
+            of wavenumber n from eddies of all other wavenumbers is also returned)
+            Cz; rate of conversion of zonal available potential energy to zonal kinetic energy
+            Ca; rate of transfer of total available potential energy in the zonally averaged temperature 
+            distribution (Pz) to total eddy available potential energy (Pe) [= sum_n Rn (n > 0 only) for 
+            spectral=True]
+            Ce; rate of transfer of total eddy available potential energy (Pe) to total eddy kinetic energy 
+            (Ke) [= sum_n Cn (n > 0 only) for spectral=True]
+            Ck; rate of transfer of total eddy kinetic energy (Ke) to total kinetic energy in zonally 
+            averaged motion (Kz) [= sum_n Mn (n > 0 only) for spectral=True]
+            Gz; rate of generation of zonal available potential energy due to the zonally averaged heating (Pz).
+            Note that this term is computed as a residual (Cz + Ca) and cannot be returned in spectral space. 
+            If Gz is requested with spectral=True, Gz is returned in real-space only
+            Ge; rate of generation of eddy available potential energy (Pe). Note that this term is computed as 
+            a residual (Ce - Ca) and cannot be returned in spectral space. If Ge is requested with spectral=True, 
+            Ge is returned in real-space only
+            Dz; rate of viscous dissipation of zonal kinetic energy (Kz). Note that this term is computed as a 
+            residual (Cz - Ck) and cannot be returned in spectral space. If Dz is requested with spectral=True, Dz 
+            is returned in real-space only
+            De; rate of dissipation of eddy kinetic energy (Ke). Note that this term is computed as a residual 
+            (Ce - Ck) and cannot be returned in spectral space. If De is requested with spectral=True, De is 
+            returned in real-space only
+        vgradz : bool, optional
+            If True, uses `v-grad-z` approach for computing terms relating to conversion
+            of potential energy to kinetic energy. Otherwise, defaults to using the 
+            `omaga-alpha` approach (see reference above for details)
+        spectral : bool, optional
+            If True, computes all terms as a function of wavenumber on longitudinal bands. To use this 
+            option, longitudes must be regularly spaced. Note that Ge and De are computed as residuals and
+            cannot be computed in spectral space
+        n_wavenumbers : int, optional
+            Number of wavenumbers to retain either side of wavenumber=0. Obviously only does anything if 
+            spectral=True
+        integrate : bool, optional
+            If True, computes and returns the integral of each term over the mass of the atmosphere. Otherwise, 
+            only the integrands are returned
+        lat_name : str, optional
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
+            automatically
+        lon_name : str, optional
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
+            automatically
+        plevel_name : str, optional
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
+            automatically
+
+        Returns
+        -------
+        atmos_energy_cycle : xarray Dataset
+            Dataset containing the requested variables plus gamma, the stability parameter. If integrate=True, 
+            both the integrand (<term>_int) and the integral over the mass of the atmosphere (<term>) are 
+            returned for each requested term. Otherwise, only the integrands are returned.
         
-    c = 2 * utils.constants().pi * utils.constants().R_earth
-    lat_m = c / 360
-    lon_m = c * np.cos(da[lat_n] * degtorad) / 360
-
-    da_z = utils.integrate(da, over_dim=plev_n, x=(da[plev_n] * 100) / utils.constants().g)
-    if lon_dim is None:
-        da_zx = utils.integrate(da_z, over_dim=lon_n, x=da[lon_n] * lon_m)
-    else:
-        lon_extent = lon_dim * lon_m
-        da_zx = (lon_extent.max(lon_n) - lon_extent.min(lon_n)) * da_z
-    da_zxy = utils.integrate(da_zx, over_dim=lat_n, x=da[lat_n] * lat_m)
-    
-    return da_zxy / (4 * utils.constants().pi * utils.constants().R_earth ** 2)
-
-
-def flip_n(da):
-    """ Flips data along wavenumber coordinate """
-    
-    daf = da.copy()
-    daf['n'] = -daf['n']
-    
-    return daf.sortby(daf['n'])
-
-
-def truncate(F, n_truncate, dim):
-    """ 
-        Converts spatial frequency dim to wavenumber, n, and truncates all wavenumbers greater than 
-        n_truncate 
-    """
-    F[dim] = 360 * F[dim]
-    F = F.rename({dim : 'n'})
-    F = F.where(abs(F.n) <= n_truncate, drop=True)
-    return F, flip_n(F)
-    
-    
-def triple_terms(A, B, C):
-    """ 
-        Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
-    """
-
-    # Use rolling operator to build shifted terms -----
-    Am = A.rename({'n' : 'm'})
-    Cnm = C.rolling(n=len(C.n), center=True).construct('m', fill_value=0)
-    Cnm['m'] = -C['n'].values
-    
-    # Drop m = 0 and n < 0 -----
-    Am = Am.where(Am['m'] != 0, drop=True) 
-    Cnm = Cnm.where(Cnm['m'] != 0, drop=True)
-
-    return (B * (Am * Cnm)).sum(dim='m', skipna=False)
-
-
-def triple_terms_loop(A, B, C):
-    """ 
-        Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
-    """
-
-    # Loop over all m's and perform rolling sum -----
-    ms = A['n'].where(A['n'] != 0, drop=True).values
-    ABC = A.copy() * 0
-    for m in ms:
-        Am = A.sel(n=m)
-        Cnm = C.shift(n=int(m)).fillna(0)
-        ABC = ABC + (Am * B * Cnm)
-
-    return ABC
-
-
-def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral=False, n_wavenumbers=20,
-                               integrate=True, loop_triple_terms=False):
-    """
-        Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in 
-        `Marques et al. 2011 Global diagnostic energetics of five state-of-the-art climate 
-        models. Climate Dynamics`. Note that this decomposition is in the space domain. A
-        space-time decomposition can also be carried out (though not in Fourier space, but 
-        this is not implemented here (see `Oort. 1964 On Estimates of the atmospheric energy 
-        cycle. Monthly Weather Review`).
-
-        Inputs:
-            terms : str or sequence
-                list of terms to compute. If None, returns all terms. Available options are:
-                    Pz : total available potential energy in the zonally averaged temperature
-                         distribution
-                    Kz : total kinetic energy in zonally averaged motion
-                    Pe : total eddy available potential energy [= sum_n Pn for spectral=True]
-                         (Note that for spectral=True, an additional term, Sn, quantifying the
-                         rate of transfer of available potential energy to eddies of wavenumber 
-                         n from eddies of all other wavenumbers is also returned)
-                    Ke : total eddy kinetic energy [= sum_n Kn for spectral=True]
-                         (Note that for spectral=True, an additional term, Ln, quantifying the
-                         rate of transfer of kinetic energy to eddies of wavenumber n from eddies 
-                         of all other wavenumbers is also returned)
-                    Cz : rate of conversion of zonal available potential energy to zonal kinetic 
-                         energy
-                    Ca : rate of transfer of total available potential energy in the zonally 
-                         averaged temperature distribution (Pz) to total eddy available potential 
-                         energy (Pe) [= sum_n Rn for spectral=True]
-                    Ce : rate of transfer of total eddy available potential energy (Pe) to total 
-                         eddy kinetic energy (Ke) [= sum_n Cn for spectral=True]
-                    Ck : rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
-                         energy in zonally averaged motion (Kz) [= sum_n Mn for spectral=True]
-            vgradz : bool, optional
-                if True, uses `v-grad-z` approach for computing terms relating to conversion
-                of potential energy to kinetic energy. Otherwise, defaults to using the 
-                `omaga-alpha` approach (see reference above for details)
-            spectral : bool, optional
-                if True, computes all terms as a function of wavenumber on longitudinal bands
-            n_wavenumbers : int, optional
-                number of wavenumbers to retain either side of wavenumber=0. Obviously only does
-                anything if spectral=True
-            integrate : bool, optional
-                if True, computes and returns the integral of each term over the mass of the 
-                atmosphere. Otherwise, only the integrands are returned.
-
-        Restrictions:
-            Pressures must be in hPa
-            lat and lon are in degrees
-            For spectral=True, lon must be regularly spaced
+        Examples
+        --------
+        >>> temp = xr.DataArray(np.random.normal(size=(90,90,9,5)), 
+        ...                     coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                             ('level', np.arange(100,1000,100)), 
+        ...                             ('time', pd.date_range('2000-01-01', periods=5, freq='M'))])
+        >>> u = xr.DataArray(np.random.normal(size=(90,90,9,5)), 
+        ...                  coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                          ('level', np.arange(100,1000,100)), 
+        ...                          ('time', pd.date_range('2000-01-01', periods=5, freq='M'))])
+        >>> v = xr.DataArray(np.random.normal(size=(90,90,9,5)), 
+        ...                  coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                          ('level', np.arange(100,1000,100)), 
+        ...                          ('time', pd.date_range('2000-01-01', periods=5, freq='M'))])
+        >>> omega = xr.DataArray(np.random.normal(size=(90,90,9,5)), 
+        ...                      coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                              ('level', np.arange(100,1000,100)), 
+        ...                              ('time', pd.date_range('2000-01-01', periods=5, freq='M'))])
+        >>> gh = xr.DataArray(np.random.normal(size=(90,90,9,5)), 
+        ...                   coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                           ('level', np.arange(100,1000,100)), 
+        ...                           ('time', pd.date_range('2000-01-01', periods=5, freq='M'))])
+        >>> doppyo.diagnostic.atmos_energy_cycle(temp, u, v, omega, gh, spectral=True)
+        <xarray.Dataset>
+        Dimensions:  (lat: 90, level: 9, n: 41, time: 5)
+        Coordinates:
+          * level    (level) int64 100 200 300 400 500 600 700 800 900
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2000-05-31
+          * lat      (lat) int64 -90 -88 -86 -84 -82 -80 -78 ... 76 78 80 82 84 86 88
+          * n        (n) float64 -20.0 -19.0 -18.0 -17.0 -16.0 ... 17.0 18.0 19.0 20.0
+        Data variables:
+            gamma    (level, time) float64 8.993 120.3 68.1 ... -6.874 1.083 -1.383
+            Pz_int   (level, time, lat) float64 83.76 64.07 67.67 ... -8.283 -0.7205
+            Pz       (time) float64 -9.73e+04 8.225e+05 -1.892e+04 -4.197e+06 -9.113e+05
+            Kz_int   (lat, level, time) float64 0.03326 0.01417 ... 0.01454 0.005276
+            Kz       (time) float64 88.08 93.48 97.19 91.19 85.38
+            Cz_int   (level, lat, time) float64 0.0001505 -6.762e-05 ... -3.222e-06
+            Cz       (time) float64 0.01983 0.02128 -0.04917 -0.04136 -0.04431
+            Pn_int   (level, time, lat, n) float64 109.5 163.6 132.4 ... -0.5592 -31.31
+            Pn       (time, n) float64 -1.496e+05 -1.48e+05 ... -1.712e+06 -1.534e+06
+            Sn_int   (level, time, n, lat) complex128 (-1.635e+12+1.365e+12j) ... (1.546e-04-3.464e-03j)
+            Sn       (time, n) float64 54.46 42.84 39.39 10.27 ... 43.73 55.43 37.28
+            Kn_int   (lat, n, level, time) float64 0.02795 0.02618 ... 0.0314 0.005119
+            Kn       (n, time) float64 184.5 179.1 183.1 186.4 ... 183.1 186.4 176.6
+            Ln_int   (n, lat, level, time) complex128 (-1.401e+09+4.623e+08j) ... (2.400e-06+9.272e-07j)
+            Ln       (n, time) float64 7.325e-05 0.0001285 ... 8.57e-05 0.0001433
+            Rn_int   (level, time, lat, n) complex128 (5.631e-03-1.433e-17j) ... (-3.295e-04+8.862e-19j)
+            Rn       (time, n) float64 0.3357 0.5211 0.00877 ... 3.811 0.04257 3.209
+            Cn_int   (level, lat, n, time) complex128 (-1.694e-04+4.232e-19j) ... (-1.836e-04+4.979e-19j)
+            Cn       (n, time) float64 0.09795 0.04268 0.01845 ... 0.04054 0.03553
+            Mn_int   (lat, n, level, time) complex128 (-1.376e+06+2.933e-09j) ... (5.344e-07-1.670e-21j)
+            Mn       (n, time) float64 1.526e+06 8.963e+05 ... 4.038e+06 8.648e+05
+            Gz_int   (level, lat, time) float64 -0.01321 -0.2201 ... -6.633e-05
+            Gz       (time) float64 1.33 -10.62 27.5 -31.06 -10.44
+            Ge_int   (level, lat, time) float64 0.01375 0.2213 ... 0.0007708 2.494e-05
+            Ge       (time) float64 -1.011 10.69 -27.39 31.14 10.57
+            Dz_int   (level, lat, time) float64 7.444e+07 -6.406e+07 ... -3.544e-06
+            Dz       (time) float64 1.009e+07 6.951e+06 1.85e+07 1.491e+07 1.306e+07
+            De_int   (level, lat, time) float64 7.444e+07 -6.406e+07 ... -3.849e-05
+            De       (time) float64 1.009e+07 6.951e+06 1.85e+07 1.491e+07 1.306e+07
             
-        Notes:
-            dfgldfhglkhdflkgjhadlfkghlksd
-
-        Notation: (stackable, e.g. *_ZT indicates the time average of the zonal average)
-            *_A -> area average over an isobaric surface
-            *_a -> departure from area average
-            *_Z -> zonal average
-            *_z -> departure from zonal average
-            *_T -> time average
-            *_t -> departure from time average
-            Capital variables indicate Fourier transforms:
-                F(u) = U
-                F(v) = V
-                F(omega) = O
-                F(gh) = A
-                F(temp) = B
+        Limitations
+        -----------
+        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
+        doppyo.utils.get_lon_name(), etc)
+        Pressure levels must be provided in units of hPa
+        The terms Sn and Ln, which are computed when Pe and Ke are requested with spectral=True, rely on 
+        "triple terms" that are very intensive and can take a significant amount of time and memory to compute 
+        (see _triple_terms() below). Often (i.e. for arrays of sufficient size to be of interest) requesting
+        these terms yeilds a MemoryError--if working in memory--or a KilledWorkerError--if working out of
+        memory
+        
+        To do
+        -----
+        Arrays that are sufficiently large to be interesting currently max out the available memory when
+        Sn or Ln are requested. I need to implement a less hungry method for computing the "triple terms" 
+        (see _triple_terms() below)
+        
+        Notes
+        -----
+        The following notation is used below (stackable, e.g. *_ZT indicates the time average of the zonal 
+        average):
+        *_A -> area average over an isobaric surface
+        *_a -> departure from area average
+        *_Z -> zonal average
+        *_z -> departure from zonal average
+        *_T -> time average
+        *_t -> departure from time average
+        Additionally, capital variables indicate Fourier transforms:
+        F(u) = U
+        F(v) = V
+        F(omega) = O
+        F(gh) = A
+        F(temp) = B
     """
     
-    if isinstance(terms,str):
+    def _flip_n(da):
+        """ Flips data along wavenumber coordinate """
+
+        daf = da.copy()
+        daf['n'] = -daf['n']
+
+        return daf.sortby(daf['n'])
+
+
+    def _truncate(F, n_truncate, dim):
+        """ 
+            Converts spatial frequency dim to wavenumber, n, and truncates all wavenumbers greater than 
+            n_truncate 
+        """
+        F[dim] = 360 * F[dim]
+        F = F.rename({dim : 'n'})
+        F = F.where(abs(F.n) <= n_truncate, drop=True)
+        return F, _flip_n(F)
+
+
+    def _triple_terms(A, B, C):
+        """ 
+            Calculate triple term summation of the form \int_{m=-inf}^{inf} A(m) * B(n) * C(n - m)
+        """
+
+        # Use rolling operator to build shifted terms -----
+        Am = A.rename({'n' : 'm'})
+        Cnm = C.rolling(n=len(C.n), center=True).construct('m', fill_value=0)
+        Cnm['m'] = -C['n'].values
+
+        # Drop m = 0 and n < 0 -----
+        Am = Am.where(Am['m'] != 0, drop=True) 
+        Cnm = Cnm.where(Cnm['m'] != 0, drop=True)
+
+        return (B * (Am * Cnm)).sum(dim='m', skipna=False)
+
+    
+    if terms is None:
+        terms = ['Pz', 'Kz', 'Pe', 'Ke', 'Cz', 'Ca', 'Ce', 'Ck', 'Gz', 'Ge', 'Dz', 'De']
+    if isinstance(terms, str):
         terms = [terms]
     
     # Initialize some things -----
-    lat = utils.get_lat_name(temp)
-    lon = utils.get_lon_name(temp)
-    plev = utils.get_level_name(temp)
+    if lat_name is None:
+        lat_name = utils.get_lat_name(temp)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(temp)
+    if plevel_name is None:
+        plevel_name = utils.get_plevel_name(temp)
     
     degtorad = utils.constants().pi / 180
-    tan_lat = xr.ufuncs.tan(temp[lat] * degtorad)
-    cos_lat = xr.ufuncs.cos(temp[lat] * degtorad) 
+    tan_lat = xr.ufuncs.tan(temp[lat_name] * degtorad)
+    cos_lat = xr.ufuncs.cos(temp[lat_name] * degtorad) 
     
     # Determine the stability parameter using Saltzman's approach -----
     kappa = utils.constants().R_d / utils.constants().C_pd
-    p_kap = (1000 / temp[plev]) ** kappa
-    theta_A = utils.average(temp * p_kap, [lat, lon], weights=cos_lat)
-    dtheta_Adp = utils.calc_gradient(theta_A, dim=plev, x=(theta_A[plev] * 100))
-    gamma = - p_kap * (utils.constants().R_d) / ((temp[plev] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
+    p_kap = (1000 / temp[plevel_name]) ** kappa
+    theta_A = utils.average(temp * p_kap, [lat_name, lon_name], weights=cos_lat)
+    dtheta_Adp = utils.differentiate_wrt(theta_A, dim=plevel_name, x=(theta_A[plevel_name] * 100))
+    gamma = - p_kap * (utils.constants().R_d) / ((temp[plevel_name] * 100) * utils.constants().C_pd) / dtheta_Adp # [1/K]
     energies = gamma.rename('gamma').to_dataset()
     
     # Compute zonal terms
     # ========================
     
-    if ('Pz' in terms) | (terms is None):
+    if ('Pz' in terms):
     # Compute the total available potential energy in the zonally averaged temperature
     # distribution, Pz [also commonly called Az] -----
-        temp_A = utils.average(temp, [lat, lon], weights=cos_lat)
-        temp_Z = temp.mean(dim=lon)
+        temp_A = utils.average(temp, [lat_name, lon_name], weights=cos_lat)
+        temp_Z = temp.mean(dim=lon_name)
         temp_Za = temp_Z - temp_A
         Pz_int = gamma * utils.constants().C_pd / 2 * temp_Za ** 2  # [J/kg]
         energies['Pz_int'] = Pz_int
         if integrate:
-            Pz = int_over_atmos(Pz_int, lat, lon, plev, lon_dim=temp[lon]) # [J/m^2]
+            Pz = _int_over_atmos(Pz_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [J/m^2]
             energies['Pz'] = Pz
     
-    if ('Kz' in terms) | (terms is None):
+    if ('Kz' in terms):
     # Compute the total kinetic energy in zonally averaged motion, Kz [also commonly 
     # called Kz] -----
-        u_Z = u.mean(dim=lon)
-        v_Z = v.mean(dim=lon)
+        u_Z = u.mean(dim=lon_name)
+        v_Z = v.mean(dim=lon_name)
         Kz_int = 0.5 * (u_Z ** 2 + v_Z ** 2) # [J/kg]
         energies['Kz_int'] = Kz_int
         if integrate:
-            Kz = int_over_atmos(Kz_int, lat, lon, plev, lon_dim=u[lon]) # [J/m^2]
+            Kz = _int_over_atmos(Kz_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name]) # [J/m^2]
             energies['Kz'] = Kz
     
-    if ('Cz' in terms) | (terms is None):
+    if ('Cz' in terms):
     # Compute the rate of conversion of zonal available potential energy (Pz) to zonal kinetic
     # energy (Kz), Cz [also commonly called Cz] -----
         if vgradz:
             if 'v_Z' not in locals():
-                v_Z = v.mean(dim=lon)
-            gh_Z = gh.mean(dim=lon)
-            dghdlat = utils.calc_gradient(gh_Z, dim=lat, x=(gh_Z[lat] * degtorad))
+                v_Z = v.mean(dim=lon_name)
+            gh_Z = gh.mean(dim=lon_name)
+            dghdlat = utils.differentiate_wrt(gh_Z, dim=lat_name, x=(gh_Z[lat_name] * degtorad))
             Cz_int = - (utils.constants().g / utils.constants().R_earth) * v_Z * dghdlat # [W/kg]
             energies['Cz_int'] = Cz_int
             if integrate:
-                Cz = int_over_atmos(Cz_int, lat, lon, plev, lon_dim=gh[lon]) # [W/m^2]
+                Cz = _int_over_atmos(Cz_int, lat_name, lon_name, plevel_name, lon_dim=gh[lon_name]) # [W/m^2]
                 energies['Cz'] = Cz
         else:
             if 'temp_Za' not in locals():
-                temp_A = utils.average(temp, [lat, lon], weights=cos_lat)
-                temp_Z = temp.mean(dim=lon)
+                temp_A = utils.average(temp, [lat_name, lon_name], weights=cos_lat)
+                temp_Z = temp.mean(dim=lon_name)
                 temp_Za = temp_Z - temp_A
-            omega_A = utils.average(omega, [lat, lon], weights=cos_lat)
-            omega_Z = omega.mean(dim=lon)
+            omega_A = utils.average(omega, [lat_name, lon_name], weights=cos_lat)
+            omega_Z = omega.mean(dim=lon_name)
             omega_Za = omega_Z - omega_A
-            Cz_int = - (utils.constants().R_d / (temp[plev] * 100)) * omega_Za * temp_Za # [W/kg]
+            Cz_int = - (utils.constants().R_d / (temp[plevel_name] * 100)) * omega_Za * temp_Za # [W/kg]
             energies['Cz_int'] = Cz_int
             if integrate:
-                Cz = int_over_atmos(Cz_int, lat, lon, plev, lon_dim=omega[lon]) # [W/m^2]
+                Cz = _int_over_atmos(Cz_int, lat_name, lon_name, plevel_name, lon_dim=omega[lon_name]) # [W/m^2]
                 energies['Cz'] = Cz
     
     # Compute eddy terms in Fourier space if spectral=True
     # ==========================================================
     if spectral:
         
-        if ('Pe' in terms) | (terms is None):
+        if ('Pe' in terms):
         # Compute the total available potential energy eddies of wavenumber n, Pn -----
-            Bp, Bn = truncate(utils.fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
-                              len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+            Bp, Bn = _truncate(utils.fft(temp, dim=lon_name, nfft=len(temp[lon_name]), twosided=True, shift=True) / 
+                              len(temp[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
 
             Pn_int = (gamma * utils.constants().C_pd * abs(Bp) ** 2)
             energies['Pn_int'] = Pn_int
             if integrate:
-                Pn = int_over_atmos(Pn_int, lat, lon, plev, lon_dim=temp[lon]) # [J/m^2]
+                Pn = _int_over_atmos(Pn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [J/m^2]
                 energies['Pn'] = Pn
 
         # Compute the rate of transfer of available potential energy to eddies of 
         # wavenumber n from eddies of all other wavenumbers, Sn -----
-            Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
-                              len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-            Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) /
-                              len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-            Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) /
-                              len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+            Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) /
+                               len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) /
+                               len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) /
+                               len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
                 
-            dBpdlat = utils.calc_gradient(Bp, dim=lat, x=(Bp[lat] * degtorad))
-            dBndlat = utils.calc_gradient(Bn, dim=lat, x=(Bn[lat] * degtorad))
-            dBpdp = utils.calc_gradient(Bp, dim=plev, x=(Bp[plev] * 100))
-            dBndp = utils.calc_gradient(Bn, dim=plev, x=(Bn[plev] * 100))
+            dBpdlat = utils.differentiate_wrt(Bp, dim=lat_name, x=(Bp[lat_name] * degtorad))
+            dBndlat = utils.differentiate_wrt(Bn, dim=lat_name, x=(Bn[lat_name] * degtorad))
+            dBpdp = utils.differentiate_wrt(Bp, dim=plevel_name, x=(Bp[plevel_name] * 100))
+            dBndp = utils.differentiate_wrt(Bn, dim=plevel_name, x=(Bn[plevel_name] * 100))
 
-            if loop_triple_terms:
-                BpBnUp = triple_terms_loop(Bp, Bn, Up)
-                BpBpUn = triple_terms_loop(Bp, Bp, Un)
-                BpglBnVp = triple_terms_loop(Bp, dBndlat, Vp)
-                BpglBpVn = triple_terms_loop(Bp, dBpdlat, Vn)
-                BpgpBnOp = triple_terms_loop(Bp, dBndp, Op)
-                BpgpBpOn = triple_terms_loop(Bp, dBpdp, On)
-                BpBnOp = triple_terms_loop(Bp, Bn, Op)
-                BpBpOn = triple_terms_loop(Bp, Bp, On)
-            else:
-                BpBnUp = triple_terms(Bp, Bn, Up)
-                BpBpUn = triple_terms(Bp, Bp, Un)
-                BpglBnVp = triple_terms(Bp, dBndlat, Vp)
-                BpglBpVn = triple_terms(Bp, dBpdlat, Vn)
-                BpgpBnOp = triple_terms(Bp, dBndp, Op)
-                BpgpBpOn = triple_terms(Bp, dBpdp, On)
-                BpBnOp = triple_terms(Bp, Bn, Op)
-                BpBpOn = triple_terms(Bp, Bp, On)
+            BpBnUp = _triple_terms(Bp, Bn, Up)
+            BpBpUn = _triple_terms(Bp, Bp, Un)
+            BpglBnVp = _triple_terms(Bp, dBndlat, Vp)
+            BpglBpVn = _triple_terms(Bp, dBpdlat, Vn)
+            BpgpBnOp = _triple_terms(Bp, dBndp, Op)
+            BpgpBpOn = _triple_terms(Bp, dBpdp, On)
+            BpBnOp = _triple_terms(Bp, Bn, Op)
+            BpBpOn = _triple_terms(Bp, Bp, On)
 
             Sn_int = -gamma * utils.constants().C_pd * (1j * Bp['n']) / \
-                         (utils.constants().R_earth * xr.ufuncs.cos(Bp[lat] * degtorad)) * \
+                         (utils.constants().R_earth * xr.ufuncs.cos(Bp[lat_name] * degtorad)) * \
                          (BpBnUp + BpBpUn) + \
                      gamma * utils.constants().C_pd / utils.constants().R_earth * \
                          (BpglBnVp + BpglBpVn) + \
                      gamma * utils.constants().C_pd * (BpgpBnOp + BpgpBpOn) + \
-                     gamma * utils.constants().R_d / Bp[plev] * \
+                     gamma * utils.constants().R_d / Bp[plevel_name] * \
                          (BpBnOp + BpBpOn)
             energies['Sn_int'] = Sn_int
             if integrate:
-                Sn = abs(int_over_atmos(Sn_int, lat, lon, plev, lon_dim=temp[lon])) # [W/m^2]
+                Sn = abs(_int_over_atmos(Sn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name])) # [W/m^2]
                 energies['Sn'] = Sn
                 
-        if ('Ke' in terms) | (terms is None):
+        if ('Ke' in terms):
         # Compute the total kinetic energy in eddies of wavenumber n, Kn -----
             if 'U' not in locals():
-                Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) /
-                                  len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) /
+                                   len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
             if 'V' not in locals():
-                Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
-                                  len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                   len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
 
             Kn_int = abs(Up) ** 2 + abs(Vp) ** 2
             energies['Kn_int'] = Kn_int
             if integrate:
-                Kn = int_over_atmos(Kn_int, lat, lon, plev, lon_dim=u[lon]) # [J/m^2]
+                Kn = _int_over_atmos(Kn_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name]) # [J/m^2]
                 energies['Kn'] = Kn
 
         # Compute the rate of transfer of kinetic energy to eddies of wavenumber n from 
         # eddies of all other wavenumbers, Ln -----
             if 'O' not in locals():
-                Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
-                                  len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                   len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
                 
-            dUpdp = utils.calc_gradient(Up, dim=plev, x=(Up[plev] * 100))
-            dVpdp = utils.calc_gradient(Vp, dim=plev, x=(Vp[plev] * 100))
-            dOpdp = utils.calc_gradient(Op, dim=plev, x=(Op[plev] * 100))
-            dOndp = utils.calc_gradient(On, dim=plev, x=(On[plev] * 100))
-            dVpcdl = utils.calc_gradient(Vp * cos_lat, dim=lat, x=(Vp[lat] * degtorad))
-            dVncdl = utils.calc_gradient(Vn * cos_lat, dim=lat, x=(Vn[lat] * degtorad))
-            dUpdl = utils.calc_gradient(Up, dim=lat, x=(Up[lat] * degtorad))
-            dVpdl = utils.calc_gradient(Vp, dim=lat, x=(Vp[lat] * degtorad))
+            dUpdp = utils.differentiate_wrt(Up, dim=plevel_name, x=(Up[plevel_name] * 100))
+            dVpdp = utils.differentiate_wrt(Vp, dim=plevel_name, x=(Vp[plevel_name] * 100))
+            dOpdp = utils.differentiate_wrt(Op, dim=plevel_name, x=(Op[plevel_name] * 100))
+            dOndp = utils.differentiate_wrt(On, dim=plevel_name, x=(On[plevel_name] * 100))
+            dVpcdl = utils.differentiate_wrt(Vp * cos_lat, dim=lat_name, x=(Vp[lat_name] * degtorad))
+            dVncdl = utils.differentiate_wrt(Vn * cos_lat, dim=lat_name, x=(Vn[lat_name] * degtorad))
+            dUpdl = utils.differentiate_wrt(Up, dim=lat_name, x=(Up[lat_name] * degtorad))
+            dVpdl = utils.differentiate_wrt(Vp, dim=lat_name, x=(Vp[lat_name] * degtorad))
 
-            if loop_triple_terms:
-                UpUnUp = triple_terms_loop(Up, Un, Up)
-                UpUpUn = triple_terms_loop(Up, Up, Un)
-                VpVnUp = triple_terms_loop(Vp, Vn, Up)
-                VpVpUn = triple_terms_loop(Vp, Vp, Un)
-                VpUnUp = triple_terms_loop(Vp, Un, Up)
-                VpUpUn = triple_terms_loop(Vp, Up, Un)
-                UpVnUp = triple_terms_loop(Up, Vn, Up)
-                UpVpUn = triple_terms_loop(Up, Vp, Un)
-                gpUpUngpOp = triple_terms_loop(dUpdp, Un, dOpdp)
-                gpUpUpgpOn = triple_terms_loop(dUpdp, Up, dOndp)
-                gpVpVngpOp = triple_terms_loop(dVpdp, Vn, dOpdp)
-                gpVpVpgpOn = triple_terms_loop(dVpdp, Vp, dOndp)
-                glUpUnglVpc = triple_terms_loop(dUpdl, Un, dVpcdl)
-                glUpUpglVnc = triple_terms_loop(dUpdl, Up, dVncdl)
-                glVpVnglVpc = triple_terms_loop(dVpdl, Vn, dVpcdl)
-                glVpVpglVnc = triple_terms_loop(dVpdl, Vp, dVncdl)
-            else:
-                UpUnUp = triple_terms(Up, Un, Up)
-                UpUpUn = triple_terms(Up, Up, Un)
-                VpVnUp = triple_terms(Vp, Vn, Up)
-                VpVpUn = triple_terms(Vp, Vp, Un)
-                VpUnUp = triple_terms(Vp, Un, Up)
-                VpUpUn = triple_terms(Vp, Up, Un)
-                UpVnUp = triple_terms(Up, Vn, Up)
-                UpVpUn = triple_terms(Up, Vp, Un)
-                gpUpUngpOp = triple_terms(dUpdp, Un, dOpdp)
-                gpUpUpgpOn = triple_terms(dUpdp, Up, dOndp)
-                gpVpVngpOp = triple_terms(dVpdp, Vn, dOpdp)
-                gpVpVpgpOn = triple_terms(dVpdp, Vp, dOndp)
-                glUpUnglVpc = triple_terms(dUpdl, Un, dVpcdl)
-                glUpUpglVnc = triple_terms(dUpdl, Up, dVncdl)
-                glVpVnglVpc = triple_terms(dVpdl, Vn, dVpcdl)
-                glVpVpglVnc = triple_terms(dVpdl, Vp, dVncdl)
+            UpUnUp = _triple_terms(Up, Un, Up)
+            UpUpUn = _triple_terms(Up, Up, Un)
+            VpVnUp = _triple_terms(Vp, Vn, Up)
+            VpVpUn = _triple_terms(Vp, Vp, Un)
+            VpUnUp = _triple_terms(Vp, Un, Up)
+            VpUpUn = _triple_terms(Vp, Up, Un)
+            UpVnUp = _triple_terms(Up, Vn, Up)
+            UpVpUn = _triple_terms(Up, Vp, Un)
+            gpUpUngpOp = _triple_terms(dUpdp, Un, dOpdp)
+            gpUpUpgpOn = _triple_terms(dUpdp, Up, dOndp)
+            gpVpVngpOp = _triple_terms(dVpdp, Vn, dOpdp)
+            gpVpVpgpOn = _triple_terms(dVpdp, Vp, dOndp)
+            glUpUnglVpc = _triple_terms(dUpdl, Un, dVpcdl)
+            glUpUpglVnc = _triple_terms(dUpdl, Up, dVncdl)
+            glVpVnglVpc = _triple_terms(dVpdl, Vn, dVpcdl)
+            glVpVpglVnc = _triple_terms(dVpdl, Vp, dVncdl)
 
             Ln_int = -(1j * Up['n']) / (utils.constants().R_earth * cos_lat) * \
                          (UpUnUp - UpUpUn) + \
@@ -995,288 +1512,325 @@ def compute_atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, 
                          (glUpUnglVpc + glUpUpglVnc + glVpVnglVpc + glVpVpglVnc)
             energies['Ln_int'] = Ln_int
             if integrate:
-                Ln = abs(int_over_atmos(Ln_int, lat, lon, plev, lon_dim=u[lon])) # [W/m^2]
+                Ln = abs(_int_over_atmos(Ln_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name])) # [W/m^2]
                 energies['Ln'] = Ln
         
-        if ('Ca' in terms) | (terms is None):
+        if ('Ca' in terms):
         # Compute the rate of transfer of zonal available potential energy to eddy 
         # available potential energy in wavenumber n, Rn -----
             if 'temp_Z' not in locals():
-                temp_Z = temp.mean(dim=lon)
+                temp_Z = temp.mean(dim=lon_name)
             if 'V' not in locals():
-                Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
-                                  len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                   len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
             if 'B' not in locals():
-                Bp, Bn = truncate(utils.fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
-                                  len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Bp, Bn = _truncate(utils.fft(temp, dim=lon_name, nfft=len(temp[lon_name]), twosided=True, shift=True) / 
+                                   len(temp[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
             if 'O' not in locals():
-                Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
-                                  len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                   len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
 
-            dtemp_Zdlat = utils.calc_gradient(temp_Z, dim=lat, x=(temp_Z[lat] * degtorad))
+            dtemp_Zdlat = utils.differentiate_wrt(temp_Z, dim=lat_name, x=(temp_Z[lat_name] * degtorad))
             theta = temp * p_kap
-            theta_Z = theta.mean(dim=lon)
+            theta_Z = theta.mean(dim=lon_name)
             theta_Za = theta_Z - theta_A
-            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=plev, x=(theta_Za[plev] * 100))
+            dtheta_Zadp = utils.differentiate_wrt(theta_Za, dim=plevel_name, x=(theta_Za[plevel_name] * 100))
             Rn_int = gamma * utils.constants().C_pd * ((dtemp_Zdlat / utils.constants().R_earth) * (Vp * Bn + Vn * Bp) + 
                                                        (p_kap * dtheta_Zadp) * (Op * Bn + On * Bp)) # [W/kg]
             energies['Rn_int'] = Rn_int
             if integrate:
-                Rn = abs(int_over_atmos(Rn_int, lat, lon, plev, lon_dim=temp[lon])) # [W/m^2]
+                Rn = abs(_int_over_atmos(Rn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name])) # [W/m^2]
                 energies['Rn'] = Rn
 
-        if ('Ce' in terms) | (terms is None):
+        if ('Ce' in terms):
         # Compute the rate of conversion of available potential energy of wavenumber n 
         # to eddy kinetic energy of wavenumber n, Cn -----
             if vgradz:
                 if 'U' not in locals():
-                    Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
-                                      len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                    Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) / 
+                                       len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
                 if 'V' not in locals():
-                    Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
-                                      len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-                Ap, An = truncate(utils.fft(gh, dim=lon, nfft=len(gh[lon]), twosided=True, shift=True) / 
-                                  len(gh[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                    Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                       len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                Ap, An = _truncate(utils.fft(gh, dim=lon_name, nfft=len(gh[lon_name]), twosided=True, shift=True) / 
+                                   len(gh[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
 
-                dApdlat = utils.calc_gradient(Ap, dim=lat, x=(Ap[lat] * degtorad))
-                dAndlat = utils.calc_gradient(An, dim=lat, x=(An[lat] * degtorad))
+                dApdlat = utils.differentiate_wrt(Ap, dim=lat_name, x=(Ap[lat_name] * degtorad))
+                dAndlat = utils.differentiate_wrt(An, dim=lat_name, x=(An[lat_name] * degtorad))
 
                 Cn_int = (((-1j * utils.constants().g * Up['n']) / \
-                           (utils.constants().R_earth * xr.ufuncs.cos(Up[lat] * degtorad))) * \
+                           (utils.constants().R_earth * xr.ufuncs.cos(Up[lat_name] * degtorad))) * \
                                 (Ap * Un - An * Up)) - \
                          ((utils.constants().g / utils.constants().R_earth) * \
                                 (dApdlat * Vn + dAndlat * Vp)) # [W/kg]
                 energies['Cn_int'] = Cn_int
                 if integrate:
-                    Cn = abs(int_over_atmos(Cn_int, lat, lon, plev, lon_dim=u[lon])) # [W/m^2]
+                    Cn = abs(_int_over_atmos(Cn_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name])) # [W/m^2]
                     energies['Cn'] = Cn
             else:
                 if 'O' not in locals():
-                    Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
-                                      len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                    Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                       len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
                 if 'B' not in locals():
-                    Bp, Bn = truncate(utils.fft(temp, dim=lon, nfft=len(temp[lon]), twosided=True, shift=True) / 
-                                      len(temp[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-                Cn_int = - (utils.constants().R_d / (omega[plev] * 100)) * (Op * Bn + On * Bp) # [W/kg]
+                    Bp, Bn = _truncate(utils.fft(temp, dim=lon_name, nfft=len(temp[lon_name]), twosided=True, shift=True) / 
+                                       len(temp[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+                Cn_int = - (utils.constants().R_d / (omega[plevel_name] * 100)) * (Op * Bn + On * Bp) # [W/kg]
                 energies['Cn_int'] = Cn_int
                 if integrate:
-                    Cn = abs(int_over_atmos(Cn_int, lat, lon, plev, lon_dim=temp[lon])) # [W/m^2]
+                    Cn = abs(_int_over_atmos(Cn_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name])) # [W/m^2]
                     energies['Cn'] = Cn
     
-        if ('Ck' in terms) | (terms is None):
+        if ('Ck' in terms):
         # Compute the rate of transfer of kinetic energy to the zonally averaged flow 
         # from eddies of wavenumber n, Mn -----
             if 'v_Z' not in locals():
-                v_Z = v.mean(dim=lon)
+                v_Z = v.mean(dim=lon_name)
             if 'u_Z' not in locals():
-                u_Z = u.mean(dim=lon)
+                u_Z = u.mean(dim=lon_name)
             if 'U' not in locals():
-                Up, Un = truncate(utils.fft(u, dim=lon, nfft=len(u[lon]), twosided=True, shift=True) / 
-                                  len(u[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Up, Un = _truncate(utils.fft(u, dim=lon_name, nfft=len(u[lon_name]), twosided=True, shift=True) / 
+                                   len(u[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
             if 'V' not in locals():
-                Vp, Vn = truncate(utils.fft(v, dim=lon, nfft=len(v[lon]), twosided=True, shift=True) / 
-                                  len(v[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
+                Vp, Vn = _truncate(utils.fft(v, dim=lon_name, nfft=len(v[lon_name]), twosided=True, shift=True) / 
+                                   len(v[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
             if 'O' not in locals():
-                Op, On = truncate(utils.fft(omega, dim=lon, nfft=len(omega[lon]), twosided=True, shift=True) / 
-                                      len(omega[lon]), n_truncate=n_wavenumbers, dim='f_'+lon)
-            dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v[lat] * degtorad))
-            du_Zndlat = utils.calc_gradient(u_Z / xr.ufuncs.cos(u[lat] * degtorad), 
-                                            dim=lat, x=(u[lat] * degtorad))
-            dv_Zdp = utils.calc_gradient(v_Z, dim=plev, x=(v[plev] * 100))
-            du_Zdp = utils.calc_gradient(u_Z, dim=plev, x=(u[plev] * 100))
+                Op, On = _truncate(utils.fft(omega, dim=lon_name, nfft=len(omega[lon_name]), twosided=True, shift=True) / 
+                                   len(omega[lon_name]), n_truncate=n_wavenumbers, dim='f_'+lon_name)
+            dv_Zdlat = utils.differentiate_wrt(v_Z, dim=lat_name, x=(v[lat_name] * degtorad))
+            du_Zndlat = utils.differentiate_wrt(u_Z / xr.ufuncs.cos(u[lat_name] * degtorad), 
+                                            dim=lat_name, x=(u[lat_name] * degtorad))
+            dv_Zdp = utils.differentiate_wrt(v_Z, dim=plevel_name, x=(v[plevel_name] * 100))
+            du_Zdp = utils.differentiate_wrt(u_Z, dim=plevel_name, x=(u[plevel_name] * 100))
 
             Mn_int = (-2 * Up * Un * v_Z * tan_lat / utils.constants().R_earth) + \
                      (2 * Vp * Vn * dv_Zdlat / utils.constants().R_earth + (Vp * On + Vn * Op) * dv_Zdp) + \
                      ((Up * On + Un * Op) * du_Zdp) + \
-                     ((Up * Vn + Un * Vp) * xr.ufuncs.cos(u[lat] * degtorad) / \
+                     ((Up * Vn + Un * Vp) * xr.ufuncs.cos(u[lat_name] * degtorad) / \
                          utils.constants().R_earth * du_Zndlat) # [W/kg]
             energies['Mn_int'] = Mn_int
             if integrate:
-                Mn = abs(int_over_atmos(Mn_int, lat, lon, plev, lon_dim=u[lon])) # [W/m^2]
+                Mn = abs(_int_over_atmos(Mn_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name])) # [W/m^2]
                 energies['Mn'] = Mn
-        
-        if ('Ge' in terms) | (terms is None):
-        # Compute the rate of generation of eddy available potential energy of wavenumber 
-        # n due to nonadiabatic heating, Gn -----
-            raise ValueError('Rate of generation of eddy available potential energy is computed as ' +
-                             'a residual and cannot be computed in Fourier space. Please set spectral' +
-                             '=False')
-        
-        if ('De' in terms) | (terms is None):
-        # Compute the rate of dissipation of the kinetic energy of eddies of wavenumber n, 
-        # Dn -----
-            raise ValueError('Rate of viscous dissipation of eddy kinetic energy is computed as a ' +
-                             'residual and cannot be computed in Fourier space. Please set spectral' +
-                             '=False')
         
     else:
         
-        if ('Pe' in terms) | (terms is None):
+        if ('Pe' in terms):
         # Compute the total eddy available potential energy, Pe [also commonly called 
         # Ae] -----
             if 'temp_Z' not in locals():
-                temp_Z = temp.mean(dim=lon)
+                temp_Z = temp.mean(dim=lon_name)
             temp_z = temp - temp_Z
-            Pe_int = gamma * utils.constants().C_pd / 2 * (temp_z ** 2).mean(dim=lon)  # [J/kg]
+            Pe_int = gamma * utils.constants().C_pd / 2 * (temp_z ** 2).mean(dim=lon_name)  # [J/kg]
             energies['Pe_int'] = Pe_int
             if integrate:
-                Pe = int_over_atmos(Pe_int, lat, lon, plev, lon_dim=temp[lon]) # [J/m^2]
+                Pe = _int_over_atmos(Pe_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [J/m^2]
                 energies['Pe'] = Pe
         
-        if ('Ke' in terms) | (terms is None):
+        if ('Ke' in terms):
         # Compute the total eddy kinetic energy, Ke -----
             if 'u_Z' not in locals():
-                    u_Z = u.mean(dim=lon)
+                    u_Z = u.mean(dim=lon_name)
             if 'v_Z' not in locals():
-                    v_Z = v.mean(dim=lon)
+                    v_Z = v.mean(dim=lon_name)
             u_z = u - u_Z
             v_z = v - v_Z
-            Ke_int = 0.5 * (u_z ** 2 + v_z ** 2).mean(dim=lon) # [J/kg]
+            Ke_int = 0.5 * (u_z ** 2 + v_z ** 2).mean(dim=lon_name) # [J/kg]
             energies['Ke_int'] = Ke_int
             if integrate:
-                Ke = int_over_atmos(Ke_int, lat, lon, plev, lon_dim=u[lon]) # [J/m^2]
+                Ke = _int_over_atmos(Ke_int, lat_name, lon_name, plevel_name, lon_dim=u[lon_name]) # [J/m^2]
                 energies['Ke'] = Ke
                 
-        if ('Ca' in terms) | (terms is None):
+        if ('Ca' in terms):
         # Compute the rate of transfer of total available potential energy in the zonally 
         # averaged temperature distribution (Pz) to total eddy available potential energy 
         # (Pe), Ca -----
             if 'v_Z' not in locals():
-                v_Z = v.mean(dim=lon)
+                v_Z = v.mean(dim=lon_name)
             if 'temp_Z' not in locals():
-                temp_Z = temp.mean(dim=lon)
+                temp_Z = temp.mean(dim=lon_name)
             if 'omega_Z' not in locals():
-                omega_Z = omega.mean(dim=lon)
+                omega_Z = omega.mean(dim=lon_name)
             if 'theta_Z' not in locals():
                 theta = temp * p_kap
-                theta_Z = theta.mean(dim=lon)
+                theta_Z = theta.mean(dim=lon_name)
             if 'dtemp_Zdlat' not in locals():
-                dtemp_Zdlat = utils.calc_gradient(temp_Z, dim=lat, x=(temp_Z[lat] * degtorad))
+                dtemp_Zdlat = utils.differentiate_wrt(temp_Z, dim=lat_name, x=(temp_Z[lat_name] * degtorad))
             v_z = v - v_Z
             temp_z = temp - temp_Z
             omega_z = omega - omega_Z
-            oT_Z = (omega_z * temp_z).mean(dim=lon)
-            oT_A = utils.average(omega_z * temp_z, [lat, lon], weights=cos_lat)
+            oT_Z = (omega_z * temp_z).mean(dim=lon_name)
+            oT_A = utils.average(omega_z * temp_z, [lat_name, lon_name], weights=cos_lat)
             oT_Za = oT_Z - oT_A
             theta_Za = theta_Z - theta_A
-            dtheta_Zadp = utils.calc_gradient(theta_Za, dim=plev, x=(theta_Za[plev] * 100))
+            dtheta_Zadp = utils.differentiate_wrt(theta_Za, dim=plevel_name, x=(theta_Za[plevel_name] * 100))
             Ca_int = - gamma * utils.constants().C_pd * \
-                           (((v_z * temp_z).mean(dim=lon) * dtemp_Zdlat / utils.constants().R_earth) + \
+                           (((v_z * temp_z).mean(dim=lon_name) * dtemp_Zdlat / utils.constants().R_earth) + \
                             (p_kap * oT_Za * dtheta_Zadp)) # [W/kg]
             energies['Ca_int'] = Ca_int
             if integrate:
-                Ca = int_over_atmos(Ca_int, lat, lon, plev, lon_dim=v[lon]) # [W/m^2]
+                Ca = _int_over_atmos(Ca_int, lat_name, lon_name, plevel_name, lon_dim=v[lon_name]) # [W/m^2]
                 energies['Ca'] = Ca
             
-        if ('Ce' in terms) | (terms is None):
+        if ('Ce' in terms):
         # Compute the rate of transfer of total eddy available potential energy (Pe) to 
         # total eddy kinetic energy (Ke), Ce -----
             if 'temp_Z' not in locals():
-                temp_Z = temp.mean(dim=lon)
+                temp_Z = temp.mean(dim=lon_name)
             if 'omega_Z' not in locals():
-                omega_Z = omega.mean(dim=lon)
+                omega_Z = omega.mean(dim=lon_name)
             temp_z = temp - temp_Z
             omega_z = omega - omega_Z
-            Ce_int = - (utils.constants().R_d / (temp[plev] * 100)) * \
-                           (omega_z * temp_z).mean(dim=lon) # [W/kg]  
+            Ce_int = - (utils.constants().R_d / (temp[plevel_name] * 100)) * \
+                           (omega_z * temp_z).mean(dim=lon_name) # [W/kg]  
             energies['Ce_int'] = Ce_int
             if integrate:
-                Ce = int_over_atmos(Ce_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
+                Ce = _int_over_atmos(Ce_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
                 energies['Ce'] = Ce
         
-        if ('Ck' in terms) | (terms is None):
+        if ('Ck' in terms):
         # Compute the rate of transfer of total eddy kinetic energy (Ke) to total kinetic 
         # energy in zonally averaged motion (Kz), Ck -----
             if 'u_Z' not in locals():
-                    u_Z = u.mean(dim=lon)
+                    u_Z = u.mean(dim=lon_name)
             if 'v_Z' not in locals():
-                    v_Z = v.mean(dim=lon)
+                    v_Z = v.mean(dim=lon_name)
             if 'omega_Z' not in locals():
-                omega_Z = omega.mean(dim=lon)
+                omega_Z = omega.mean(dim=lon_name)
             u_z = u - u_Z
             v_z = v - v_Z
             omega_z = omega - omega_Z
-            du_Zndlat = utils.calc_gradient(u_Z / cos_lat, dim=lat, x=(u_Z[lat] * degtorad))
-            dv_Zdlat = utils.calc_gradient(v_Z, dim=lat, x=(v_Z[lat] * degtorad))
-            du_Zdp = utils.calc_gradient(u_Z, dim=plev, x=(u_Z[plev] * 100))
-            dv_Zdp = utils.calc_gradient(v_Z, dim=plev, x=(v_Z[plev] * 100))
-            Ck_int = (u_z * v_z).mean(dim=lon)  * cos_lat * du_Zndlat / utils.constants().R_earth + \
-                     (u_z * omega_z).mean(dim=lon) * du_Zdp + \
-                     (v_z ** 2).mean(dim=lon) * dv_Zdlat / utils.constants().R_earth + \
-                     (v_z * omega_z).mean(dim=lon) * dv_Zdp - \
-                     (u_z ** 2).mean(dim=lon) * v_Z * tan_lat / utils.constants().R_earth
+            du_Zndlat = utils.differentiate_wrt(u_Z / cos_lat, dim=lat_name, x=(u_Z[lat_name] * degtorad))
+            dv_Zdlat = utils.differentiate_wrt(v_Z, dim=lat_name, x=(v_Z[lat_name] * degtorad))
+            du_Zdp = utils.differentiate_wrt(u_Z, dim=plevel_name, x=(u_Z[plevel_name] * 100))
+            dv_Zdp = utils.differentiate_wrt(v_Z, dim=plevel_name, x=(v_Z[plevel_name] * 100))
+            Ck_int = (u_z * v_z).mean(dim=lon_name)  * cos_lat * du_Zndlat / utils.constants().R_earth + \
+                     (u_z * omega_z).mean(dim=lon_name) * du_Zdp + \
+                     (v_z ** 2).mean(dim=lon_name) * dv_Zdlat / utils.constants().R_earth + \
+                     (v_z * omega_z).mean(dim=lon_name) * dv_Zdp - \
+                     (u_z ** 2).mean(dim=lon_name) * v_Z * tan_lat / utils.constants().R_earth
             energies['Ck_int'] = Ck_int
             if integrate:
-                Ck = int_over_atmos(Ck_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
+                Ck = _int_over_atmos(Ck_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
                 energies['Ck'] = Ck
                 
-    if ('Gz' in terms) | (terms is None):
+    if ('Gz' in terms):
     # Compute the rate of generation of zonal available potential energy due to the zonally
     # averaged heating, Gz -----
         if ('Cz' not in terms) | ('Ca' not in terms):
-            raise ValueError('The rate of generation of zonal available potential energy, Gz, is ' +
-                             'computed from the residual of Cz and Ca. Please add these to the list, ' +
-                             'terms=[<terms>].')
+            raise ValueError('The rate of generation of zonal available potential energy, Gz, is computed from the sum of Cz and Ca. Please add these to the list, terms=[<terms>].')
+        if spectral:
+            warnings.warn('Rate of generation of zonal available potential energy is computed from the sum of Cz and Ca and cannot be computed in Fourier space. Returning Gz in real-space.')
+            Ca_int = Rn_int.where(Rn_int.n > 0, drop=True).sum(dim='n').real # sum Rn to get Ca
         Gz_int = Cz_int + Ca_int
         energies['Gz_int'] = Gz_int
         if integrate:
-            Gz = int_over_atmos(Gz_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
+            Gz = _int_over_atmos(Gz_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
             energies['Gz'] = Gz
 
-    if ('Ge' in terms) | (terms is None):
+    if ('Ge' in terms):
     # Compute the rate of generation of eddy available potential energy (Ae), Ge -----
         if ('Ce' not in terms) | ('Ca' not in terms):
-            raise ValueError('The rate of generation of eddy available potential energy, Ge, is ' +
-                             'computed from the residual of Ce and Ca. Please add these to the list, ' +
-                             'terms=[<terms>].')
+            raise ValueError('The rate of generation of eddy available potential energy, Ge, is computed from the residual of Ce and Ca. Please add these to the list, terms=[<terms>].')
+        if spectral:
+            warnings.warn('The rate of generation of eddy available potential energy is computed from the residual of Ce and Ca and cannot be computed in Fourier space. Returning Ge in real-space.')
+            Ce_int = Cn_int.where(Cn_int.n > 0, drop=True).sum(dim='n').real # sum Cn to get Ce
+            if 'Ca_int' not in locals():
+                Ca_int = Rn_int.where(Rn_int.n > 0, drop=True).sum(dim='n').real # sum Rn to get Ca
         Ge_int = Ce_int - Ca_int
         energies['Ge_int'] = Ge_int
         if integrate:
-            Ge = int_over_atmos(Ge_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
+            Ge = _int_over_atmos(Ge_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
             energies['Ge'] = Ge
     
-    if ('Dz' in terms) | (terms is None):
+    if ('Dz' in terms):
     # Compute the rate of viscous dissipation of zonal kinetic energy, Dz -----
         if ('Cz' not in terms) | ('Ck' not in terms):
-            raise ValueError('The rate of viscous dissipation of zonal kinetic energy, Dz, is ' +
-                             'computed from the residual of Cz and Ck. Please add these to the ' +
-                             'list, terms=[<terms>].')
+            raise ValueError('The rate of viscous dissipation of zonal kinetic energy, Dz, is computed from the residual of Cz and Ck. Please add these to the list, terms=[<terms>].')
+        if spectral:   
+            warnings.warn('The rate of viscous dissipation of zonal kinetic energy, Dz, is computed from the residual of Cz and Ck and cannot be computed in Fourier space. Returning De in real-space.')
+            Ck_int = Mn_int.where(Mn_int.n > 0, drop=True).sum(dim='n').real # sum Mn to get Ck
         Dz_int = Cz_int - Ck_int
         energies['Dz_int'] = Dz_int
         if integrate:
-            Dz = int_over_atmos(Dz_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
+            Dz = _int_over_atmos(Dz_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
             energies['Dz'] = Dz
 
-    if ('De' in terms) | (terms is None):
+    if ('De' in terms):
     # Compute the rate of dissipation of eddy kinetic energy (Ke), De -----
         if ('Ce' not in terms) | ('Ck' not in terms):
-            raise ValueError('The rate of viscous dissipation of eddy kinetic energy, De, is ' +
-                             'computed from the residual of Ce and Ck. Please add these to the ' +
-                             'list, terms=[<terms>].')
+            raise ValueError('The rate of viscous dissipation of eddy kinetic energy, De, is computed from the residual of Ce and Ck. Please add these to the list, terms=[<terms>].')
+        if spectral:
+            warnings.warn('The rate of viscous dissipation of eddy kinetic energy, De, is computed from the residual of Ce and Ck and cannot be computed in Fourier space. Returning De in real-space.')
+            if 'Ce_int' not in locals():
+                Ce_int = Cn_int.where(Cn_int.n > 0, drop=True).sum(dim='n').real # sum Cn to get Ce
+            if 'Ck_int' not in locals():
+                Ck_int = Mn_int.where(Mn_int.n > 0, drop=True).sum(dim='n').real # sum Mn to get Ck
         De_int = Ce_int - Ck_int
         energies['De_int'] = De_int
         if integrate:
-            De = int_over_atmos(De_int, lat, lon, plev, lon_dim=temp[lon]) # [W/m^2]
+            De = _int_over_atmos(De_int, lat_name, lon_name, plevel_name, lon_dim=temp[lon_name]) # [W/m^2]
             energies['De'] = De
     
     return energies
         
 
 # ===================================================================================================
+# General diagnostics
+# ===================================================================================================
 def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
     """
-        Compute the (cross) power spectral density along dimension dim using welch's method
-
-        nwindow is the length of the signal segments, and overlap is the overlap [%] of the segments
-
-        For consistency between spatial and temporal dim, spectra is computed relative to
-        a "frequency", f = 1/dx, where dx is the spacing along dim, e.g.:
+        Compute the cross/power spectral density along a dimension using welch's method. Note that
+        the spectral density is always computed relative to a "frequency" f = 1/dx (see Notes for 
+        details)
+        Author: Dougie Squire
+        Date: 20/07/2018
+        
+        Parameters
+        ----------
+        da1 : xarray DataArray
+            First array of data to use in spectral density calculation. For power spectral density, 
+            da1 = da2
+        da2 : xarray DataArray
+            Second array of data to use in spectral density calculation. For power spectral density, 
+            da1 = da2
+        dim : str
+            Dimension to compute spectral density along
+        nwindow : value
+            Length of the signal segments for pwelch calculation
+        overlap : value, optional
+            Percentage overlap of the signal segments for pwelch calculation
+        dx : value, optional
+            Spacing along the dimension dim. If None, dx is determined from the coordinate dim. For 
+            consistency between spatial and temporal dim, spectra is computed relative to a "frequency", 
+            f = 1/dx, where dx is the spacing along dim, e.g.:
             - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
             - for spatial dim in meters, f = 1/meters = k/(2*pi) 
             - for spatial dim in degrees, f = 1/degrees = k/360
-        If converting the "frequency" to wavenumber, for example, one must also adjust the spectra 
-        magnitude so that the integral remains equal to the variance, e.g. for spatial spectra:
+            If converting the "frequency" to wavenumber, for example, one must also adjust the spectra 
+            magnitude so that the integral remains equal to the variance, e.g. for spatial spectra,
             k = f*(2*pi)  ->  phi_new = phi_old/(2*pi)
+        hanning : bool, optional
+            If True, a Hanning window weighting is applied prior to the fft
+            
+        Returns
+        -------
+        spectra : xarray DataArray
+            Array containing the power spectral density of the input array(s)
+            
+        Examples
+        --------
+        >>> u = xr.DataArray(np.random.normal(size=(500)), 
+        ...                  coords=[('time', pd.date_range('2000-01-01', periods=500, freq='D'))])
+        >>> spectra = doppyo.diagnostic.pwelch(u, u, dim='time', nwindow=20)
+        >>> seconds_to_days = 60*60*24
+        >>> spectra['f_time'] = seconds_to_days*spectra['f_time'] # Change freq from Hz to 1/days
+        >>> spectra = spectra/seconds_to_days
+        >>> print(spectra)
+        <xarray.DataArray 'spectra' (f_time: 11)>
+        array([1.381912, 1.89882 , 1.641378, 1.939686, 2.218824, 1.941639, 2.142277,
+               1.689319, 1.983302, 2.225709, 2.732023])
+        Coordinates:
+          * f_time   (f_time) float64 0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5
     """
 
     # Force nwindow to be even -----
@@ -1340,24 +1894,52 @@ def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
     da1_fft = utils.fft(da1_windowed, dim=dim, dx=dx)
     da2_fftc = xr.ufuncs.conj(utils.fft(da2_windowed, dim=dim, dx=dx))
 
-    return (weight * 2 * dx * (da1_fft * da2_fftc).mean('n') / nwindow).real
+    return (weight * 2 * dx * (da1_fft * da2_fftc).mean('n') / nwindow).real.rename('spectra')
 
 
 # ===================================================================================================
-def compute_inband_variance(da, dim, bounds, nwindow, overlap=50):
+def inband_variance(da, dim, bounds, nwindow, overlap=50):
     """ 
-        Compute the in-band variance along dimension dim.
+        Compute the in-band variance along a specified dimension. 
+        Author: Dougie Squire
+        Date: 20/07/2018
         
-        For consistency between spatial and temporal dim, spectra is computed relative to
-        a "frequency", f = 1/dx, where dx is the spacing along dim, e.g.:
+        Parameters
+        ----------
+        da : xarray DataArray
+            Array with which to compute in-band variance
+        dim : str
+            Dimension along which to compute in-band variance
+        bounds : sequence
+            Frequency bounds for in-band variance calculation. Note that for consistency between 
+            spatial and temporal dim, all spectra are computed relative to a "frequency", f = 1/dx, 
+            where dx is the spacing along dim, e.g.:
             - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
             - for spatial dim in meters, f = 1/meters = k/(2*pi) 
             - for spatial dim in degrees, f = 1/degrees = k/360
-        bounds must be provided in a way consistent with this, e.g.:
-            - for temporal dim, bounds = 1 / (60*60*24*[d1, d2, d3]), where d# are numbers 
-              of days
-            - for spatial dim, bounds = 1 / [l1, l2, l3], where l# are numbers of meters, 
-              degrees, etc
+            Thus, bounds must be provided in a way consistent with this, e.g.:
+            - for temporal dim, bounds = 1 / (60*60*24*[d1, d2, d3]), where d# are numbers of days
+            - for spatial dim, bounds = 1 / [l1, l2, l3], where l# are numbers of meters, degrees, etc
+        nwindow : value
+            Length of the signal segments for pwelch calculation
+        overlap : value, optional
+            Percentage overlap of the signal segments for pwelch calculation
+        
+        Returns
+        -------
+        inband_var : xarray DataArray
+            Array containing the in-band variances of the input array
+            
+        Examples
+        --------
+        >>> A = xr.DataArray(np.random.normal(size=(500)), 
+        ...                  coords=[('time', pd.date_range('2000-01-01', periods=500, freq='D'))])
+        >>> doppyo.diagnostic.inband_variance(A, dim='time', 
+        ...                                   bounds=1/(60*60*24*np.array([2, 5, 10])), nwindow=20)
+        <xarray.DataArray 'in-band' (f_time_bins: 2)>
+        array([0.106615, 0.492033])
+        Coordinates:
+          * f_time_bins  (f_time_bins) object [1.16e-06, 2.31e-06) [2.31e-06, 5.79e-06)
     """
     
     bounds = np.sort(bounds)
@@ -1365,72 +1947,260 @@ def compute_inband_variance(da, dim, bounds, nwindow, overlap=50):
     dx = spectra['f_'+dim].diff('f_'+dim).values[0]
     bands = spectra.groupby_bins('f_'+dim, bounds, right=False)
     
-    return bands.apply(utils.integrate, over_dim='f_'+dim, dx=dx)
+    return bands.apply(utils.integrate, over_dim='f_'+dim, dx=dx).rename('inband_var')
 
 
 # ===================================================================================================
 # Indices
 # ===================================================================================================
-def compute_nino3(da_sst_anom):
-    ''' Returns nino3 index '''  
+def nino3(sst_anom):
+    """ 
+        Returns Nino-3 index 
+        Author: Dougie Squire
+        Date: 10/04/2018
+        
+        Parameters
+        ----------
+        sst_anom : xarray DataArray
+            Array containing sea surface temperature anomalies
+            
+        Returns
+        -------
+        nino3 : xarray DataArray
+            Average of the provided sst anomalies over the nino-3 box
+            
+        Examples
+        --------
+        >>> sst = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                            ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> sst_clim = sst.groupby('time.month').mean(dim='time')
+        >>> sst_anom = doppyo.utils.anomalize(sst, sst_clim)
+        >>> doppyo.diagnostic.nino3(sst_anom)
+        <xarray.DataArray 'nino3' (time: 24)>
+        array([-0.137317, -0.094808, -0.01091 , -0.04653 ,  0.030562, -0.065515,
+               -0.109851,  0.118016,  0.092496, -0.030821, -0.011724, -0.002773,
+                0.137317,  0.094808,  0.01091 ,  0.04653 , -0.030562,  0.065515,
+                0.109851, -0.118016, -0.092496,  0.030821,  0.011724,  0.002773])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """ 
     
     box = [-5.0,5.0,210.0,270.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(da_sst_anom,box)
+    return utils.latlon_average(sst_anom, box).rename('nino3')
 
 
 # ===================================================================================================
-def compute_nino34(da_sst_anom):
-    ''' Returns nino3.4 index '''  
+def nino34(sst_anom):
+    """ 
+        Returns Nino-3.4 index 
+        Author: Dougie Squire
+        Date: 10/04/2018
+        
+        Parameters
+        ----------
+        sst_anom : xarray DataArray
+            Array containing sea surface temperature anomalies
+            
+        Returns
+        -------
+        nino34 : xarray DataArray
+            Average of the provided sst anomalies over the nino-3.4 box
+            
+        Examples
+        --------
+        >>> sst = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                            ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> sst_clim = sst.groupby('time.month').mean(dim='time')
+        >>> sst_anom = doppyo.utils.anomalize(sst, sst_clim)
+        >>> doppyo.diagnostic.nino34(sst_anom)
+        <xarray.DataArray 'nino34' (time: 24)>
+        array([-0.052202,  0.00467 ,  0.121013,  0.007983, -0.070645,  0.051945,
+               -0.045485,  0.065569, -0.018723, -0.053734,  0.10527 , -0.113451,
+                0.052202, -0.00467 , -0.121013, -0.007983,  0.070645, -0.051945,
+                0.045485, -0.065569,  0.018723,  0.053734, -0.10527 ,  0.113451])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """ 
     
     box = [-5.0,5.0,190.0,240.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(da_sst_anom,box)
+    return utils.latlon_average(sst_anom, box).rename('nino34')
 
 
 # ===================================================================================================
-def compute_nino4(da_sst_anom):
-    ''' Returns nino4 index '''  
+def nino4(sst_anom):
+    """ 
+        Returns Nino-4 index 
+        Author: Dougie Squire
+        Date: 10/04/2018
+        
+        Parameters
+        ----------
+        sst_anom : xarray DataArray
+            Array containing sea surface temperature anomalies
+            
+        Returns
+        -------
+        nino4 : xarray DataArray
+            Average of the provided sst anomalies over the nino-4 box
+            
+        Examples
+        --------
+        >>> sst = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                            ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> sst_clim = sst.groupby('time.month').mean(dim='time')
+        >>> sst_anom = doppyo.utils.anomalize(sst, sst_clim)
+        >>> doppyo.diagnostic.nino4(sst_anom)
+        <xarray.DataArray 'nino4' (time: 24)>
+        array([ 0.017431, -0.086129,  0.106992, -0.097994,  0.109215, -0.120221,
+                0.042459, -0.189595,  0.005097,  0.034218,  0.019478,  0.054122,
+               -0.017431,  0.086129, -0.106992,  0.097994, -0.109215,  0.120221,
+               -0.042459,  0.189595, -0.005097, -0.034218, -0.019478, -0.054122])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """   
     
     box = [-5.0,5.0,160.0,210.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(da_sst_anom,box)
+    return utils.latlon_average(sst_anom, box).rename('nino4')
 
 
 # ===================================================================================================
-def compute_emi(da_sst_anom):
-    ''' Returns EMI index ''' 
+def emi(sst_anom):
+    """ 
+        Returns El Nino Modoki index
+        Author: Dougie Squire
+        Date: 10/04/2018
+        
+        Parameters
+        ----------
+        sst_anom : xarray DataArray
+            Array containing sea surface temperature anomalies
+            
+        Returns
+        -------
+        emi : xarray DataArray
+            Array containing the El Nino Modoki index
+            
+        Examples
+        --------
+        >>> sst = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                            ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> sst_clim = sst.groupby('time.month').mean(dim='time')
+        >>> sst_anom = doppyo.utils.anomalize(sst, sst_clim)
+        >>> doppyo.diagnostic.emi(sst_anom)
+        <xarray.DataArray 'emi' (time: 24)>
+        array([-0.046743,  0.181795,  0.020386, -0.215317, -0.209294,  0.109291,
+                0.202055, -0.021001, -0.013106,  0.094376, -0.000516, -0.021762,
+                0.046743, -0.181795, -0.020386,  0.215317,  0.209294, -0.109291,
+               -0.202055,  0.021001,  0.013106, -0.094376,  0.000516,  0.021762])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """
     
     boxA = [-10.0,10.0,360.0-165.0,360.0-140.0] # [lat_min,lat_max,lon_min,lon_max]
     boxB = [-15.0,5.0,360.0-110.0,360.0-70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxC = [-10.0,20.0,125.0,145.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    da_sstA = utils.latlon_average(da_sst_anom,boxA)
-    da_sstB = utils.latlon_average(da_sst_anom,boxB)
-    da_sstC = utils.latlon_average(da_sst_anom,boxC)
+    da_sstA = utils.latlon_average(sst_anom, boxA)
+    da_sstB = utils.latlon_average(sst_anom, boxB)
+    da_sstC = utils.latlon_average(sst_anom, boxC)
     
-    return da_sstA - 0.5*da_sstB - 0.5*da_sstC
+    return (da_sstA - 0.5*da_sstB - 0.5*da_sstC).rename('emi')
 
 
 # ===================================================================================================
-def compute_dmi(da_sst_anom):
-    ''' Returns DMI index ''' 
+def dmi(sst_anom):
+    """ 
+        Returns dipole mode index 
+        Author: Dougie Squire
+        Date: 10/04/2018
+        
+        Parameters
+        ----------
+        sst_anom : xarray DataArray
+            Array containing sea surface temperature anomalies
+            
+        Returns
+        -------
+        dmi : xarray DataArray
+            Array containing the dipole mode index
+            
+        Examples
+        --------
+        >>> sst = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                            ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> sst_clim = sst.groupby('time.month').mean(dim='time')
+        >>> sst_anom = doppyo.utils.anomalize(sst, sst_clim)
+        >>> doppyo.diagnostic.dmi(sst_anom)
+        <xarray.DataArray 'dmi' (time: 24)>
+        array([-0.225498,  0.220686,  0.032038,  0.019634,  0.00511 , -0.202789,
+               -0.014349, -0.293248,  0.020925,  0.114059,  0.066389,  0.238707,
+                0.225498, -0.220686, -0.032038, -0.019634, -0.00511 ,  0.202789,
+                0.014349,  0.293248, -0.020925, -0.114059, -0.066389, -0.238707])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """
     
     boxW = [-10.0,10.0,50.0,70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxE = [-10.0,0.0,90.0,110.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    da_W = utils.latlon_average(da_sst_anom,boxW)
-    da_E = utils.latlon_average(da_sst_anom,boxE)
+    da_W = utils.latlon_average(sst_anom, boxW)
+    da_E = utils.latlon_average(sst_anom, boxE)
     
-    return da_W - da_E
+    return (da_W - da_E).rename('dmi')
 
 
 # ===================================================================================================
-def compute_soi(da_slp_anom, std_dim, n_rolling=None):
-    ''' Returns SOI index as defined by NOAA '''  
+def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
+    """
+        Returns southern oscillation index as defined by NOAA (see, for example, 
+        https://www.esrl.noaa.gov/psd/gcos_wgsp/Timeseries/SOI/)
+        Author: Dougie Squire
+        Date: 10/04/2018
+        
+        Parameters
+        ----------
+        slp_anom : xarray DataArray
+            Array containing sea level pressure anomalies
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name 
+            automatically
+            
+        Returns
+        -------
+        soi : xarray DataArray
+            Array containing the southern oscillation index
+            
+        Examples
+        --------
+        >>> slp = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                    ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> slp_clim = slp.groupby('time.month').mean(dim='time')
+        >>> slp_anom = doppyo.utils.anomalize(slp, slp_clim)
+        >>> doppyo.diagnostic.soi(slp_anom)
+        <xarray.DataArray 'soi' (time: 24)>
+        array([ 0.355277,  0.38263 ,  0.563005, -1.256122, -1.252341,  0.202942,
+                0.691819,  0.412523, -1.368695,  0.421943,  2.349053,  0.069382,
+               -0.355277, -0.38263 , -0.563005,  1.256122,  1.252341, -0.202942,
+               -0.691819, -0.412523,  1.368695, -0.421943, -2.349053, -0.069382])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """
     
-    if std_dim is None:
-        raise ValueError('The dimension over which to compute the standard deviations must be specified')
+    if lat_name is None:
+        lat_name = utils.get_lat_name(slp_anom)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(slp_anom)
+    if time_name is None:
+        time_name = utils.get_time_name(slp_anom)
     
     lat_Tahiti = 17.6509
     lon_Tahiti = 149.4260
@@ -1438,17 +2208,50 @@ def compute_soi(da_slp_anom, std_dim, n_rolling=None):
     lat_Darwin = 12.4634
     lon_Darwin = 130.8456
 
-    da_Tahiti_anom = utils.get_nearest_point(da_slp_anom, lat_Tahiti, lon_Tahiti)
-    da_Tahiti_std = da_Tahiti_anom.std(dim=std_dim)
+    da_Tahiti_anom = slp_anom.sel({lat_name : lat_Tahiti, lon_name : lon_Tahiti}, method='nearest')
+    da_Tahiti_std = da_Tahiti_anom.std(dim=time_name)
     da_Tahiti_stdzd = da_Tahiti_anom / da_Tahiti_std
 
-    da_Darwin_anom = utils.get_nearest_point(da_slp_anom, lat_Darwin, lon_Darwin)
-    da_Darwin_std = da_Darwin_anom.std(dim=std_dim)
+    da_Darwin_anom = slp_anom.sel({lat_name : lat_Darwin, lon_name : lon_Darwin}, method='nearest')
+    da_Darwin_std = da_Darwin_anom.std(dim=time_name)
     da_Darwin_stdzd = da_Darwin_anom / da_Darwin_std
 
-    MSD = (da_Tahiti_stdzd - da_Darwin_stdzd).std(dim=std_dim)
+    MSD = (da_Tahiti_stdzd - da_Darwin_stdzd).std(dim=time_name)
         
-    return (da_Tahiti_stdzd - da_Darwin_stdzd) / MSD
+    return ((da_Tahiti_stdzd - da_Darwin_stdzd) / MSD).rename('soi')
 
 
 # ===================================================================================================
+# General functions
+# ===================================================================================================
+def _int_over_atmos(da, lat_name, lon_name, plevel_name, lon_dim=None):
+    """ 
+        Returns integral of da over the mass of the atmosphere 
+        
+        If a longitudinal dimension does not exist, this must be provided as lon_dim
+    """
+    
+    degtorad = utils.constants().pi / 180
+    
+    if lon_dim is None:
+        lat = da[lat_name]
+        lon = da[lon_name]
+        da = da.sortby([lat, lon])
+    else:
+        lat = da[lat_name]
+        lon = lon_dim
+        da = da.sortby(lat)
+        
+    c = 2 * utils.constants().pi * utils.constants().R_earth
+    lat_m = c / 360
+    lon_m = c * np.cos(da[lat_name] * degtorad) / 360
+
+    da_z = utils.integrate(da, over_dim=plevel_name, x=(da[plevel_name] * 100) / utils.constants().g)
+    if lon_dim is None:
+        da_zx = utils.integrate(da_z, over_dim=lon_name, x=da[lon_name] * lon_m)
+    else:
+        lon_extent = lon_dim * lon_m
+        da_zx = (lon_extent.max(lon_name) - lon_extent.min(lon_name)) * da_z
+    da_zxy = utils.integrate(da_zx, over_dim=lat_name, x=da[lat_name] * lat_m)
+    
+    return da_zxy / (4 * utils.constants().pi * utils.constants().R_earth ** 2)
