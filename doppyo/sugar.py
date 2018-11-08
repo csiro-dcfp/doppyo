@@ -1412,3 +1412,71 @@ def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral
             energies['De'] = De
     
     return energies
+
+
+# ===================================================================================================
+def auto_merge(paths, preprocess=None, parallel=True, **kwargs):
+    """
+    Automatically merge a split xarray Dataset. This is designed to behave like
+    `xarray.open_mfdataset`, except it supports concatenation along multiple
+    dimensions.
+    Parameters
+    ----------
+    datasets : str or list of str or list of xarray.Dataset
+        Either a glob expression or list of paths as you would pass to
+        xarray.open_mfdataset, or a list of xarray datasets. If a list of
+        datasets is passed, you should make sure that they are represented
+        as dask arrays to avoid reading the whole dataset into memory.
+    Returns
+    -------
+    xarray.Dataset
+        The merged dataset.
+    """
+    
+    if parallel:
+        # wrap the open_dataset, getattr, and preprocess with delayed
+        open_ = dask.delayed(xr.open_dataset)
+        getattr_ = dask.delayed(getattr)
+        if preprocess is not None:
+            preprocess = dask.delayed(preprocess)
+    else:
+        open_ = open_dataset
+        getattr_ = getattr
+
+    datasets = [open_(p, **kwargs) for p in paths]
+    file_objs = [getattr_(ds, '_file_obj') for ds in datasets]
+    if preprocess is not None:
+        datasets = [preprocess(ds) for ds in datasets]
+
+    if parallel:
+        # calling compute here will return the datasets/file_objs lists,
+        # the underlying datasets will still be stored as dask arrays
+        datasets, file_objs = dask.compute(datasets, file_objs)
+
+    def _combine_along_last_dim(datasets):
+        merged = []
+
+        # Determine the dimension along which the dataset is split
+        split_dims = [d for d in datasets[0].dims if
+                      len(np.unique([ds[d].values[0] for ds in datasets])) > 1]
+
+        # Concatenate along one of the split dimensions
+        concat_dim = split_dims[-1]
+
+        # Group along the remaining dimensions and concatenate within each
+        # group.
+        sorted_ds = sorted(datasets, key=lambda ds: tuple(ds[d].values[0]
+                                                          for d in split_dims))
+        for _, group in itertools.groupby(
+                sorted_ds,
+                key=lambda ds: tuple(ds[d].values[0] for d in split_dims[:-1])
+                ):
+            merged.append(xr.auto_combine(group, concat_dim=concat_dim))
+
+        return merged
+
+    merged = datasets
+    while len(merged) > 1:
+        merged = _combine_along_last_dim(merged)
+
+    return merged[0]
