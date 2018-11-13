@@ -13,6 +13,8 @@ import pandas as pd
 import xarray as xr
 
 import cartopy
+from collections import Sequence
+from itertools import chain, count
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -576,10 +578,16 @@ def get_nearest_point(da, lat, lon):
 # ===================================================================================================
 # visualization tools
 # ===================================================================================================
-def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2, mult_row=1, 
-                mult_col=1, mult_cshift=1, mult_cbar=1, contour=False, cmap='viridis', fontsize=12, invert=False):
+def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=None, clims=None, squeeze_row=1, 
+                squeeze_col=1, squeeze_cbar=1, shift_cbar=1, cmap='viridis', fontsize=12, invert=False):
     """ Plots tiles of figures """
     
+    def _depth(seq):
+        for level in count():
+            if not seq:
+                return level
+            seq = list(chain.from_iterable(s for s in seq if isinstance(s, Sequence)))
+
     matplotlib.rc('font', family='sans-serif')
     matplotlib.rc('font', serif='Helvetica') 
     matplotlib.rc('text', usetex='false') 
@@ -587,39 +595,59 @@ def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2,
 
     nrow = int(np.ceil(len(data)/ncol));
 
-    fig = plt.figure(figsize=(11*mult_col, nrow*4*mult_row))
+    fig = plt.figure(figsize=(11*squeeze_col, nrow*4*squeeze_row))
+    
+    if (clims is not None) & (np.shape(vlims) != np.shape(clims)):
+        raise ValueError('The input clims must be equal in size to vlims')
+    
+    # Check if vlims are given per figure or for all figures -----
+    one_cbar = False
+    if vlims is None:
+        vlims = [[None, None]] * len(data)
+    if _depth(vlims) == 1:
+        one_cbar = True
         
-    count = 1
+    over_count = 1
     for idx,dat in enumerate(data):
+        if one_cbar:
+            vmin, vmax = vlims
+            if clims is not None:
+                cmin, cmax = clims
+        else:
+            vmin, vmax = vlims[idx]
+            if clims is not None:
+                cmin, cmax = clims[idx]
+        
         if ('lat' in dat.dims) and ('lon' in dat.dims):
             trans = cartopy.crs.PlateCarree()
-            ax = plt.subplot(nrow, ncol, count, projection=cartopy.crs.PlateCarree(central_longitude=180))
+            ax = plt.subplot(nrow, ncol, over_count, projection=cartopy.crs.PlateCarree(central_longitude=180))
             extent = [dat.lon.min(), dat.lon.max(), 
                       dat.lat.min(), dat.lat.max()]
 
             if contour is True:
-                if cmin is not None:
+                if clims is not None:
                     ax.coastlines(color='gray')
-                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,12), origin='lower', transform=trans, 
-                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
-                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,12), origin='lower', transform=trans,
-                              colors='w', linewidths=2)
-                    ax.contour(dat.lon, dat.lat, dat, np.linspace(cmin,cmax,12), origin='lower', transform=trans,
-                              colors='k', linewidths=1)
+                    im = ax.contourf(dat.lon, dat.lat, dat, levels=np.linspace(vmin,vmax,12), origin='lower', transform=trans, 
+                                     vmin=vmin, vmax=vmax, cmap=cmap)
+                    ax.contour(dat.lon, dat.lat, dat, levels=np.linspace(cmin,cmax,12), origin='lower', transform=trans,
+                               vmin=vmin, vmax=vmax, colors='w', linewidths=2)
+                    ax.contour(dat.lon, dat.lat, dat, levels=np.linspace(cmin,cmax,12), origin='lower', transform=trans,
+                               vmin=vmin, vmax=vmax, colors='k', linewidths=1)
                 else:
                     ax.coastlines(color='black')
-                    im = ax.contourf(dat.lon, dat.lat, dat, np.linspace(vmin,vmax,20), origin='lower', transform=trans, 
-                                  vmin=vmin, vmax=vmax, cmap=cmap, extend='both')
+                    im = ax.contourf(dat.lon, dat.lat, dat, origin='lower', transform=trans, vmin=vmin, vmax=vmax, 
+                                     cmap=cmap)
             else:
+                ax.coastlines(color='black')
                 im = ax.imshow(dat, origin='lower', extent=extent, transform=trans, vmin=vmin, vmax=vmax, cmap=cmap)
 
             gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), draw_labels=True)
             gl.xlines = False
             gl.ylines = False
             gl.xlabels_top = False
-            if count % ncol == 0:
+            if over_count % ncol == 0:
                 gl.ylabels_left = False
-            elif (count+ncol-1) % ncol == 0: 
+            elif (over_count+ncol-1) % ncol == 0: 
                 gl.ylabels_right = False
             else:
                 gl.ylabels_left = False
@@ -628,9 +656,18 @@ def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2,
             gl.ylocator = mticker.FixedLocator([-90, -60, 0, 60, 90])
             gl.xformatter = LONGITUDE_FORMATTER
             gl.yformatter = LATITUDE_FORMATTER
-            ax.set_title(headings[idx], fontsize=fontsize)
+            
+            if not one_cbar:
+                cbar = plt.colorbar(im, ax=ax, orientation="horizontal", aspect=30/squeeze_cbar, pad=shift_cbar*0.1)
+                tick_locator = mticker.MaxNLocator(nbins=6)
+                cbar.locator = tick_locator
+                cbar.update_ticks()
+                if headings is not None:
+                    cbar.set_label(headings[idx], labelpad=5, fontsize=fontsize);
+            elif headings is not None:
+                ax.set_title(headings[idx], fontsize=fontsize)
         else:
-            ax = plt.subplot(nrow, ncol, count)
+            ax = plt.subplot(nrow, ncol, over_count)
             if 'lat' in dat.dims:
                 x_plt = dat['lat']
                 y_plt = dat[find_other_dims(dat,'lat')[0]]
@@ -649,38 +686,51 @@ def plot_fields(data, title, headings, vmin, vmax, cmin=None, cmax=None, ncol=2,
                       y_plt.min(), y_plt.max()]
             
             if contour is True:
-                if cmin is not None:
-                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, 
-                                     vmax=vmax, cmap=cmap, extend='both')
+                if clims is not None:
+                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, vmax=vmax, 
+                                     cmap=cmap)
                     ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='w', linewidths=2)
                     ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='k', linewidths=1)
                 else:
-                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,20), vmin=vmin, 
-                                     vmax=vmax, cmap=cmap, extend='both')
+                    im = ax.contourf(x_plt, y_plt, dat, vmin=vmin, vmax=vmax, cmap=cmap)
             else:
                 im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
                 
-            if count % ncol == 0:
+            if over_count % ncol == 0:
                 ax.yaxis.tick_right()
-            elif (count+ncol-1) % ncol == 0: 
+            elif (over_count+ncol-1) % ncol == 0: 
                 ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
             else:
                 ax.set_yticks([])
             if idx / ncol >= nrow - 1:
                 ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
-            ax.set_title(headings[idx], fontsize=fontsize)
+                
+            if not one_cbar:
+                cbar = plt.colorbar(im, ax=ax, orientation="horizontal", aspect=30/squeeze_cbar, pad=shift_cbar*0.1)
+                tick_locator = mticker.MaxNLocator(nbins=6)
+                cbar.locator = tick_locator
+                cbar.update_ticks()
+                if headings is not None:
+                    cbar.set_label(headings[idx], labelpad=5, fontsize=fontsize);
+            elif headings is not None:
+                ax.set_title(headings[idx], fontsize=fontsize)
             
             if invert:
                 ax.invert_yaxis()
 
-        count += 1
+        over_count += 1
 
     plt.tight_layout()
-    fig.subplots_adjust(bottom=mult_cshift*0.16)
-    cbar_ax = fig.add_axes([0.15, 0.13, 0.7, mult_cbar*0.020])
-    cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', extend='both');
-    cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
-    cbar.set_ticks(np.linspace(vmin,vmax,5))
+        
+    if one_cbar:
+        vmin, vmax = vlims
+        fig.subplots_adjust(bottom=shift_cbar*0.16)
+        cbar_ax = fig.add_axes([0.15, 0.13, 0.7, squeeze_cbar*0.020])
+        cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal');
+        cbar_ax.set_xlabel(title, rotation=0, labelpad=15, fontsize=fontsize);
+        cbar.set_ticks(np.linspace(vmin,vmax,5))
+    elif title is not None:
+        fig.suptitle(title, y=1)
     
     
 # ===================================================================================================
