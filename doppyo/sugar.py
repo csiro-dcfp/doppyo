@@ -21,6 +21,9 @@ import matplotlib.ticker as mticker
 from cartopy.util import add_cyclic_point
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
+# Load doppyo packages -----
+from doppyo import utils
+
 # ===================================================================================================
 def rank_gufunc(x):
     ''' Returns ranked data along specified dimension '''
@@ -670,12 +673,12 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
             ax = plt.subplot(nrow, ncol, over_count)
             if 'lat' in dat.dims:
                 x_plt = dat['lat']
-                y_plt = dat[find_other_dims(dat,'lat')[0]]
+                y_plt = dat[utils.get_other_dims(dat,'lat')[0]]
                 # if dat.get_axis_num('lat') > 0:
                 #     dat = dat.transpose()
             elif 'lon' in dat.dims:
                 x_plt = dat['lon']
-                y_plt = dat[find_other_dims(dat,'lon')[0]]
+                y_plt = dat[utils.get_other_dims(dat,'lon')[0]]
                 # if dat.get_axis_num('lon') > 0:
                 #     dat = dat.transpose()
             else: 

@@ -405,8 +405,8 @@ def histogram(da, bin_edges, over_dims):
         Limitations
         -----------
         This function uses xr.groupby_bins when over_dims is a subset of da.dims and is therefore not 
-        parallelized in these cases. There are efforts underway to parallelize groupby operations in 
-        xarray, see https://github.com/pydata/xarray/issues/585
+        parallelized/lazy in these cases. There are efforts underway to parallelize groupby operations 
+        in xarray, see https://github.com/pydata/xarray/issues/585
         
         See also
         --------
@@ -439,10 +439,10 @@ def histogram(da, bin_edges, over_dims):
         data = da.data
         if isinstance(data, dask_array_type):
             hist, _ = dask.array.histogram(da.data, bins=bin_edges)
-            return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('data')
+            return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('histogram')
         else:
             hist, _ = np.histogram(da.data, bins=bin_edges)
-            return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('data')
+            return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('histogram')
     else:
         # To use groupby_bins, da must have a name -----
         da = da.rename('histogram') 
@@ -457,8 +457,8 @@ def histogram(da, bin_edges, over_dims):
                          .rename({'histogram_bins' : 'bins'})
             hist['bins'] = (bin_edges[0:-1]+bin_edges[1:]) / 2
     
-    # Add nans where data did not fall in any bin -----
-    return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
+        # Add nans where data did not fall in any bin -----
+        return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
 
 
 # ===================================================================================================
@@ -624,7 +624,7 @@ def xy_from_lonlat(lon, lat):
 
 
 # ===================================================================================================
-def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
+def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False, skipna=False):
     """ 
         Returns trapezoidal/rectangular integration along specified dimension 
         Author: Dougie Squire
@@ -678,11 +678,11 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
         if cumulative:
             integral = ((da.shift(**{over_dim:1}) + da) * dx / 2.0) \
                        .fillna(0.0) \
-                       .cumsum(over_dim)
+                       .cumsum(over_dim, skipna=skipna) 
         else:
             integral = ((da.shift(**{over_dim:1}) + da) * dx / 2.0) \
                        .fillna(0.0) \
-                       .sum(over_dim)
+                       .sum(over_dim, skipna=skipna) 
     elif method == 'rect':
         if dx is None:
             dx1 = x - x.shift(**{over_dim:1})
@@ -690,13 +690,13 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False):
             dx = dx1.combine_first(dx2)
 
         if cumulative:
-            integral = (da * dx).cumsum(over_dim, skipna=False) 
+            integral = (da * dx).cumsum(over_dim, skipna=skipna) 
         else:
-            integral = (da * dx).sum(over_dim, skipna=False) 
+            integral = (da * dx).sum(over_dim, skipna=skipna) 
     else:
         raise ValueError(f'{method} is not a recognised integration method')
     
-    return integral.where(da.sum(over_dim, skipna=False).notnull()).rename('integral')
+    return integral.rename('integral')
     
 
 # ===================================================================================================
