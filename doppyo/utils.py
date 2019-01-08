@@ -421,10 +421,7 @@ def histogram(da, bin_edges, over_dims):
         except ValueError:
             unstacked = da
 
-        if dims is None:
-            return unstacked.count(keep_attrs=True)
-        else:
-            return ((0 * unstacked) + 1).sum(dim=dims, skipna=True) # da.count has no skipna option in 0.10.8
+        return ((0 * unstacked) + 1).sum(dim=dims, skipna=True) # da.count has no skipna option in 0.10.8
 
     if over_dims is None:
         over_dims = []
@@ -444,9 +441,16 @@ def histogram(da, bin_edges, over_dims):
             hist, _ = np.histogram(da.data, bins=bin_edges)
             return xr.DataArray(hist, coords=[bins], dims=['bins']).rename('histogram')
     else:
+        # As of 10.9, groupby_bins behaviour is different for single and multi-dimensional
+        # arrays. This causes issues when using over_dims=[] on a single dimensional array.
+        # To get around this, we add a dummy dimension and remove it afterwards -----
+        expanded = False
+        if (da.ndim == 1) and (over_dims == []):
+            da = da.copy().expand_dims(dim='dummy')
+            expanded = True
+            
         # To use groupby_bins, da must have a name -----
         da = da.rename('histogram') 
-        
         group = da.groupby_bins(da, bins=bin_edges, squeeze=False)
         
         if list(group) == []:
@@ -458,7 +462,10 @@ def histogram(da, bin_edges, over_dims):
             hist['bins'] = (bin_edges[0:-1]+bin_edges[1:]) / 2
     
         # Add nans where data did not fall in any bin -----
-        return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
+        if expanded:
+            return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram').drop('dummy').squeeze('dummy')
+        else:
+            return hist.astype(int).where(hist.sum('bins') != 0).rename('histogram')
 
 
 # ===================================================================================================
@@ -1848,8 +1855,12 @@ def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date',
         else:
             start_index = start_index.item()
             end_index = min([start_index + N_lead_steps, len(da[time_name])])
-            init_list.append(datetime_to_leadtime(da.isel({time_name:range(start_index, end_index)})))
-    
+            if (end_index - start_index) < 3: # Cannot determine frequency with less than three times - fill with nans
+                da_nan = np.nan * da.isel({time_name:range(0, N_lead_steps)})
+                da_nan[time_name] = pd.date_range(init_date, periods=N_lead_steps, freq=pd.infer_freq(da[time_name].values))
+                init_list.append(datetime_to_leadtime(da_nan))
+            else:
+                init_list.append(datetime_to_leadtime(da.isel({time_name:range(start_index, end_index)})))
     return xr.concat(init_list, dim=init_date_name)
 
 
