@@ -600,6 +600,9 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
 
     fig = plt.figure(figsize=(11*squeeze_col, nrow*4*squeeze_row))
     
+    if not isinstance(data,list):
+        data = [data]
+    
     if (clims is not None) & (np.shape(vlims) != np.shape(clims)):
         raise ValueError('The input clims must be equal in size to vlims')
     
@@ -670,53 +673,65 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
             elif headings is not None:
                 ax.set_title(headings[idx], fontsize=fontsize)
         else:
-            ax = plt.subplot(nrow, ncol, over_count)
-            if 'lat' in dat.dims:
-                x_plt = dat['lat']
-                y_plt = dat[utils.get_other_dims(dat,'lat')[0]]
-                # if dat.get_axis_num('lat') > 0:
-                #     dat = dat.transpose()
-            elif 'lon' in dat.dims:
-                x_plt = dat['lon']
-                y_plt = dat[utils.get_other_dims(dat,'lon')[0]]
-                # if dat.get_axis_num('lon') > 0:
-                #     dat = dat.transpose()
-            else: 
-                x_plt = dat[dat.dims[1]]
-                y_plt = dat[dat.dims[0]]
+            if len(dat.dims) == 1:
+                ax = plt.subplot(nrow, ncol, over_count)
+                x_plt = 0
+                y_plt = dat
                 
-            extent = [x_plt.min(), x_plt.max(), 
-                      y_plt.min(), y_plt.max()]
-            
-            if contour is True:
-                if clims is not None:
-                    im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, vmax=vmax, 
-                                     cmap=cmap)
-                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='w', linewidths=2)
-                    ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='k', linewidths=1)
-                else:
-                    im = ax.contourf(x_plt, y_plt, dat, vmin=vmin, vmax=vmax, cmap=cmap)
-            else:
-                im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
-                
-            if over_count % ncol == 0:
-                ax.yaxis.tick_right()
-            elif (over_count+ncol-1) % ncol == 0: 
-                ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
-            else:
-                ax.set_yticks([])
-            if idx / ncol >= nrow - 1:
-                ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
-                
-            if not one_cbar:
-                cbar = plt.colorbar(im, ax=ax, orientation="horizontal", aspect=30/squeeze_cbar, pad=shift_cbar*0.1)
-                tick_locator = mticker.MaxNLocator(nbins=6)
-                cbar.locator = tick_locator
-                cbar.update_ticks()
+                ax.bar(x_plt, y_plt)
+                ax.set_xlim(-1,1)
+                ax.set_xticks([])
+                ax.set_ylabel(dat.name)
                 if headings is not None:
-                    cbar.set_label(headings[idx], labelpad=5, fontsize=fontsize);
-            elif headings is not None:
-                ax.set_title(headings[idx], fontsize=fontsize)
+                    ax.set_title(headings[idx], fontsize=fontsize)
+            else:
+                ax = plt.subplot(nrow, ncol, over_count)
+                if 'lat' in dat.dims:
+                    x_plt = dat['lat']
+                    y_plt = dat[utils.get_other_dims(dat,'lat')[0]]
+                    # if dat.get_axis_num('lat') > 0:
+                    #     dat = dat.transpose()
+                elif 'lon' in dat.dims:
+                    x_plt = dat['lon']
+                    y_plt = dat[utils.get_other_dims(dat,'lon')[0]]
+                    # if dat.get_axis_num('lon') > 0:
+                    #     dat = dat.transpose()
+                else: 
+                    x_plt = dat[dat.dims[1]]
+                    y_plt = dat[dat.dims[0]]
+
+                extent = [x_plt.min(), x_plt.max(), 
+                          y_plt.min(), y_plt.max()]
+
+                if contour is True:
+                    if clims is not None:
+                        im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, vmax=vmax, 
+                                         cmap=cmap)
+                        ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='w', linewidths=2)
+                        ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='k', linewidths=1)
+                    else:
+                        im = ax.contourf(x_plt, y_plt, dat, vmin=vmin, vmax=vmax, cmap=cmap)
+                else:
+                    im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
+
+                if over_count % ncol == 0:
+                    ax.yaxis.tick_right()
+                elif (over_count+ncol-1) % ncol == 0: 
+                    ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
+                else:
+                    ax.set_yticks([])
+                if idx / ncol >= nrow - 1:
+                    ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
+
+                if not one_cbar:
+                    cbar = plt.colorbar(im, ax=ax, orientation="horizontal", aspect=30/squeeze_cbar, pad=shift_cbar*0.1)
+                    tick_locator = mticker.MaxNLocator(nbins=6)
+                    cbar.locator = tick_locator
+                    cbar.update_ticks()
+                    if headings is not None:
+                        cbar.set_label(headings[idx], labelpad=5, fontsize=fontsize);
+                elif headings is not None:
+                    ax.set_title(headings[idx], fontsize=fontsize)
             
             if invert:
                 ax.invert_yaxis()
