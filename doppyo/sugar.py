@@ -678,10 +678,14 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
                 x_plt = 0
                 y_plt = dat
                 
-                ax.bar(x_plt, y_plt)
-                ax.set_xlim(-1,1)
+                if 'asp' not in locals():
+                    asp = 1
+                    
+                ax.bar(x_plt, y_plt, width=asp*y_plt*1)
+                ax.set_xlim(-asp*y_plt,asp*y_plt)
                 ax.set_xticks([])
                 ax.set_ylabel(dat.name)
+                ax.set_aspect(asp)
                 if headings is not None:
                     ax.set_title(headings[idx], fontsize=fontsize)
             else:
@@ -737,7 +741,10 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
                 ax.invert_yaxis()
 
         over_count += 1
-
+        
+        if idx == 0:
+            asp = np.diff(ax.get_xlim())[0] / np.diff(ax.get_ylim())[0]
+            
     plt.tight_layout()
         
     if one_cbar:
