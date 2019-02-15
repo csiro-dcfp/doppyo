@@ -1,0 +1,11 @@
+package:
+  name: doppyo
+  version: "0.0.1"
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  number: 0
+  script: "python -m pip install . --no-deps -vv"
