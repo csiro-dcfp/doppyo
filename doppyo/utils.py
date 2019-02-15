@@ -1760,6 +1760,11 @@ def get_latlon_region(da, box):
 
     lat_name = get_lat_name(da)
     lon_name = get_lon_name(da)
+    
+    if box[2] < 0:
+        box[2] = box[2]+360
+    if box[3] < 0:
+        box[3] = box[3]+360
         
     # Account for datasets with negative longitudes -----
     if np.any(da[lon_name] < 0):
