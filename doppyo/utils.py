@@ -1758,17 +1758,20 @@ def get_latlon_region(da, box):
           * lon      (lon) int64 -280 -279 -278 -277 -276 -275 ... 74 75 76 77 78 79
     """
 
+    lat_name = get_lat_name(da)
+    lon_name = get_lon_name(da)
+        
     # Account for datasets with negative longitudes -----
-    if np.any(da['lon'] < 0):
-        lons = da['lon'].values
+    if np.any(da[lon_name] < 0):
+        lons = da[lon_name].values
         lons_pos = np.where(lons < 0, lons+360, lons)
         idx = np.where((lons_pos >= box[2]) & (lons_pos <= box[3]))[0]
         if np.all(np.diff(idx)[0] == np.diff(idx)):
-            return da.sel(lat=slice(box[0],box[1])).isel(lon=slice(idx[0],idx[-1]))
+            return da.sel({lat_name : slice(box[0],box[1])}).isel({lon_name : slice(idx[0],idx[-1])})
         else:
-            return da.sel(lat=slice(box[0],box[1])).isel(lon=idx)
+            return da.sel({lat_name : slice(box[0],box[1])}).isel({lon_name : idx})
     else:
-        return da.sel(lat=slice(box[0],box[1]), lon=slice(box[2],box[3]))
+        return da.sel({lat_name : slice(box[0],box[1]), lon_name : slice(box[2],box[3])})
 
     
 # ===================================================================================================
@@ -1797,7 +1800,10 @@ def latlon_average(da, box):
         array(-0.056776)
     '''
     
-    return get_latlon_region(da, box).mean(dim=['lat', 'lon'])
+    lat_name = get_lat_name(da)
+    lon_name = get_lon_name(da)
+    
+    return get_latlon_region(da, box).mean(dim=[lat_name, lon_name])
 
 
 # ===================================================================================================
