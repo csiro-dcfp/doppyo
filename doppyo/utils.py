@@ -5,14 +5,14 @@
     Python Version: 3.6
 """
 
-__all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'histogram', 
-           'get_bin_edges', 'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 
-           'multiply', 'divide', 'average', 'fft', 'ifft', 'fftfilt', 'isosurface',
-           'load_mean_climatology', 'anomalize', 'trunc_time', 'leadtime_to_datetime', 
-           'datetime_to_leadtime', 'repeat_datapoint', 'get_latlon_region', 'latlon_average', 
-           'stack_by_init_date', 'concat_times', 'prune', 'get_other_dims', 'cftime_to_datetime64', 
-           'get_time_name', 'get_lon_name', 'get_lat_name', 'get_depth_name', 'get_level_name', 
-           'get_plevel_name', '_is_datetime']
+__all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'Gaussian_pdf', 
+           'Gaussian_cdf', 'histogram', 'get_bin_edges', 'polyfit', 'polyval', 'differentiate_wrt', 
+           'xy_from_lonlat', 'integrate', 'add', 'subtract', 'multiply', 'divide', 'average', 'fft', 
+           'ifft', 'fftfilt', 'isosurface', 'load_mean_climatology', 'anomalize', 'trunc_time', 
+           'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_datapoint', 'get_latlon_region', 
+           'latlon_average', 'stack_by_init_date', 'concat_times', 'prune', 'get_other_dims', 
+           'cftime_to_datetime64', 'get_time_name', 'get_lon_name', 'get_lat_name', 'get_depth_name', 
+           'get_level_name', 'get_plevel_name', '_is_datetime']
 
 # ===================================================================================================
 # Packages
@@ -363,6 +363,65 @@ def cdf(da, bin_edges, over_dims):
 
 
 # ===================================================================================================
+def Gaussian_pdf(x):
+    """ 
+        Evaluate standard Gaussian pdf at x 
+        Author: Dougie Squire
+        Date: 26/03/2019
+        
+        Parameters
+        ----------
+        x : array_like, float
+            Point(s) at which to evaluate the Gaussian pdf
+            
+        Returns
+        -------
+        p : array_like, float
+            Same shape as x containing the evaluated pdf values
+            
+        Examples
+        --------
+        >>> doppyo.utils.gaussian_pdf(0.5)
+        0.3520653267642995
+    """
+    
+    return (1 / (2 * constants().pi) ** 0.5) * xr.ufuncs.exp(-x ** 2 / 2)
+
+
+# ===================================================================================================
+def Gaussian_cdf(x, n=100):
+    """ 
+        Evaluate standard Gaussian cdf at x (numerical integral over n points) 
+        Author: Dougie Squire
+        Date: 26/03/2019
+        
+        Parameters
+        ----------
+        x : array_like, float
+            Point(s) at which to evaluate the Gaussian cdf
+        n : int, optional
+            Number of points to use to evaulate the numerical integral
+            
+        Returns
+        -------
+        p : xarray DataArray
+            Same shape as x containing the evaluated cdf values
+            
+        Examples
+        --------
+        >>> doppyo.utils.gaussian_cdf(0.5)
+        <xarray.DataArray 'integral' ()>
+        array(0.691462)
+    """
+    
+    z = xr.DataArray(np.arange(n) / np.sqrt(2) / (n-1), dims=['z']) * x
+    erf = (2 / constants().pi ** 0.5) * \
+               integrate(xr.ufuncs.exp(-z ** 2), over_dim='z', x=z, method='trapz')
+    
+    return 0.5 * (erf + 1)
+
+
+# ===================================================================================================
 def histogram(da, bin_edges, over_dims):
     """ 
         Returns the histogram over the specified dimensions
@@ -500,6 +559,127 @@ def get_bin_edges(bins):
                                  [bins[-1]+dbin[-1]]))
     
     return bin_edges
+
+
+# ===================================================================================================
+def polyfit(x, y, order, over_dims):
+    """
+        Returns least squares polynomial fit of the specified order
+        Author: Dougie Squire
+        Date: 25/03/2019
+        
+        Parameters
+        ----------
+        x : xarray DataArray
+            Array containing x-coordinates of the sample points
+        y : xarray DataArray
+            Array containing y-coordinates of the sample points
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the fit
+            
+        Returns
+        -------
+        coefficients : xarray DataArray
+            Array containing the coefficients of the fit
+            
+        Examples
+        --------
+        >>> x = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> y = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> doppyo.utils.polyfit(x, y, order=2, over_dims=['x','y'])
+        <xarray.DataArray 'fit' (z: 3, degree: 3)>
+        array([[-0.17262 ,  0.423925,  0.644511],
+               [-0.217319,  0.033146,  1.139249],
+               [ 0.520737, -0.641632, -1.095306]])
+        Coordinates:
+          * z        (z) int64 0 1 2
+          * degree   (degree) int64 0 1 2
+    """
+    
+    def _polyfit(x, y, order):
+        notnan = np.isfinite(x) & np.isfinite(y)
+        return np.polyfit(x[notnan], y[notnan], order)
+    
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+
+    da = xr.apply_ufunc(_polyfit, x , y,
+                        input_core_dims=[over_dims, over_dims],
+                        output_core_dims=[['degree']],
+                        vectorize=True, 
+                        dask='parallelized',
+                        output_dtypes=[float],
+                        kwargs={'order' : order})
+    da['degree'] = np.arange(order+1)
+    
+    return da.rename('coefficients')
+
+
+# ===================================================================================================
+def polyval(x, p, over_dims):
+    """
+        Evaluate a polynomial at specific values
+        Author: Dougie Squire
+        Date: 25/03/2019
+        
+        Parameters
+        ----------
+        x : xarray DataArray
+            Array containing x-coordinates of the sample points
+        p : xarray DataArray
+            Array containing the polynomial coefficients
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the fit. Should match over_dims handed to polyfit
+            
+        Returns
+        -------
+        fit : xarray DataArray
+            Evaluated polynomial values
+            
+        Examples
+        --------
+        >>> x = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> y = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> p = polyfit(x, y, order=2, over_dims=['x','y'])
+        >>> xf = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                   coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.utils.polyval(p, xf, over_dims=['x','y'])
+        <xarray.DataArray (z: 3, x: 3, y: 3)>
+        array([[[ 0.680063,  0.687067,  0.37378 ],
+                [ 0.68157 ,  0.593822,  0.564625],
+                [ 0.661166,  0.651231,  0.373721]],
+
+               [[-0.526172, -0.343878,  1.040153],
+                [-0.310027, -0.374777,  0.251314],
+                [-0.197566, -0.488106,  1.04039 ]],
+
+               [[ 1.009727, -0.11369 ,  0.517851],
+                [-0.152397,  2.377984, -0.149194],
+                [-0.227379,  1.532419,  0.518102]]])
+        Coordinates:
+          * z        (z) int64 0 1 2
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1 2
+    """
+
+    def _polyval(p, x):
+        return np.polyval(p, x)
+    
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+
+    da = xr.apply_ufunc(_polyval, p , x,
+                        input_core_dims=[['degree'], over_dims],
+                        output_core_dims=[over_dims],
+                        vectorize=True, 
+                        dask='parallelized',
+                        output_dtypes=[float])
+    
+    return da.rename('fit')
 
 
 # ===================================================================================================
@@ -1717,7 +1897,7 @@ def repeat_datapoint(da, coord, coord_val):
 
     repeat_data = da.sel({coord : coord_val}, drop=True)
     
-    return (0 * da) + repeat_da
+    return (0 * da) + repeat_data
 
 
 # ===================================================================================================
@@ -1765,6 +1945,10 @@ def get_latlon_region(da, box):
         box[2] = box[2]+360
     if box[3] < 0:
         box[3] = box[3]+360
+        
+    # Make sure lats are organised in same way between da and box -----
+    if da.lat[-1] < da.lat[0]:
+        box = [box[1], box[0], box[2], box[3]]
         
     # Account for datasets with negative longitudes -----
     if np.any(da[lon_name] < 0):

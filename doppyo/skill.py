@@ -16,7 +16,8 @@ __all__ = ['rank_histogram', 'rps', 'reliability', 'roc', 'discrimination', 'Bri
            'Gerrity_score', 'bias_score', 'hit_rate', 'false_alarm_ratio', 'false_alarm_rate', 
            'success_ratio', 'threat_score', 'equit_threat_score', 'odds_ratio', 
            'odds_ratio_skill_score', 'mean_additive_bias', 'mean_multiplicative_bias', 
-           'mean_absolute_error', 'mean_squared_error', 'rms_error', 'Pearson_corrcoeff']
+           'mean_absolute_error', 'mean_squared_error', 'rms_error', 'Pearson_corrcoeff', 
+           'sign_test']
 
 # ===================================================================================================
 # Packages
@@ -1787,6 +1788,68 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
                 ((da_ref ** 2).mean(intersection_dims) ** 0.5)
 
     return (cov / norm).mean(difference_dims).rename('Pearson_corrcoeff')
+
+
+# ===================================================================================================
+def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date'):
+    """
+        Returns the Delsole and Tippett sign test over the given time period
+        Author: Dougie Squire
+        Date: 26/03/2019
+        
+        Parameters
+        ----------
+        da_cmp1 : xarray DataArray
+            Array containing data to be compared to da_cmp1
+        da_cmp2 : xarray DataArray
+            Array containing data to be compared to da_cmp2
+        da_ref : xarray DataArray
+            Array containing data to use as reference
+        time_dim : str, optional
+            Name of dimension over which to compute the random walk
+            
+        Returns
+        -------
+        sign_test : xarray DataArray
+            Array containing the results of the sign test
+        confidence : xarray DataArray
+            Array containing 95% confidence bounds
+            
+        Examples
+        --------
+        >>> x = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                  coords=[('t', np.arange(3)), ('x', np.arange(3))])
+        >>> y = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                 coords=[('t', np.arange(3)), ('x', np.arange(3))])
+        >>> o = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                  coords=[('t', np.arange(3)), ('x', np.arange(3))])
+        >>> walk, confidence = sign_test(x, y, o, time_dim='t')
+        >>> walk
+        <xarray.DataArray (t: 3, x: 3)>
+        array([[-1, -1, -1],
+               [ 0,  0, -2],
+               [-1, -1, -3]])
+        Coordinates:
+          * t        (t) int64 0 1 2
+          * x        (x) int64 0 1 2
+          
+        Notes
+        -----
+        See Delsole and Tippett 2016 Forecast Comparison Based on Random Walks
+    """
+    
+    cmp1_diff = abs(da_cmp1 - da_ref)
+    cmp2_diff = abs(da_cmp2 - da_ref)
+    
+    sign_test = (1 * (cmp1_diff > cmp2_diff) - 1 * (cmp2_diff > cmp1_diff)).cumsum(time_dim)
+    
+    # Estimate 95% confidence interval -----
+    confidence = da_ref[time_dim].copy()
+    N = np.arange(1,len(confidence)+1)
+    # z_alpha is the value at which the standardized cumulative Gaussian distributed exceeds alpha
+    confidence.values = 1.95996496 * xr.ufuncs.sqrt(N) 
+    
+    return sign_test.rename('sign_test'), confidence.rename('confidence')
 
 
     
