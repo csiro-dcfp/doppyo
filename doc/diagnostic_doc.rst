@@ -1,0 +1,4 @@
+Diagnostics
+======================
+.. automodule:: diagnostic
+   :members:

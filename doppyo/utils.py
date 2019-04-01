@@ -1,8 +1,10 @@
 """
+    Overview
+    ========
     General support functions for the doppyo package
-    Authors: Dougie Squire & Thomas Moore
-    Date created: 04/04/2018
-    Python Version: 3.6
+
+    API
+    ===
 """
 
 __all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'Gaussian_pdf', 
@@ -40,8 +42,9 @@ from doppyo import skill
 class timer(object):
     """
         Reports time taken to complete code snippets.
-        Author: Dougie Squire
-        Date: 14/02/2018
+        
+        | Author: Dougie Squire
+        | Date: 14/02/2018
 
         Examples
         --------
@@ -66,8 +69,9 @@ class timer(object):
 class constants(object):
     """ 
         Returns commonly used constants.
-        Author: Dougie Squire
-        Date: 14/02/2018
+        
+        | Author: Dougie Squire
+        | Date: 14/02/2018
     
         Examples
         --------
@@ -138,8 +142,9 @@ class constants(object):
 def skewness(da, dim):
     """
         Returns the skewness along dimension dim
-        Author: Dougie Squire
-        Date: 20/08/2018
+        
+        | Author: Dougie Squire
+        | Date: 20/08/2018
 
         Parameters
         ----------
@@ -179,8 +184,9 @@ def skewness(da, dim):
 def kurtosis(da, dim):
     """
         Returns the kurtosis along dimension dim
-        Author: Dougie Squire
-        Date: 20/08/2018
+        
+        | Author: Dougie Squire
+        | Date: 20/08/2018
 
         Parameters
         ----------
@@ -220,8 +226,9 @@ def kurtosis(da, dim):
 def digitize(da, bin_edges):
     """
         Returns the indices of the bins to which each value in input array belongs.
-        Author: Dougie Squire
-        Date: 31/10/2018
+        
+        | Author: Dougie Squire
+        | Date: 31/10/2018
         
         Parameters
         ----------
@@ -266,8 +273,9 @@ def digitize(da, bin_edges):
 def pdf(da, bin_edges, over_dims):
     """ 
         Returns the probability distribution function along the specified dimensions
-        Author: Dougie Squire
-        Date: 01/10/2018
+        
+        | Author: Dougie Squire
+        | Date: 01/10/2018
         
         Parameters
         ----------
@@ -301,11 +309,11 @@ def pdf(da, bin_edges, over_dims):
           * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...
           * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
           
-        Limitations
+        Notes
         -----------
-        This function uses doppyo.utils.histogram() which uses xr.groupby_bins when over_dims is a subset 
-        of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize 
-        groupby operations in xarray, see https://github.com/pydata/xarray/issues/585
+        This function uses ``doppyo.utils.histogram()`` which uses ``xr.groupby_bins`` when over_dims is a subset \
+                of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize \
+                groupby operations in xarray, see https://github.com/pydata/xarray/issues/585
     """
     
     hist = histogram(da, bin_edges, over_dims)
@@ -317,8 +325,9 @@ def pdf(da, bin_edges, over_dims):
 def cdf(da, bin_edges, over_dims):
     """ 
         Returns the cumulative probability distribution function along the specified dimensions
-        Author: Dougie Squire
-        Date: 01/10/2018
+        
+        | Author: Dougie Squire
+        | Date: 01/10/2018
         
         Parameters
         ----------
@@ -352,11 +361,11 @@ def cdf(da, bin_edges, over_dims):
           * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...
           * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
           
-        Limitations
+        Notes
         -----------
-        This function uses doppyo.utils.histogram() which uses xr.groupby_bins when over_dims is a subset 
-        of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize 
-        groupby operations in xarray, see https://github.com/pydata/xarray/issues/585
+        This function uses ``doppyo.utils.histogram()`` which uses ``xr.groupby_bins`` when over_dims is a subset \
+                of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize \
+                groupby operations in xarray, see https://github.com/pydata/xarray/issues/585
     """
     
     return integrate(pdf(da, bin_edges, over_dims), over_dim='bins', method='rect', cumulative=True).rename('cdf')
@@ -366,8 +375,9 @@ def cdf(da, bin_edges, over_dims):
 def Gaussian_pdf(x):
     """ 
         Evaluate standard Gaussian pdf at x 
-        Author: Dougie Squire
-        Date: 26/03/2019
+        
+        | Author: Dougie Squire
+        | Date: 26/03/2019
         
         Parameters
         ----------
@@ -392,8 +402,9 @@ def Gaussian_pdf(x):
 def Gaussian_cdf(x, n=100):
     """ 
         Evaluate standard Gaussian cdf at x (numerical integral over n points) 
-        Author: Dougie Squire
-        Date: 26/03/2019
+        
+        | Author: Dougie Squire
+        | Date: 26/03/2019
         
         Parameters
         ----------
@@ -425,8 +436,9 @@ def Gaussian_cdf(x, n=100):
 def histogram(da, bin_edges, over_dims):
     """ 
         Returns the histogram over the specified dimensions
-        Author: Dougie Squire
-        Date: 01/10/2018
+        
+        | Author: Dougie Squire
+        | Date: 01/10/2018
         
         Parameters
         ----------
@@ -461,11 +473,11 @@ def histogram(da, bin_edges, over_dims):
           * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...
           * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...
   
-        Limitations
+        Notes
         -----------
-        This function uses xr.groupby_bins when over_dims is a subset of da.dims and is therefore not 
-        parallelized/lazy in these cases. There are efforts underway to parallelize groupby operations 
-        in xarray, see https://github.com/pydata/xarray/issues/585
+        This function uses ``xr.groupby_bins`` when over_dims is a subset of da.dims and is therefore not \
+                parallelized/lazy in these cases. There are efforts underway to parallelize groupby operations \
+                in xarray, see https://github.com/pydata/xarray/issues/585
         
         See also
         --------
@@ -531,8 +543,9 @@ def histogram(da, bin_edges, over_dims):
 def get_bin_edges(bins):
     """ 
         Returns bin edges of provided bins 
-        Author: Dougie Squire
-        Date: 06/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 06/03/2018
         
         Parameters
         ----------
@@ -542,9 +555,9 @@ def get_bin_edges(bins):
         Returns
         -------
         edges : array_like
-            Array of bin edges where the first and last edge are computed using the spacing between
-            the first-and-second and second-last-and-last bins, respectively. This array is one
-            element larger than the input array
+            Array of bin edges where the first and last edge are computed using the spacing between \
+                    the first-and-second and second-last-and-last bins, respectively. This array is one\
+                    element larger than the input array
             
         Examples
         --------
@@ -565,8 +578,9 @@ def get_bin_edges(bins):
 def polyfit(x, y, order, over_dims):
     """
         Returns least squares polynomial fit of the specified order
-        Author: Dougie Squire
-        Date: 25/03/2019
+        
+        | Author: Dougie Squire
+        | Date: 25/03/2019
         
         Parameters
         ----------
@@ -596,6 +610,10 @@ def polyfit(x, y, order, over_dims):
         Coordinates:
           * z        (z) int64 0 1 2
           * degree   (degree) int64 0 1 2
+
+        See Also
+        --------
+        numpy.polyfit
     """
     
     def _polyfit(x, y, order):
@@ -621,8 +639,9 @@ def polyfit(x, y, order, over_dims):
 def polyval(x, p, over_dims):
     """
         Evaluate a polynomial at specific values
-        Author: Dougie Squire
-        Date: 25/03/2019
+        
+        | Author: Dougie Squire
+        | Date: 25/03/2019
         
         Parameters
         ----------
@@ -652,11 +671,11 @@ def polyval(x, p, over_dims):
         array([[[ 0.680063,  0.687067,  0.37378 ],
                 [ 0.68157 ,  0.593822,  0.564625],
                 [ 0.661166,  0.651231,  0.373721]],
-
+        ...
                [[-0.526172, -0.343878,  1.040153],
                 [-0.310027, -0.374777,  0.251314],
                 [-0.197566, -0.488106,  1.04039 ]],
-
+        ...
                [[ 1.009727, -0.11369 ,  0.517851],
                 [-0.152397,  2.377984, -0.149194],
                 [-0.227379,  1.532419,  0.518102]]])
@@ -664,6 +683,10 @@ def polyval(x, p, over_dims):
           * z        (z) int64 0 1 2
           * x        (x) int64 0 1 2
           * y        (y) int64 0 1 2
+
+        See Also
+        --------
+        numpy.polyval
     """
 
     def _polyval(p, x):
@@ -687,15 +710,16 @@ def polyval(x, p, over_dims):
 # ===================================================================================================
 def differentiate_wrt(da, dim, x):
     """ 
-        Returns the gradient along dim using x to compute differences. This function is required
-        because the current implementation of xr.differentiate (0.10.9) can only differentiate with 
-        respect to a 1D coordinate. It is common to want to differentiate with respect to something 
-        that changes as a function of multiple dimensions (e.g. the zonal distance between regularly 
-        spaced lat/lon points varies as a function of lat and lon). Uses second order accurate central 
-        differencing in the interior points and first order accurate one-sided (forward or backwards) 
-        differencing at the boundaries.
-        Author: Dougie Squire
-        Date: 02/11/2018
+        Returns the gradient along dim using x to compute differences. This function is required \
+                because the current implementation of xr.differentiate (0.10.9) can only differentiate with \
+                respect to a 1D coordinate. It is common to want to differentiate with respect to something \
+                that changes as a function of multiple dimensions (e.g. the zonal distance between regularly \
+                spaced lat/lon points varies as a function of lat and lon). Uses second order accurate central \
+                differencing in the interior points and first order accurate one-sided (forward or backwards) \
+                differencing at the boundaries.
+        
+        | Author: Dougie Squire
+        | Date: 02/11/2018
         
         Parameters
         ----------
@@ -704,7 +728,7 @@ def differentiate_wrt(da, dim, x):
         dim : str
             The dimension to be used to compute the gradient
         x : xarray DataArray
-            Array containing values to differentiate with respect to. Must be broadcastable da
+            Array containing values to differentiate with respect to. Must be broadcastable with da
             
         Returns
         -------
@@ -770,8 +794,9 @@ def differentiate_wrt(da, dim, x):
 def xy_from_lonlat(lon, lat):
     """
         Returns x/y in m from grid points that are in a longitude/latitude format.
-        Author: Dougie Squire
-        Date: 01/11/2018
+        
+        | Author: Dougie Squire
+        | Date: 01/11/2018
         
         Parameters
         ----------
@@ -814,8 +839,9 @@ def xy_from_lonlat(lon, lat):
 def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False, skipna=False):
     """ 
         Returns trapezoidal/rectangular integration along specified dimension 
-        Author: Dougie Squire
-        Date: 16/08/2018
+        
+        | Author: Dougie Squire
+        | Date: 16/08/2018
         
         Parameters
         ----------
@@ -824,13 +850,13 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False, s
         over_dim : str
             Dimension to integrate
         x : xarray DataArray, optional
-            Values to use for integrand. Must contain dimensions over_dim. If None, x is determined
-            from the coords associated with over_dim
+            Values to use for integrand. Must contain dimensions over_dim. If None, x is determined\
+                    from the coords associated with over_dim
         dx : value, optional
             Integrand spacing used to compute the integral. If None, dx is determined from x
         method : str, optional
-            Method of performing integral. Options are 'trapz' for trapezoidal integration, or 'rect'
-            for rectangular integration
+            Method of performing integral. Options are 'trapz' for trapezoidal integration, or 'rect'\
+                    for rectangular integration
         cumulative : bool, optional
             If True, return the cumulative integral    
             
@@ -848,6 +874,10 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False, s
         array([-0.20331 , -0.781251])
         Coordinates:
           * y        (y) int64 0 1
+
+        See Also
+        --------
+        numpy.trapz
     """
 
     if x is None:
@@ -890,8 +920,9 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False, s
 def add(data_1, data_2):
     """ 
         Returns the addition of two arrays, data_1 + data_2. Useful for xr.apply type operations
-        Author: Dougie Squire
-        Date: 27/06/2018
+        
+        | Author: Dougie Squire
+        | Date: 27/06/2018
 
         Parameters
         ----------
@@ -925,8 +956,9 @@ def add(data_1, data_2):
 def subtract(data_1, data_2):
     """ 
         Returns the difference of two arrays, data_1 - data_2. Useful for xr.apply type operations
-        Author: Dougie Squire
-        Date: 27/06/2018
+        
+        | Author: Dougie Squire
+        | Date: 27/06/2018
 
         Parameters
         ----------
@@ -961,8 +993,9 @@ def subtract(data_1, data_2):
 def multiply(data_1, data_2):
     """ 
         Returns the multiplication of two fields, data_1 * data_2. Useful for xr.apply type operations
-        Author: Dougie Squire
-        Date: 27/06/2018
+        
+        | Author: Dougie Squire
+        | Date: 27/06/2018
         
         Parameters
         ----------
@@ -997,8 +1030,9 @@ def multiply(data_1, data_2):
 def divide(data_1, data_2):
     """ 
         Returns the division of two fields, data_1 / data_2. Useful for xr.apply type operations
-        Author: Dougie Squire
-        Date: 27/06/2018
+        
+        | Author: Dougie Squire
+        | Date: 27/06/2018
         
         Parameters
         ----------
@@ -1033,19 +1067,20 @@ def divide(data_1, data_2):
 def average(da, dim=None, weights=None):
     """
         Returns the weighted average
-        Author: Dougie Squire
-        Date: 06/08/2018
+        
+        | Author: Dougie Squire
+        | Date: 06/08/2018
 
         Parameters
         ----------
         da : xarray DataArray
             Array to be averaged
         dim : str or sequence of str, optional
-            Dimension(s) over which to compute weighted average. If None, average is computed over all
-            dimensions
+            Dimension(s) over which to compute weighted average. If None, average is computed over all\
+                    dimensions
         weights : xarray DataArray, optional
-            Weights to apply during averaging. Shape of weights must be broadcastable to shape of da.
-            If None, unity weighting is applied
+            Weights to apply during averaging. Shape of weights must be broadcastable to shape of da.\
+                    If None, unity weighting is applied
             
         Returns
         -------
@@ -1076,8 +1111,9 @@ def average(da, dim=None, weights=None):
 def fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
     """
         Returns the sequentual ffts of the provided array along the specified dimensions
-        Author: Dougie Squire
-        Date: 06/08/2018
+        
+        | Author: Dougie Squire
+        | Date: 06/08/2018
         
         Parameters
         ----------
@@ -1086,21 +1122,21 @@ def fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
         dim : str or sequence
             Dimensions along which to compute the fft
         nfft : float or sequence, optional
-            Number of points in each dimensions to use in the transformation. If None, the full length
-            of each dimension is used.
+            Number of points in each dimensions to use in the transformation. If None, the full length\
+                    of each dimension is used.
         dx : float or sequence, optional
-            Define the spacing of the dimensions. If None, the spacing is computed directly from the 
-            coordinates associated with the dimensions. If dx is a time array, frequencies are computed 
-            in Hz
+            Define the spacing of the dimensions. If None, the spacing is computed directly from the \
+                    coordinates associated with the dimensions. If dx is a time array, frequencies are computed \
+                    in Hz
         twosided : bool, optional
-            When the DFT is computed for purely real input, the output is Hermitian-symmetric, 
-            meaning the negative frequency terms are just the complex conjugates of the corresponding 
-            positive-frequency terms, and the negative-frequency terms are therefore redundant.
-            If True, force the fft to include negative and positive frequencies, even if the input 
-            data is real. If the input array is complex, one must set twosided=True
+            When the DFT is computed for purely real input, the output is Hermitian-symmetric, \
+                    meaning the negative frequency terms are just the complex conjugates of the corresponding \
+                    positive-frequency terms, and the negative-frequency terms are therefore redundant.\
+                    If True, force the fft to include negative and positive frequencies, even if the input \
+                    data is real. If the input array is complex, one must set twosided=True
         shift : bool, optional
-            If True, the frequency axes are shifted to center the 0 frequency, otherwise negative 
-            frequencies follow positive frequencies as in numpy.fft.ftt
+            If True, the frequency axes are shifted to center the 0 frequency, otherwise negative \
+                    frequencies follow positive frequencies as in ``numpy.fft.ftt``
 
         Returns
         -------
@@ -1133,8 +1169,8 @@ def fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
         
         Notes
         -----
-        A real fft is performed over the first dimension, which is faster. The transforms over the 
-        remaining dimensions are then computed with the classic fft.
+        A real fft is performed over the first dimension, which is faster. The transforms over the \
+                remaining dimensions are then computed with the classic fft.
     """
 
     if isinstance(dim, str):
@@ -1229,14 +1265,15 @@ def fft(da, dim, nfft=None, dx=None, twosided=False, shift=True):
 # ===================================================================================================
 def ifft(da, dim, nifft=None, shifted=True):
     """
-        Returns the sequentual iffts of the provided array along the specified dimensions. Note, it is 
-        not possible to reconstruct the  dimension along which the fft was performed (r_dim) from 
-        knowledge only of the fft "frequencies" (f_dim). For example, time cannot be reconstructed from 
-        frequency. Here, r_dim is defined relative to 0 in steps of dx as determined from f_dim. It may 
-        be necessary for the user to use the original (pre-fft) dimension to redefine r_dim after the
-        ifft is performed (see the Examples s ection of this docstring).
-        Author: Dougie Squire
-        Date: 06/08/2018
+        Returns the sequentual iffts of the provided array along the specified dimensions. Note, it is \
+                not possible to reconstruct the  dimension along which the fft was performed (r_dim) from \
+                knowledge only of the fft "frequencies" (f_dim). For example, time cannot be reconstructed from \
+                frequency. Here, r_dim is defined relative to 0 in steps of dx as determined from f_dim. It may \
+                be necessary for the user to use the original (pre-fft) dimension to redefine r_dim after the\
+                ifft is performed (see the Examples s ection of this docstring).
+        
+        | Author: Dougie Squire
+        | Date: 06/08/2018
         
         Parameters
         ----------
@@ -1245,11 +1282,11 @@ def ifft(da, dim, nifft=None, shifted=True):
         dim : str or sequence
             Dimensions along which to compute the ifft
         nifft : float or sequence, optional
-            Number of points in each dimensions to use in the transformation. If None, the full length
-            of each dimension is used.
+            Number of points in each dimensions to use in the transformation. If None, the full length\
+                    of each dimension is used.
         shifted : bool, optional
-            If True, assumes that the input dimensions are shifted to center the 0 frequency, otherwise 
-            assumes negative frequencies follow positive frequencies as in numpy.fft.ftt
+            If True, assumes that the input dimensions are shifted to center the 0 frequency, otherwise \
+                    assumes negative frequencies follow positive frequencies as in ``numpy.fft.ftt``
             
         Returns
         -------
@@ -1286,8 +1323,8 @@ def ifft(da, dim, nifft=None, shifted=True):
           
         See also
         --------
-        dask.array.fft
-        numpy.fft
+        dask.array.ifft
+        numpy.ifft
     """
 
     if isinstance(dim, str):
@@ -1355,8 +1392,9 @@ def ifft(da, dim, nifft=None, shifted=True):
 def fftfilt(da, dim, method, dx, x_cut):
     """
         Spectrally filters the provided array along dimension dim.
-        Author: Dougie Squire
-        Date: 15/09/2018
+        
+        | Author: Dougie Squire
+        | Date: 15/09/2018
         
         Parameters
         ----------
@@ -1365,7 +1403,7 @@ def fftfilt(da, dim, method, dx, x_cut):
         dim : str
             Dimension along which to filter
         method : str
-            Filter method to use. Options are 'low pass', 'high pass' or 'band pass'
+            Filter method to use. Options are ``"low pass"``, ``"high pass"`` or ``"band pass"``
         dx : value
             Define the spacing of the dimension.
         xc : value or array_like (if method = 'band pass')
@@ -1423,11 +1461,12 @@ def fftfilt(da, dim, method, dx, x_cut):
 # ===================================================================================================
 def isosurface(da, coord, target):
     """
-        Returns the values of a coordinate in the input array where the input array values equals
-        a prescribed target. E.g. returns the depth of the 20 degC isotherm. Returns nans for all
-        points in input array where isosurface is not defined. If 
-        Author: Thomas Moore
-        Date: 02/10/2018
+        Returns the values of a coordinate in the input array where the input array values equals \
+                a prescribed target. E.g. returns the depth of the 20 degC isotherm. Returns nans for all \
+                points in input array where isosurface is not defined. If 
+        
+        | Author: Thomas Moore and Dougie Squire
+        | Date: 02/10/2018
         
         Parameters
         ----------
@@ -1441,8 +1480,8 @@ def isosurface(da, coord, target):
         Returns
         -------
         isosurface : xarray DataArray
-            Values of coord where da is closest to target. If multiple occurences of target occur 
-            along coord, only the maximum value of coord is returned
+            Values of coord where da is closest to target. If multiple occurences of target occur \
+                    along coord, only the maximum value of coord is returned
             
         Examples
         --------
@@ -1455,15 +1494,15 @@ def isosurface(da, coord, target):
         Coordinates:
           * y        (y) int64 0 1 2 3 4
   
-        Limitations
+        Notes
         -----------
-        If multiple occurences of target occur along coord, only the maximum value of coord is
-        returned
+        If multiple occurences of target occur along coord, only the maximum value of coord is\
+                returned
         
         To do
-        -----
-        The current version includes no interpolation between grid spacing. This should be added as
-        an option in the future
+        
+        - The current version includes no interpolation between grid spacing. This should be added as \
+                an option in the future
     """
     
     # Find isosurface -----
@@ -1480,24 +1519,25 @@ def isosurface(da, coord, target):
 def load_mean_climatology(clim, freq, variable=None, time_name=None, **kwargs):
     """ 
         Returns pre-saved climatology at desired frequency.
-        Author: Dougie Squire
-        Date: 04/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 04/03/2018
         
         Parameters
         ----------
         clim : str
-            Name of climatology to load. Currently available options are: "jra_1958-2016", 
-            "cafe_f1_atmos_2003-2017", "cafe_f1_ocean_2003-2017", "cafe_c2_atmos_400-499", 
-            "cafe_c2_atmos_500-549", cafe_c2_ocean_400-499", "cafe_c2_ocean_500-549", 
-            "HadISST_1870-2018", "REMSS_2002-2018"
+            Name of climatology to load. Currently available options are: ``"jra_1958-2016"``, \
+                    ``"cafe_f1_atmos_2003-2017"``, ``"cafe_f1_ocean_2003-2017"``, ``"cafe_c2_atmos_400-499"``, \
+                    ``"cafe_c2_atmos_500-549"``, ``"cafe_c2_ocean_400-499"``, ``"cafe_c2_ocean_500-549"``, \
+                    ``"HadISST_1870-2018"``, ``"REMSS_2002-2018"``
         freq : str
             Desired frequency of climatology (daily or longer) e.g. 'D', 'M'
         variable : str, optional
             Variable to load. If None, all variables are returned
         time_name : str, optional
-            Name of the time dimension. If None, doppyo will attempt to determine time_name 
-            automatically
-        **kwargs : dict
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
+        \**kwargs : dict
             Additional arguments to pass to load command
         
         Returns
@@ -1523,7 +1563,7 @@ def load_mean_climatology(clim, freq, variable=None, time_name=None, **kwargs):
             cell_methods:   time: mean
             time_avg_info:  average_T1,average_T2,average_DT
         
-        Limitations
+        Notes
         -----------
         Can only be run from a system connected to Bowen cloud storage
     """
@@ -1578,8 +1618,9 @@ def load_mean_climatology(clim, freq, variable=None, time_name=None, **kwargs):
 def anomalize(data, clim, time_name=None):
     """ 
         Returns anomalies of data about clim
-        Author: Dougie Squire
-        Date: 04/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 04/03/2018
         
         Parameters
         ----------
@@ -1588,8 +1629,8 @@ def anomalize(data, clim, time_name=None):
         clim : xarray DataArray
             Array to compute anomalies about
         time_name : str, optional
-            Name of the time dimension. If None, doppyo will attempt to determine time_name 
-            automatically
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
             
         Returns
         -------
@@ -1607,7 +1648,7 @@ def anomalize(data, clim, time_name=None):
         Coordinates:
           * time     (time) datetime64[ns] 2000-01-01 2000-01-02 ... 2002-09-26
           
-        Limitations
+        Notes
         -----------
         Cannot anomalize about multiple day/month/year climatologies, e.g. 5-day averages 
     """
@@ -1686,8 +1727,9 @@ def anomalize(data, clim, time_name=None):
 def trunc_time(da, freq, time_name=None):
     """ 
         Truncates values in provided array to provided frequency 
-        Author: Dougie Squire
-        Date: 04/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 04/04/2018
         
         Parameters
         ----------
@@ -1696,8 +1738,8 @@ def trunc_time(da, freq, time_name=None):
         freq : str
             Truncation frequency. Options are 's', 'm', 'h', D', 'M', 'Y'
         time_name : str, optional
-            Name of the time dimension. If None, doppyo will attempt to determine time_name 
-            automatically
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
             
         Returns
         -------
@@ -1729,10 +1771,11 @@ def trunc_time(da, freq, time_name=None):
 # ===================================================================================================
 def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_time', time_name='time'):
     """ 
-        Converts time information from initial date / lead time dimension pair to single datetime 
-        dimension (i.e. timeseries) 
-        Author: Dougie Squire
-        Date: 04/04/2018
+        Converts time information from initial date / lead time dimension pair to single datetime \
+                dimension (i.e. timeseries) 
+        
+        | Author: Dougie Squire
+        | Date: 04/04/2018
         
         Parameters
         ----------
@@ -1783,10 +1826,11 @@ def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_ti
 # ===================================================================================================
 def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_time', time_name='time'):
     """ 
-        Converts time information from single datetime dimension (i.e. timeseries) to initial date / 
-        lead time dimension pair
-        Author: Dougie Squire
-        Date: 04/04/2018
+        Converts time information from single datetime dimension (i.e. timeseries) to initial date /\
+                lead time dimension pair
+        
+        | Author: Dougie Squire
+        | Date: 04/04/2018
         
         Parameters
         ----------
@@ -1816,11 +1860,11 @@ def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_ti
           * lead_time  (lead_time) int64 0 1 2 3 4 5 6 7 8 9
             init_date  datetime64[ns] 2000-01-31
 
-        Limitations
+        Notes
         -----------
-        Only compatible with time coordinates that have frequencies that can be determined by pandas.infer_freq().
-        This means that ambiguous frequencies, such as month-centred monthly frequencies must be preprocessed for
-        compatibility (see doppyo.utils.trunc_freq())
+        Only compatible with time coordinates that have frequencies that can be determined by pandas.infer_freq(). \
+                This means that ambiguous frequencies, such as month-centred monthly frequencies must be preprocessed for\
+                compatibility (see doppyo.utils.trunc_freq())
     """
     
     init_date = da[time_name].values[0]
@@ -1862,10 +1906,11 @@ def datetime_to_leadtime(da, init_date_name='init_date', lead_time_name='lead_ti
 # ===================================================================================================
 def repeat_datapoint(da, coord, coord_val):
     """ 
-        Returns array with data at coord = coord_val repeated across all other elements in coord. 
-        This is useful for generating persistence forecasts
-        Author: Dougie Squire
-        Date: 02/06/2018
+        Returns array with data at coord = coord_val repeated across all other elements in coord. \
+                This is useful for generating persistence forecasts
+        
+        | Author: Dougie Squire
+        | Date: 02/06/2018
         
         Parameters
         ----------
@@ -1903,10 +1948,11 @@ def repeat_datapoint(da, coord, coord_val):
 # ===================================================================================================
 def get_latlon_region(da, box):
     """
-        Returns an array containing those elements of the input array that fall within the provided
-        lat-lon box
-        Author: Dougie Squire
-        Date: 04/04/2018
+        Returns an array containing those elements of the input array that fall within the provided\
+                lat-lon box
+        
+        | Author: Dougie Squire
+        | Date: 04/04/2018
         
         Parameters
         ----------
@@ -1968,6 +2014,9 @@ def latlon_average(da, box):
     '''
         Returns the average of the input array over a provide lat-lon box, 
         
+        | Author: Dougie Squire
+        | Date: 04/04/2018
+       
         Parameters
         ----------
         da : xarray DataArray
@@ -1999,9 +2048,12 @@ def latlon_average(da, box):
 def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date', 
                        lead_time_name='lead_time', time_name='time'):
     """ 
-        Stacks provided timeseries array in an inital date / lead time format. Note this process
-        replicates data and can substantially increase memory usage. Lead time frequency will match
-        frequency of input data. Returns nans if requested times lie outside of the available range
+        Stacks provided timeseries array in an inital date / lead time format. Note this process \
+                replicates data and can substantially increase memory usage. Lead time frequency will match \
+                frequency of input data. Returns nans if requested times lie outside of the available range
+        
+        | Author: Dougie Squire
+        | Date: 14/03/2018
         
         Parameters
         ----------
@@ -2063,8 +2115,9 @@ def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date',
 def concat_times(da, init_date_name='init_date', lead_time_name='lead_time', time_name='time'):
     """
         Unstack and concatenate all init_date/lead_time rows into single time dimension
-        Author: Dougie Squire
-        Date: 22/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 22/04/2018
         
         Parameters
         ----------
@@ -2109,8 +2162,9 @@ def concat_times(da, init_date_name='init_date', lead_time_name='lead_time', tim
 def prune(da, squeeze=False):
     """ 
         Removes all coordinates that are not dimensions
-        Author: Dougie Squire
-        Date: 22/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 22/04/2018
         
         Parameters
         ----------
@@ -2154,8 +2208,9 @@ def prune(da, squeeze=False):
 def get_other_dims(da, dims_exclude):
     """ 
         Returns all dimensions in provided dataset excluding dim_exclude 
-        Author: Dougie Squire
-        Date: 22/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 22/04/2018
         
         Parameters
         ----------
@@ -2200,17 +2255,18 @@ def get_other_dims(da, dims_exclude):
 def cftime_to_datetime64(time, shift_year=0):
     """ 
         Convert cftime object to datetime64 object, allowing for `NOLEAP` calendar configuration
-        Author: Dougie Squire
-        Date: 04/09/2018
+        
+        | Author: Dougie Squire
+        | Date: 04/09/2018
         
         Parameters
         ----------
         time : cftime or array_like of cftime
             Times to be converted to datetime64
         shift_year: values
-            Number of years to shift times by. cftime objects are generated by xarray when times fall
-            outside of the range 1678-2261. Shifting years to within this range enables conversion to
-            datetime64 within an xarray object
+            Number of years to shift times by. cftime objects are generated by xarray when times fall \
+                    outside of the range 1678-2261. Shifting years to within this range enables conversion to \
+                    datetime64 within an xarray object
             
         Returns
         --------
@@ -2229,7 +2285,7 @@ def cftime_to_datetime64(time, shift_year=0):
         Coordinates:
           * time     (time) datetime64[ns] 2000-01-01 2000-02-01 ... 2000-12-01
 
-        Limitations
+        Notes
         -----------
         Times must be sequential and monotonic
     """
@@ -2246,8 +2302,9 @@ def cftime_to_datetime64(time, shift_year=0):
 def get_time_name(da):
     """ 
         Returns name of time dimension in input array
-        Author: Dougie Squire
-        Date: 03/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 03/03/2018
         
         Parameters
         ----------
@@ -2279,8 +2336,9 @@ def get_time_name(da):
 def get_lon_name(da):
     """ 
         Returns name of longitude dimension in input array
-        Author: Dougie Squire
-        Date: 03/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 03/03/2018
         
         Parameters
         ----------
@@ -2316,8 +2374,9 @@ def get_lon_name(da):
 def get_lat_name(da):
     """ 
         Returns name of latitude dimension in input array
-        Author: Dougie Squire
-        Date: 03/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 03/03/2018
         
         Parameters
         ----------
@@ -2353,8 +2412,9 @@ def get_lat_name(da):
 def get_depth_name(da):
     """ 
         Returns name of depth dimension in input array
-        Author: Thomas Moore
-        Date: 31/10/2018
+        
+        | Author: Thomas Moore
+        | Date: 31/10/2018
         
         Parameters
         ----------
@@ -2389,8 +2449,9 @@ def get_depth_name(da):
 def get_level_name(da):
     """ 
         Returns name of atmospheric level dimension in input array
-        Author: Dougie Squire
-        Date: 03/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 03/03/2018
         
         Parameters
         ----------
@@ -2422,8 +2483,9 @@ def get_level_name(da):
 def get_plevel_name(da):
     """ 
         Returns name of pressure level dimension in input array
-        Author: Dougie Squire
-        Date: 03/03/2018
+        
+        | Author: Dougie Squire
+        | Date: 03/03/2018
         
         Parameters
         ----------
@@ -2457,8 +2519,9 @@ def get_plevel_name(da):
 def _is_datetime(object):
     """ 
         Return True or False depending on whether input is datetime64 or not 
-        Author: Dougie Squire
-        Date: 19/15/2018
+        
+        | Author: Dougie Squire
+        | Date: 19/15/2018
         
         Parameters
         ----------
@@ -2484,8 +2547,9 @@ def _is_datetime(object):
 def _equal_coords(da_1, da_2):
     """ 
         Returns True if coordinates of da_1 and da_2 are equal (or flipped) 
-        Author: Dougie Squire
-        Date: 19/15/2018
+        
+        | Author: Dougie Squire
+        | Date: 19/15/2018
         
         Parameters
         ----------

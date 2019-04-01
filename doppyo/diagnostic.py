@@ -1,8 +1,10 @@
 """
+    Overview
+    ========
     doppyo functions for computing various ocean, atmosphere, & climate diagnostics
-    Authors: Dougie Squire & Thomas Moore
-    Date created: 04/04/2018
-    Python Version: 3.6
+
+    API
+    ===
 """
 
 __all__ = ['isotherm_depth', 'velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 
@@ -30,8 +32,9 @@ def isotherm_depth(temp, target_temp=20, depth_name=None):
     """ 
         Returns the depth of an isotherm given a target temperature. If no temperatures in the column
         exceed the target temperature, a nan is returned at that point
-        Author: Thomas Moore
-        Date: 02/10/2018
+        
+        | Author: Thomas Moore
+        | Date: 02/10/2018
         
         Parameters
         ----------
@@ -40,8 +43,8 @@ def isotherm_depth(temp, target_temp=20, depth_name=None):
         target_temp : value, optional
             Value of temperature used to compute isotherm depth. Default value is 20 degC
         depth_name : str, optional
-            Name of depth coordinate. If None, doppyo will attempt to determine depth_name
-            automatically
+            Name of depth coordinate. If None, doppyo will attempt to determine depth_name \
+                    automatically
             
         Returns
         -------
@@ -63,14 +66,14 @@ def isotherm_depth(temp, target_temp=20, depth_name=None):
           * lat      (lat) int64 -90 -45 0 45
           * lon      (lon) int64 0 90 180 270
         
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        If multiple occurences of target occur along the depth coordinate, only the maximum value of 
-        coord is returned
-        The current version includes no interpolation between grid spacing. This should be added as
-        an option in the future
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | If multiple occurences of target occur along the depth coordinate, only the maximum value of \
+                coord is returned
+        | The current version includes no interpolation between grid spacing. This should be added as \
+                an option in the future
     """
     
     if depth_name is None:
@@ -85,23 +88,24 @@ def isotherm_depth(temp, target_temp=20, depth_name=None):
 def velocity_potential(u, v, lat_name=None, lon_name=None):
     """ 
         Returns the velocity potential given fields of u and v
-        Author: Dougie Squire
-        Date: 11/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 11/07/2018
         
         Parameters
         ----------
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
-            (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude \
+                    (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude and 
-            longitude (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude and \
+                    longitude (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
             
         Returns
         -------
@@ -130,18 +134,18 @@ def velocity_potential(u, v, lat_name=None, lon_name=None):
             standard_name:  atmosphere_horizontal_velocity_potential
             long_name:      velocity potential
         
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
-        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
-        is regular or Gaussian.
-        These calculations are not yet dask-compatible.
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | This function utilises the windspharm package, which is a wrapper on pyspharm, which is a \
+                wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
+                is regular or Gaussian.
+        | These calculations are not yet dask-compatible.
         
         To Do
-        -----
-        Make dask-compatible by either developing the windspharm package, or using a kernel approach
+
+        - Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
     
     if lat_name is None:
@@ -163,23 +167,24 @@ def velocity_potential(u, v, lat_name=None, lon_name=None):
 def stream_function(u, v, lat_name=None, lon_name=None):
     """ 
         Returns the stream function given fields of u and v
-        Author: Dougie Squire
-        Date: 11/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 11/07/2018
         
         Parameters
         ----------
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
-            (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude \
+                    (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude and 
-            longitude (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude and \
+                    longitude (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
             
         Returns
         -------
@@ -208,18 +213,18 @@ def stream_function(u, v, lat_name=None, lon_name=None):
             standard_name:  atmosphere_horizontal_streamfunction
             long_name:      streamfunction
         
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
-        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
-        is regular or Gaussian.
-        These calculations are not yet dask-compatible.
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | This function utilises the windspharm package, which is a wrapper on pyspharm, which is a \
+                wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
+                is regular or Gaussian.
+        | These calculations are not yet dask-compatible.
         
         To Do
-        -----
-        Make dask-compatible by either developing the windspharm package, or using a kernel approach
+        
+        - Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
 
     if lat_name is None:
@@ -241,23 +246,24 @@ def stream_function(u, v, lat_name=None, lon_name=None):
 def Rossby_wave_source(u, v, lat_name=None, lon_name=None):
     """ 
         Returns the Rossby wave source given fields of u and v
-        Author: Dougie Squire
-        Date: 11/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 11/07/2018
         
         Parameters
         ----------
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
-            (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude \
+                    (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude and 
-            longitude (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude and \
+                    longitude (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
             
         Returns
         -------
@@ -285,18 +291,18 @@ def Rossby_wave_source(u, v, lat_name=None, lon_name=None):
             units:      1e-11/s^2
             long_name:  Rossby wave source
         
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
-        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
-        is regular or Gaussian.
-        These calculations are not yet dask-compatible.
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | This function utilises the windspharm package, which is a wrapper on pyspharm, which is a \
+                wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
+                is regular or Gaussian.
+        | These calculations are not yet dask-compatible.
         
         To Do
-        -----
-        Make dask-compatible by either developing the windspharm package, or using a kernel approach
+        
+        - Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
 
     if lat_name is None:
@@ -328,30 +334,31 @@ def Rossby_wave_source(u, v, lat_name=None, lon_name=None):
 def divergent(u, v, lat_name=None, lon_name=None):
     """ 
         Returns the irrotational (divergent) component of u and v
-        Author: Dougie Squire
-        Date: 11/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 11/07/2018
         
         Parameters
         ----------
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
-            (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude \
+                    (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude and 
-            longitude (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude and \
+                    longitude (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
             
         Returns
         -------
         divergent : xarray Dataset
-            Dataset containing the following variables:
-            u_chi; array containing the irrotational component of u
-            v_chi; array containing the irrotational component of v
+            | Dataset containing the following variables:
+            | u_chi; array containing the irrotational component of u
+            | v_chi; array containing the irrotational component of v
             
         Examples
         --------
@@ -369,18 +376,18 @@ def divergent(u, v, lat_name=None, lon_name=None):
             u_chi     (lat, lon) float32 0.5355302 -0.45865965 ... -0.7270669 -0.64930713
             v_chi     (lat, lon) float32 -0.45865965 -0.5355302 ... 0.64930713 -0.7270669
         
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
-        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
-        is regular or Gaussian.
-        These calculations are not yet dask-compatible.
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | This function utilises the windspharm package, which is a wrapper on pyspharm, which is a \
+                wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
+                is regular or Gaussian.
+        | These calculations are not yet dask-compatible.
         
         To Do
-        -----
-        Make dask-compatible by either developing the windspharm package, or using a kernel approach
+        
+        - Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
 
     if lat_name is None:
@@ -407,39 +414,40 @@ def divergent(u, v, lat_name=None, lon_name=None):
 # ===================================================================================================
 def wave_activity_flux(psi_anom, u, v, plevel=None, lat_name=None, lon_name=None):
     """ 
-        Returns the stationary component of the wave activity flux, following Takaya and Nakamura, 
-        (2001) using zonal and meridional velocity fields on one or more isobaric surface(s)
-        Author: Dougie Squire
-        Date: 11/07/2018
+        Returns the stationary component of the wave activity flux, following Takaya and Nakamura, \
+                (2001) using zonal and meridional velocity fields on one or more isobaric surface(s)
+        
+        | Author: Dougie Squire
+        | Date: 11/07/2018
         
         Parameters
         ----------
         psi_anom : xarray DataArray
-            Array containing fields of stream function anomalies with at least coordinates latitude 
-            and longitude (following standard naming - see Limitations)
+            Array containing fields of stream function anomalies with at least coordinates latitude \
+                    and longitude (following standard naming - see Notes)
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
-            (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude \
+                    (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude and 
-            longitude (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude and \
+                    longitude (following standard naming - see Notes)
         plevel : value, optional
-            Value of the pressure level corresponding to the provided arrays. If None, pressure
-            level(s) are extracted from the psi_anom/u/v coordinate. Pressure levels must be provided
-            in units of hPa
+            Value of the pressure level corresponding to the provided arrays. If None, pressure \
+                    level(s) are extracted from the psi_anom/u/v coordinate. Pressure levels must be provided \
+                    in units of hPa
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
             
         Returns
         -------
         wave_activity_flux : xarray Dataset
-            Dataset containing the following variables:
-            u_waf; array containing the zonal component of the wave activity flux
-            v_waf; array containing the meridonal component of the wave activity flux
+            | Dataset containing the following variables:
+            | u_waf; array containing the zonal component of the wave activity flux
+            | v_waf; array containing the meridonal component of the wave activity flux
             
         Examples
         --------
@@ -468,19 +476,19 @@ def wave_activity_flux(psi_anom, u, v, plevel=None, lat_name=None, lon_name=None
             u_waf     (level, lat, lon, time) float64 0.003852 0.0001439 ... -0.06913
             v_waf     (level, lat, lon, time) float64 0.01495 3.032e-05 ... 0.02944
         
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        Pressure levels must be provided in units of hPa
-        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
-        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
-        is regular or Gaussian.
-        These calculations are not yet dask-compatible
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | Pressure levels must be provided in units of hPa
+        | This function utilises the windspharm package, which is a wrapper on pyspharm, which is a \
+                wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
+                is regular or Gaussian.
+        | These calculations are not yet dask-compatible
         
         To Do
-        -----
-        Make dask-compatible by either developing the windspharm package, or using a kernel approach
+        
+        - Make dask-compatible by either developing the windspharm package, or using a kernel approach
     """
     
     if lat_name is None:
@@ -534,17 +542,18 @@ def wave_activity_flux(psi_anom, u, v, plevel=None, lat_name=None, lon_name=None
 def Brunt_Vaisala(temp, plevel_name=None):
     """
         Returns the Brunt Väisälä frequency
-        Author: Dougie Squire
-        Date: 15/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 15/07/2018
         
         Parameters
         ----------
         temp : xarray DataArray
-            Array containing fields of temperature with at least coordinates latitude, longitude and
-            pressure level (following standard naming - see Limitations)
+            Array containing fields of temperature with at least coordinates latitude, longitude and \
+                    pressure level (following standard naming - see Notes)
         plevel_name : str, optional
-            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
-            automatically
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name \
+                    automatically
             
         Returns
         -------
@@ -562,7 +571,7 @@ def Brunt_Vaisala(temp, plevel_name=None):
                 [ 3.260879e-01,  1.933501e-01, -9.033669e+00, -1.468327e+00],
                 [-1.957892e+00,  2.408426e-01,  5.597183e-01, -2.548981e+01],
                 [-3.234550e-01, -1.907664e+00,  2.506510e-01, -7.385499e-01]],
-
+        ...
                [[-1.136451e-01, -1.796130e+00, -1.095550e-02,  5.748574e+00],
                 [ 4.407484e+02,  4.736099e-01, -5.086917e-01, -6.610682e-01],
                 [-2.458302e+00,  6.864762e+00,  2.633289e+00, -4.246873e-01],
@@ -575,15 +584,15 @@ def Brunt_Vaisala(temp, plevel_name=None):
             long_name:  Brunt-Vaisala frequency squared
             units:      s^-2
 
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        Pressure levels must be provided in units of hPa
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | Pressure levels must be provided in units of hPa
         
         To do
-        -----
-        Add switch for atmosphere/ocean input
+        
+        - Add switch for atmosphere/ocean input
     """
 
     R = utils.constants().R_d
@@ -607,26 +616,27 @@ def Brunt_Vaisala(temp, plevel_name=None):
 def Rossby_wave_number(u, v, u_clim, lat_name=None, lon_name=None):
     """ 
         Returns the square of the stationary Rossby wave number, Ks**2
-        Author: Dougie Squire
-        Date: 11/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 11/07/2018
         
         Parameters
         ----------
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude and longitude 
-            (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude and longitude \
+                    (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude and 
-            longitude (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude and \
+                    longitude (following standard naming - see Notes)
         u_clim : xarray DataArray
-            Array containing climatological fields of zonal velocity with at least coordinates latitude 
-            and longitude (following standard naming - see Limitations)    
+            Array containing climatological fields of zonal velocity with at least coordinates latitude \
+                    and longitude (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
             
         Returns
         -------
@@ -649,19 +659,17 @@ def Rossby_wave_number(u, v, u_clim, lat_name=None, lon_name=None):
                 [-3.756420e-01,  1.210226e+00, ..., -2.055076e+00, -2.291500e+00],
                 [ 8.786361e-01,  4.181778e-01, ..., -2.071749e+00,  4.018699e-01],
                 [ 8.218020e-01,  5.197270e+00, ...,  5.181735e+00,  7.112056e-01]],
-
+        ...
                [[-5.323813e+02, -2.894449e+02, ..., -5.063012e+03, -3.921559e+02],
                 [ 3.167388e+02, -5.406136e+02, ..., -1.987485e+03, -2.692395e+02],
                 [ 2.916992e+03,  2.318578e+02, ...,  8.611478e+02,  8.559919e+02],
                 [-4.380459e+02, -5.035198e+02, ..., -1.844072e+03, -2.856807e+02]],
-
-               ...,
-
+        ...,
                [[ 3.832781e+02, -1.272144e+03, ...,  3.900539e+02, -5.402686e+02],
                 [-2.494814e+02, -2.041985e+02, ...,  3.426493e+02, -5.557717e+02],
                 [-6.290198e+03,  1.606871e+03, ...,  2.894713e+03,  3.284330e+02],
                 [-3.325505e+02, -2.406172e+02, ..., -3.270787e+03, -1.040641e+03]],
-
+        ...
                [[ 1.401437e+00,  6.053096e-01, ...,  1.725558e-01, -7.287578e+01],
                 [-8.905873e-01,  1.469694e-01, ...,  1.308367e+00, -7.136195e-01],
                 [ 4.318194e+01, -1.850361e-01, ..., -2.447798e-01, -4.454747e-01],
@@ -674,24 +682,21 @@ def Rossby_wave_number(u, v, u_clim, lat_name=None, lon_name=None):
             units:      real number
             long_name:  Square of Rossby stationary wavenumber
 
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        This function utilises the windspharm package, which is a wrapper on pyspharm, which is a
-        wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid 
-        is regular or Gaussian.
-        These calculations are not yet dask-compatible.
+        | The input u_clim must have the same dimensions as u and v. One can project a mean climatology, \
+                A_clim, over the time dimension in A using ``doppyo.utils.anomalize(0*A, -A_clim)``
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | This function utilises the windspharm package, which is a wrapper on pyspharm, which is a \
+                wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
+                is regular or Gaussian.
+        | These calculations are not yet dask-compatible.
         
         To Do
-        -----
-        Make dask-compatible by either developing the windspharm package, or using a kernel approach
         
-        Notes
-        -----
-        The input u_clim must have the same dimensions as u and v. One can project a mean climatology, 
-        A_clim, over the time dimension in A using
-        >>> doppyo.utils.anomalize(0*A, -A_clim)
+        - Make dask-compatible by either developing the windspharm package, or using a kernel approach
+        
     """
 
     if lat_name is None:
@@ -721,29 +726,30 @@ def Rossby_wave_number(u, v, u_clim, lat_name=None, lon_name=None):
 def Eady_growth_rate(u, v, gh, nsq, lat_name=None, lon_name=None, level_name=None):
     """ 
         Returns the square of the Eady growth rate
-        Author: Dougie Squire
-        Date: 15/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 15/07/2018
         
         Parameters
         ----------
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude, longitude and
-            level (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude, longitude and \
+                    level (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         gh : xarray DataArray
-            Array containing fields of geopotential height with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of geopotential height with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         nsq : xarray DataArray
-            Array containing fields of Brunt Väisälä frequency with at least coordinates latitude, 
-            longitude and level (following standard naming - see Limitations)
+            Array containing fields of Brunt Väisälä frequency with at least coordinates latitude, \
+                    longitude and level (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
         level_name : str, optional
             Name of level coordinate. If None, doppyo will attempt to determine level_name
             automatically
@@ -778,7 +784,7 @@ def Eady_growth_rate(u, v, gh, nsq, lat_name=None, lon_name=None, level_name=Non
                   5.627093e-11,  7.463454e-10],
                 [ 4.326971e-09, -2.528522e-09, -1.243954e-13, -3.138463e-11,
                  -6.801250e-09, -6.286382e-10]],
-
+        ...
                [[-8.580527e-10,  7.040065e-12, -3.760004e-13, -1.213131e-12,
                   2.437557e-11, -6.522981e-11],
                 [ 6.119671e-09, -1.644123e-09, -5.124997e-11,  1.725101e-08,
@@ -795,10 +801,10 @@ def Eady_growth_rate(u, v, gh, nsq, lat_name=None, lon_name=None, level_name=Non
             units:      s^-2
             long_name:  Square of Eady growth rate
     
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
+        All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
     """
     
     degtorad = utils.constants().pi / 180
@@ -822,36 +828,37 @@ def Eady_growth_rate(u, v, gh, nsq, lat_name=None, lon_name=None, level_name=Non
 def thermal_wind(gh, plevel_lower, plevel_upper, lat_name=None, lon_name=None, plevel_name=None):
     """ 
         Returns the thermal wind, (u_tw, v_tw) = 1/f x k x grad(thickness), where f = 2*Omega*sin(lat)
-        Author: Dougie Squire
-        Date: 15/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 15/07/2018
         
         Parameters
         ----------
         gh : xarray DataArray
-            Array containing fields of geopotential height with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of geopotential height with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         plevel_lower : value
-            Value of lower pressure level used to compute termal wind. Must exist in level coordinate of
-            gh
+            Value of lower pressure level used to compute termal wind. Must exist in level coordinate of \
+                    gh
         plevel_upper : value
-            Value of upper pressure level used to compute termal wind. Must exist in level coordinate of
-            gh
+            Value of upper pressure level used to compute termal wind. Must exist in level coordinate of \
+                    gh
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
         plevel_name : str, optional
-            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
-            automatically
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name \
+                    automatically
             
         Returns
         -------
         thermal_wind : xarray Dataset
-            Dataset containing the following variables:
-            u_tw; array containing the zonal component of the thermal wind
-            v_tw; array containing the meridonal component of the thermal wind
+            | Dataset containing the following variables:
+            | u_tw; array containing the zonal component of the thermal wind
+            | v_tw; array containing the meridonal component of the thermal wind
         
         Examples
         --------
@@ -869,11 +876,11 @@ def thermal_wind(gh, plevel_lower, plevel_upper, lat_name=None, lon_name=None, p
             u_tw     (lon, lat) float64 0.003727 0.0006837 inf ... inf -0.0001238
             v_tw     (lat, lon) float64 4.515e+12 -1.443e+12 ... -0.000569 -0.0002777
 
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        Pressure levels must be provided in units of hPa
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | Pressure levels must be provided in units of hPa
     """
     
     degtorad = utils.constants().pi / 180
@@ -914,38 +921,38 @@ def thermal_wind(gh, plevel_lower, plevel_upper, lat_name=None, lon_name=None, p
 # ===================================================================================================
 def eofs(da, sample_dim='time', weight=None, n_modes=20):
     """
-        Returns the empirical orthogonal functions (EOFs), and associated principle component 
-        timeseries (PCs), and explained variances of provided array. Follows notation used in 
-        "Bjornsson H. and Venegas S. A. 1997 A Manual for EOF and SVD analyses of Climatic Data", 
-        whereby,
-        (phi, sqrt_lambdas, EOFs) = svd(data) and PCs = phi * sqrt_lambdas
-        Author: Dougie Squire
-        Date: 19/18/2018
+        Returns the empirical orthogonal functions (EOFs), and associated principle component \
+                timeseries (PCs), and explained variances of provided array. Follows notation used in \
+                "Bjornsson H. and Venegas S. A. 1997 A Manual for EOF and SVD analyses of Climatic Data", \
+                whereby, (phi, sqrt_lambdas, EOFs) = svd(data) and PCs = phi * sqrt_lambdas
+        
+        | Author: Dougie Squire
+        | Date: 19/18/2018
         
         Parameters
         ----------
         da : xarray DataArray or sequence of xarray DataArrays
-            Array to use to compute EOFs. When input array is a list of xarray objects, returns the 
-            joint EOFs associated with each object. In this case, all xarray objects in da must have 
-            sample_dim dimensions of equal length.
+            Array to use to compute EOFs. When input array is a list of xarray objects, returns the \
+                    joint EOFs associated with each object. In this case, all xarray objects in da must have \
+                    sample_dim dimensions of equal length.
         sample_dim : str, optional
             EOFs sample dimension
         weight : xarray DataArray or sequence of xarray DataArrays, optional
-            Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used. If weight 
-            is specified, it must be the same length as da with each element broadcastable onto each 
-            element of da
+            Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used. If weight \
+                    is specified, it must be the same length as da with each element broadcastable onto each \
+                    element of da
         n_modes : values, optional
             Number of EOF modes to return
             
         Returns
         -------
         eofs : xarray Dataset
-            Dataset containing the following variables:
-            EOFs; array containing the empirical orthogonal functions
-            PCs; array containing the associated principle component timeseries
-            lambdas; array containing the eigenvalues of the covariance of the input data
-            explained_var; array containing the fraction of the total variance explained by each EOF 
-            mode
+            | Dataset containing the following variables:
+            | EOFs; array containing the empirical orthogonal functions
+            | PCs; array containing the associated principle component timeseries
+            | lambdas; array containing the eigenvalues of the covariance of the input data
+            | explained_var; array containing the fraction of the total variance explained by each EOF \
+                    mode
             
         Examples
         --------
@@ -966,11 +973,11 @@ def eofs(da, sample_dim='time', weight=None, n_modes=20):
             lambdas        (mode) float64 87.76 80.37 68.5 58.14 ... 8.269 6.279 4.74
             explained_var  (mode) float64 0.1348 0.1234 0.1052 ... 0.009644 0.00728
             
-        Limitations
+        Notes
         -----------
-        This function is a wrapper on scipy.sparse.linalg.svds which is a naive implementation 
-        using ARPACK. Thus, the approach implemented here is non-lazy and could incur large 
-        increases in memory usage.
+        This function is a wrapper on scipy.sparse.linalg.svds which is a naive implementation \
+                using ARPACK. Thus, the approach implemented here is non-lazy and could incur large \
+                increases in memory usage.
     """
     
     if isinstance(da, xr.core.dataarray.DataArray):
@@ -1037,23 +1044,24 @@ def eofs(da, sample_dim='time', weight=None, n_modes=20):
 def mean_merid_mass_streamfunction(v, lat_name=None, lon_name=None, plevel_name=None):
     """
         Returns the mean meridional mass stream function averaged over all provided longitudes
-        Author: Dougie Squire
-        Date: 15/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 15/07/2018
         
         Parameters
         ----------
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
         plevel_name : str, optional
-            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
-            automatically
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name\
+                    automatically
             
         Returns
         -------
@@ -1075,11 +1083,11 @@ def mean_merid_mass_streamfunction(v, lat_name=None, lon_name=None, plevel_name=
           * lat      (lat) int64 -90 -45 0 45
           * level    (level) int64 400 600
 
-        Limitations
+        Notes
         -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        Pressure levels must be provided in units of hPa
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | Pressure levels must be provided in units of hPa
     """
     
     degtorad = utils.constants().pi / 180
@@ -1103,91 +1111,91 @@ def mean_merid_mass_streamfunction(v, lat_name=None, lon_name=None, plevel_name=
 def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral=False, n_wavenumbers=20,
                        integrate=True, lat_name=None, lon_name=None, plevel_name=None):
     """
-        Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in `Marques 
-        et al. 2011 Global diagnostic energetics of five state-of-the-art climate models. Climate 
-        Dynamics`. Note that this decomposition is in the space domain. A space-time decomposition 
-        can also be carried out (though not in Fourier space, but this is not implemented here (see 
-        `Oort. 1964 On Estimates of the atmospheric energy cycle. Monthly Weather Review`).
-        Author: Dougie Squire
-        Date: 15/07/2018
+        Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in `Marques \
+                et al. 2011 Global diagnostic energetics of five state-of-the-art climate models. Climate \
+                Dynamics`. Note that this decomposition is in the space domain. A space-time decomposition \
+                can also be carried out (though not in Fourier space, but this is not implemented here (see \
+                `Oort. 1964 On Estimates of the atmospheric energy cycle. Monthly Weather Review`).
+        
+        | Author: Dougie Squire
+        | Date: 15/07/2018
         
         Parameters
         ----------
         temp : xarray DataArray
-            Array containing fields of temperature with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of temperature with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         u : xarray DataArray
-            Array containing fields of zonal velocity with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of zonal velocity with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         v : xarray DataArray
-            Array containing fields of meridional velocity with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of meridional velocity with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         omega : xarray DataArray
-            Array containing fields of vertical velocity (pressure coordinates) with at least coordinates 
-            latitude, longitude and level (following standard naming - see Limitations)
+            Array containing fields of vertical velocity (pressure coordinates) with at least coordinates \
+                    latitude, longitude and level (following standard naming - see Notes)
         gh : xarray DataArray
-            Array containing fields of geopotential height with at least coordinates latitude, longitude 
-            and level (following standard naming - see Limitations)
+            Array containing fields of geopotential height with at least coordinates latitude, longitude \
+                    and level (following standard naming - see Notes)
         terms : str or sequence of str
-            List of terms to compute. If None, returns all terms. Available options are:
-            Pz; total available potential energy in the zonally averaged temperature distribution
-            Kz; total kinetic energy in zonally averaged motion
-            Pe; total eddy available potential energy [= sum_n Pn (n > 0 only) for spectral=True] (Note that 
-            for spectral=True, an additional term, Sn, quantifying the rate of transfer of available potential 
-            energy to eddies of wavenumber n from eddies of all other wavenumbers is also returned)
-            Ke; total eddy kinetic energy [= sum_n Kn (n > 0 only) for spectral=True] (Note that for 
-            spectral=True, an additional term, Ln, quantifying the rate of transfer of kinetic energy to eddies 
-            of wavenumber n from eddies of all other wavenumbers is also returned)
-            Cz; rate of conversion of zonal available potential energy to zonal kinetic energy
-            Ca; rate of transfer of total available potential energy in the zonally averaged temperature 
-            distribution (Pz) to total eddy available potential energy (Pe) [= sum_n Rn (n > 0 only) for 
-            spectral=True]
-            Ce; rate of transfer of total eddy available potential energy (Pe) to total eddy kinetic energy 
-            (Ke) [= sum_n Cn (n > 0 only) for spectral=True]
-            Ck; rate of transfer of total eddy kinetic energy (Ke) to total kinetic energy in zonally 
-            averaged motion (Kz) [= sum_n Mn (n > 0 only) for spectral=True]
-            Gz; rate of generation of zonal available potential energy due to the zonally averaged heating (Pz).
-            Note that this term is computed as a residual (Cz + Ca) and cannot be returned in spectral space. 
-            If Gz is requested with spectral=True, Gz is returned in real-space only
-            Ge; rate of generation of eddy available potential energy (Pe). Note that this term is computed as 
-            a residual (Ce - Ca) and cannot be returned in spectral space. If Ge is requested with spectral=True, 
-            Ge is returned in real-space only
-            Dz; rate of viscous dissipation of zonal kinetic energy (Kz). Note that this term is computed as a 
-            residual (Cz - Ck) and cannot be returned in spectral space. If Dz is requested with spectral=True, Dz 
-            is returned in real-space only
-            De; rate of dissipation of eddy kinetic energy (Ke). Note that this term is computed as a residual 
-            (Ce - Ck) and cannot be returned in spectral space. If De is requested with spectral=True, De is 
-            returned in real-space only
+            | List of terms to compute. If None, returns all terms. Available options are:
+            | **Pz**; total available potential energy in the zonally averaged temperature distribution
+            | **Kz**; total kinetic energy in zonally averaged motion
+            | **Pe**; total eddy available potential energy [= sum_n Pn (n > 0 only) for spectral=True] (Note that \
+                    for spectral=True, an additional term, Sn, quantifying the rate of transfer of available potential \
+                    energy to eddies of wavenumber n from eddies of all other wavenumbers is also returned)
+            | **Ke**; total eddy kinetic energy [= sum_n Kn (n > 0 only) for spectral=True] (Note that for \
+                    spectral=True, an additional term, Ln, quantifying the rate of transfer of kinetic energy to eddies \
+                    of wavenumber n from eddies of all other wavenumbers is also returned)
+            | **Cz**; rate of conversion of zonal available potential energy to zonal kinetic energy
+            | **Ca**; rate of transfer of total available potential energy in the zonally averaged temperature \
+                    distribution (Pz) to total eddy available potential energy (Pe) [= sum_n Rn (n > 0 only) for \
+                    spectral=True]
+            | **Ce**; rate of transfer of total eddy available potential energy (Pe) to total eddy kinetic energy \
+                    (Ke) [= sum_n Cn (n > 0 only) for spectral=True]
+            | **Ck**; rate of transfer of total eddy kinetic energy (Ke) to total kinetic energy in zonally \
+                    averaged motion (Kz) [= sum_n Mn (n > 0 only) for spectral=True]
+            | **Gz**; rate of generation of zonal available potential energy due to the zonally averaged heating (Pz). \
+                    Note that this term is computed as a residual (Cz + Ca) and cannot be returned in spectral space. \
+                    If Gz is requested with spectral=True, Gz is returned in real-space only
+            | **Ge**; rate of generation of eddy available potential energy (Pe). Note that this term is computed as \
+                    a residual (Ce - Ca) and cannot be returned in spectral space. If Ge is requested with spectral=True, \
+                    Ge is returned in real-space only
+            | **Dz**; rate of viscous dissipation of zonal kinetic energy (Kz). Note that this term is computed as a \
+                    residual (Cz - Ck) and cannot be returned in spectral space. If Dz is requested with spectral=True, Dz \
+                    is returned in real-space only
+            | **De**; rate of dissipation of eddy kinetic energy (Ke). Note that this term is computed as a residual \
+                    (Ce - Ck) and cannot be returned in spectral space. If De is requested with spectral=True, De is \
+                    returned in real-space only
         vgradz : bool, optional
-            If True, uses `v-grad-z` approach for computing terms relating to conversion
-            of potential energy to kinetic energy. Otherwise, defaults to using the 
-            `omaga-alpha` approach (see reference above for details)
+            If True, uses `v-grad-z` approach for computing terms relating to conversion of potential energy to \
+                    kinetic energy. Otherwise, defaults to using the `omega-alpha` approach (see reference above for details)
         spectral : bool, optional
-            If True, computes all terms as a function of wavenumber on longitudinal bands. To use this 
-            option, longitudes must be regularly spaced. Note that Ge and De are computed as residuals and
-            cannot be computed in spectral space
+            If True, computes all terms as a function of wavenumber on longitudinal bands. To use this \
+                    option, longitudes must be regularly spaced. Note that Ge and De are computed as residuals and \
+                    cannot be computed in spectral space
         n_wavenumbers : int, optional
-            Number of wavenumbers to retain either side of wavenumber=0. Obviously only does anything if 
-            spectral=True
+            Number of wavenumbers to retain either side of wavenumber=0. Obviously only does anything if \
+                    spectral=True
         integrate : bool, optional
-            If True, computes and returns the integral of each term over the mass of the atmosphere. Otherwise, 
-            only the integrands are returned
+            If True, computes and returns the integral of each term over the mass of the atmosphere. Otherwise, \
+                    only the integrands are returned
         lat_name : str, optional
-            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name 
-            automatically
+            Name of latitude coordinate. If None, doppyo will attempt to determine lat_name \
+                    automatically
         lon_name : str, optional
-            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name 
-            automatically
+            Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
+                    automatically
         plevel_name : str, optional
-            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name
-            automatically
+            Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name\
+                    automatically
 
         Returns
         -------
         atmos_energy_cycle : xarray Dataset
-            Dataset containing the requested variables plus gamma, the stability parameter. If integrate=True, 
-            both the integrand (<term>_int) and the integral over the mass of the atmosphere (<term>) are 
-            returned for each requested term. Otherwise, only the integrands are returned.
+            Dataset containing the requested variables plus gamma, the stability parameter. If integrate=True, \
+                    both the integrand (<term>_int) and the integral over the mass of the atmosphere (<term>) are \
+                    returned for each requested term. Otherwise, only the integrands are returned.
         
         Examples
         --------
@@ -1250,39 +1258,36 @@ def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral
             De_int   (level, lat, time) float64 7.444e+07 -6.406e+07 ... -3.849e-05
             De       (time) float64 1.009e+07 6.951e+06 1.85e+07 1.491e+07 1.306e+07
             
-        Limitations
-        -----------
-        All input array coordinates must follow standard naming (see doppyo.utils.get_lat_name(), 
-        doppyo.utils.get_lon_name(), etc)
-        Pressure levels must be provided in units of hPa
-        The terms Sn and Ln, which are computed when Pe and Ke are requested with spectral=True, rely on 
-        "triple terms" that are very intensive and can take a significant amount of time and memory to compute 
-        (see _triple_terms() below). Often (i.e. for arrays of sufficient size to be of interest) requesting
-        these terms yeilds a MemoryError--if working in memory--or a KilledWorkerError--if working out of
-        memory
+        Notes
+        ===========
+        | The following notation is used below (stackable, e.g. \*_ZT indicates the time average of the zonal average):
+        | \*_A -> area average over an isobaric surface
+        | \*_a -> departure from area average
+        | \*_Z -> zonal average
+        | \*_z -> departure from zonal average
+        | \*_T -> time average
+        | \*_t -> departure from time average
+        | Additionally, capital variables indicate Fourier transforms:
+        | F(u) = U
+        | F(v) = V
+        | F(omega) = O
+        | F(gh) = A
+        | F(temp) = B
+        
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc).
+        | Pressure levels must be provided in units of hPa
+        | The terms Sn and Ln, which are computed when Pe and Ke are requested with spectral=True, \
+                rely on "triple terms" that are very intensive and can take a significant amount of time \
+                and memory to compute (see _triple_terms() below). Often (i.e. for arrays of sufficient \
+                size to be of interest) requesting these terms yeilds a MemoryError--if working in memory\
+                --or a KilledWorkerError--if working out of memory
         
         To do
-        -----
-        Arrays that are sufficiently large to be interesting currently max out the available memory when
-        Sn or Ln are requested. I need to implement a less hungry method for computing the "triple terms" 
-        (see _triple_terms() below)
         
-        Notes
-        -----
-        The following notation is used below (stackable, e.g. *_ZT indicates the time average of the zonal 
-        average):
-        *_A -> area average over an isobaric surface
-        *_a -> departure from area average
-        *_Z -> zonal average
-        *_z -> departure from zonal average
-        *_T -> time average
-        *_t -> departure from time average
-        Additionally, capital variables indicate Fourier transforms:
-        F(u) = U
-        F(v) = V
-        F(omega) = O
-        F(gh) = A
-        F(temp) = B
+        - Arrays that are sufficiently large to be interesting currently max out the available memory when \
+                Sn or Ln are requested. I need to implement a less hungry method for computing the "triple terms" \
+                (see _triple_terms() below)
     """
     
     def _flip_n(da):
@@ -1779,20 +1784,21 @@ def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral
 # ===================================================================================================
 def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
     """
-        Compute the cross/power spectral density along a dimension using welch's method. Note that
-        the spectral density is always computed relative to a "frequency" f = 1/dx (see Notes for 
-        details)
-        Author: Dougie Squire
-        Date: 20/07/2018
+        Compute the cross/power spectral density along a dimension using welch's method. Note that \
+                the spectral density is always computed relative to a "frequency" f = 1/dx (see Notes for \
+                details)
+        
+        | Author: Dougie Squire
+        | Date: 20/07/2018
         
         Parameters
         ----------
         da1 : xarray DataArray
-            First array of data to use in spectral density calculation. For power spectral density, 
-            da1 = da2
+            First array of data to use in spectral density calculation. For power spectral density, \
+                    da1 = da2
         da2 : xarray DataArray
-            Second array of data to use in spectral density calculation. For power spectral density, 
-            da1 = da2
+            Second array of data to use in spectral density calculation. For power spectral density, \
+                    da1 = da2
         dim : str
             Dimension to compute spectral density along
         nwindow : value
@@ -1800,15 +1806,17 @@ def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
         overlap : value, optional
             Percentage overlap of the signal segments for pwelch calculation
         dx : value, optional
-            Spacing along the dimension dim. If None, dx is determined from the coordinate dim. For 
-            consistency between spatial and temporal dim, spectra is computed relative to a "frequency", 
-            f = 1/dx, where dx is the spacing along dim, e.g.:
+            Spacing along the dimension dim. If None, dx is determined from the coordinate dim. For \
+                    consistency between spatial and temporal dim, spectra is computed relative to a "frequency", \
+                    f = 1/dx, where dx is the spacing along dim, e.g.:
+            
             - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
             - for spatial dim in meters, f = 1/meters = k/(2*pi) 
             - for spatial dim in degrees, f = 1/degrees = k/360
-            If converting the "frequency" to wavenumber, for example, one must also adjust the spectra 
-            magnitude so that the integral remains equal to the variance, e.g. for spatial spectra,
-            k = f*(2*pi)  ->  phi_new = phi_old/(2*pi)
+            
+            If converting the "frequency" to wavenumber, for example, one must also adjust the spectra \
+                    magnitude so that the integral remains equal to the variance, e.g. for spatial spectra,\
+                    k = f*(2*pi)  ->  phi_new = phi_old/(2*pi)
         hanning : bool, optional
             If True, a Hanning window weighting is applied prior to the fft
             
@@ -1901,8 +1909,9 @@ def pwelch(da1, da2, dim, nwindow, overlap=50, dx=None, hanning=False):
 def inband_variance(da, dim, bounds, nwindow, overlap=50):
     """ 
         Compute the in-band variance along a specified dimension. 
-        Author: Dougie Squire
-        Date: 20/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 20/07/2018
         
         Parameters
         ----------
@@ -1911,13 +1920,16 @@ def inband_variance(da, dim, bounds, nwindow, overlap=50):
         dim : str
             Dimension along which to compute in-band variance
         bounds : sequence
-            Frequency bounds for in-band variance calculation. Note that for consistency between 
-            spatial and temporal dim, all spectra are computed relative to a "frequency", f = 1/dx, 
-            where dx is the spacing along dim, e.g.:
+            Frequency bounds for in-band variance calculation. Note that for consistency between \
+                    spatial and temporal dim, all spectra are computed relative to a "frequency", f = 1/dx, \
+                    where dx is the spacing along dim, e.g.:
+            
             - for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz
             - for spatial dim in meters, f = 1/meters = k/(2*pi) 
             - for spatial dim in degrees, f = 1/degrees = k/360
+            
             Thus, bounds must be provided in a way consistent with this, e.g.:
+            
             - for temporal dim, bounds = 1 / (60*60*24*[d1, d2, d3]), where d# are numbers of days
             - for spatial dim, bounds = 1 / [l1, l2, l3], where l# are numbers of meters, degrees, etc
         nwindow : value
@@ -1956,8 +1968,9 @@ def inband_variance(da, dim, bounds, nwindow, overlap=50):
 def nino3(sst_anom):
     """ 
         Returns Nino-3 index 
-        Author: Dougie Squire
-        Date: 10/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
         
         Parameters
         ----------
@@ -1995,8 +2008,9 @@ def nino3(sst_anom):
 def nino34(sst_anom):
     """ 
         Returns Nino-3.4 index 
-        Author: Dougie Squire
-        Date: 10/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
         
         Parameters
         ----------
@@ -2034,8 +2048,9 @@ def nino34(sst_anom):
 def nino4(sst_anom):
     """ 
         Returns Nino-4 index 
-        Author: Dougie Squire
-        Date: 10/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
         
         Parameters
         ----------
@@ -2073,8 +2088,9 @@ def nino4(sst_anom):
 def emi(sst_anom):
     """ 
         Returns El Nino Modoki index
-        Author: Dougie Squire
-        Date: 10/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
         
         Parameters
         ----------
@@ -2118,8 +2134,9 @@ def emi(sst_anom):
 def dmi(sst_anom):
     """ 
         Returns dipole mode index 
-        Author: Dougie Squire
-        Date: 10/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
         
         Parameters
         ----------
@@ -2160,18 +2177,19 @@ def dmi(sst_anom):
 # ===================================================================================================
 def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
     """
-        Returns southern oscillation index as defined by NOAA (see, for example, 
-        https://www.esrl.noaa.gov/psd/gcos_wgsp/Timeseries/SOI/)
-        Author: Dougie Squire
-        Date: 10/04/2018
+        Returns southern oscillation index as defined by NOAA (see, for example, \
+                https://www.esrl.noaa.gov/psd/gcos_wgsp/Timeseries/SOI/)
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
         
         Parameters
         ----------
         slp_anom : xarray DataArray
             Array containing sea level pressure anomalies
         time_name : str, optional
-            Name of the time dimension. If None, doppyo will attempt to determine time_name 
-            automatically
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
             
         Returns
         -------
@@ -2227,8 +2245,9 @@ def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
 def _int_over_atmos(da, lat_name, lon_name, plevel_name, lon_dim=None):
     """ 
         Returns integral of da over the mass of the atmosphere 
-        Author: Dougie Squire
-        Date: 15/07/2018
+        
+        | Author: Dougie Squire
+        | Date: 15/07/2018
         
         Parameters
         ----------
@@ -2241,10 +2260,10 @@ def _int_over_atmos(da, lat_name, lon_name, plevel_name, lon_dim=None):
         plevel_name : str
             Name of pressure level dimension
         lon_dim : xarray DataArray, optional
-            Value of longitude to use in the integration. Must be broadcastable onto da. If not
-            provided, the coordinate associated with the longitudinal dimension of da will be used
-            (if it exists). This option is made available because it is often desirable to integrate
-            a zonally averaged quantity, which has no longitudinal dimension
+            Value of longitude to use in the integration. Must be broadcastable onto da. If not \
+                    provided, the coordinate associated with the longitudinal dimension of da will be used\
+                    (if it exists). This option is made available because it is often desirable to integrate\
+                    a zonally averaged quantity, which has no longitudinal dimension
             
         Returns
         -------

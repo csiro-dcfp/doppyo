@@ -1,14 +1,14 @@
 """
+    Overview
+    ========
     doppyo functions for assessing one dataset relative to another (usually model output to observation)
-    Author: Dougie Squire
-    Date created: 04/04/2018
-    Python Version: 3.6
     
-    Notes
-    -----
     In the following we refer to the datasets being assessed as comparison data (da_cmp) and reference
     data (da_ref). We seek to assess the skill of the former relative to the latter. Usually, da_cmp
     and da_ref comprise model output (e.g. forecasts) and observations, respectively.
+
+    API
+    ===
 """
 
 __all__ = ['rank_histogram', 'rps', 'reliability', 'roc', 'discrimination', 'Brier_score', 
@@ -38,17 +38,18 @@ from doppyo import utils
 def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'):
     """ 
         Returns the rank histogram along the specified dimensions
-        Author: Dougie Squire
-        Date: 01/11/2018
+        
+        | Authors: Dougie Squire
+        | Date: 01/11/2018
         
         Parameters
         ----------
         da_cmp : xarray DataArray
-            Array containing data to be compared to reference dataset (usually forecasts). This data 
-            is used to rank the reference data. Must include an ensemble dimension
+            Array containing data to be compared to reference dataset (usually forecasts). This data \
+                    is used to rank the reference data. Must include an ensemble dimension
         da_ref : xarray DataArray
-            Array containing reference data (usually observations). This data is ranked within the 
-            comparison data. Dimensions should match those of da_cmp
+            Array containing reference data (usually observations). This data is ranked within the \
+                    comparison data. Dimensions should match those of da_cmp
         over_dims : str or sequence of str
             The dimension(s) over which to compute the histogram of ranks
         norm : bool, optional
@@ -127,8 +128,9 @@ def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'
 def rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
     """ 
         Returns the ranked probability score
-        Author: Dougie Squire
-        Date: 10/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
         
         Parameters
         ----------
@@ -185,19 +187,20 @@ def rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
 def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5), 
                 nans_as_zeros=True):
     """ 
-        Computes the relative frequency of an event for a range of probability threshold bins
-        given the comparison likelihood and reference logical event data 
-        Author: Dougie Squire
-        Date: 10/05/2018
+        Computes the relative frequency of an event for a range of probability threshold bins \
+                given the comparison likelihood and reference logical event data 
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
         
         Parameters
         ----------
         cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
-            (da_cmp > 1).mean(dim='ensemble'))
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
         ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
-            ref_logical = (da_ref > 1))
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
         over_dims : str or sequence of str
             Dimensions over which to compute the reliability
         probability_bins : array_like, optional
@@ -208,12 +211,12 @@ def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.lins
         Returns
         -------
         reliability : xarray DataSet
-            Dataset containing the following variables:
-            relative_freq; the relative frequency of occurence for each probability threshold bin
-            cmp_number; the number of instances that the comparison data fall within each probability
-            threshold bin
-            ref_occur; the number of instances that the reference data is True when the comparison data
-            falls within each probability threshold bin
+            | Dataset containing the following variables:
+            | relative_freq; the relative frequency of occurence for each probability threshold bin
+            | cmp_number; the number of instances that the comparison data fall within each probability \
+                    threshold bin
+            | ref_occur; the number of instances that the reference data is True when the comparison data \
+                    falls within each probability threshold bin
         
         Examples
         --------
@@ -235,14 +238,14 @@ def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.lins
             cmp_number       (probability_bin, y) int64 0 2 1 2 0 1 0 0 0 0 1 1 1 0 0
             ref_occur        (probability_bin, y) int64 0 1 0 1 0 0 0 0 0 0 0 1 1 0 0
         
-        To do
-        -----
-        Currently using a for-loop to process each probability bin separately. Is it possible
-        to remove this loop?
-        
         Notes
         -----
         See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
     """
     
     if over_dims is None:
@@ -302,19 +305,20 @@ def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.lins
 # ===================================================================================================
 def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
     """ 
-        Computes the relative operating characteristic of an event for a range of probability 
-        threshold bins given the comparison likelihood and reference logical event data 
-        Author: Dougie Squire
-        Date: 10/05/2018
+        Computes the relative operating characteristic of an event for a range of probability \
+                threshold bins given the comparison likelihood and reference logical event data 
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
         
         Parameters
         ----------
         cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
-            (da_cmp > 1).mean(dim='ensemble'))
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
         ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
-            ref_logical = (da_ref > 1))
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
         over_dims : str or sequence of str
             Dimensions over which to compute the relative operating characteristic
         probability_bins : array_like, optional
@@ -323,10 +327,10 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
         Returns
         -------
         roc : xarray DataSet
-            Dataset containing the following variables:
-            hit_rate; the hit rate in each probability bin
-            false_alarm_rate; the false alarm rate in each probability bin
-            area; the area under the roc curve (false alarm rate vs hit rate)
+            | Dataset containing the following variables:
+            | hit_rate; the hit rate in each probability bin
+            | false_alarm_rate; the false alarm rate in each probability bin
+            | area; the area under the roc curve (false alarm rate vs hit rate)
         
         Examples
         --------
@@ -348,14 +352,14 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
             false_alarm_rate  (probability_bin, y) float64 1.0 1.0 1.0 ... 0.0 0.0 0.0
             area              (y) float64 0.0 0.0 0.0
         
-        To do
-        -----
-        Currently using a for-loop to process each probability bin separately. Is it possible
-        to remove this loop?
-    
         Notes
         -----
         See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
     """
     
     if over_dims is None:
@@ -412,19 +416,20 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
 # ===================================================================================================
 def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
     """ 
-        Returns the discrimination diagram of an event; the histogram of comparison likelihood when 
-        references indicate the event has occurred and has not occurred
-        Author: Dougie Squire
-        Date: 10/05/2018
+        Returns the discrimination diagram of an event; the histogram of comparison likelihood when \
+                references indicate the event has occurred and has not occurred
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
         
         Parameters
         ----------
         cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
-            (da_cmp > 1).mean(dim='ensemble'))
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
         ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
-            ref_logical = (da_ref > 1))
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
         over_dims : str or sequence of str
             Dimensions over which to compute the discrimantion histograms
         probability_bins : array_like, optional
@@ -433,11 +438,11 @@ def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.l
         Returns
         -------
         discrimination : xarray DataSet
-            Dataset containing the following variables:
-            hist_event; histogram of comparison likelihoods when reference data indicates that the 
-            event has occurred
-            hist_no_event; histogram of comparison likelihoods when reference data indicates that the 
-            event has not occurred
+            | Dataset containing the following variables:
+            | hist_event; histogram of comparison likelihoods when reference data indicates that the \
+                    event has occurred
+            | hist_no_event; histogram of comparison likelihoods when reference data indicates that the \
+                    event has not occurred
         
         Examples
         --------
@@ -458,14 +463,14 @@ def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.l
             hist_event     (bins, y) float64 0.0 0.0 nan 0.5 1.0 ... 0.0 nan 0.0 0.0 nan
             hist_no_event  (bins, y) float64 0.0 0.0 0.0 1.0 ... 0.3333 0.0 0.0 0.3333
         
-        To do
-        -----
-        Currently using a for-loop to process each probability bin separately. Is it possible
-        to remove this loop?
-    
         Notes
         -----
         See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
     """
     
     # Initialise probability bins -----
@@ -491,33 +496,34 @@ def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.l
 # ===================================================================================================
 def Brier_score(cmp_likelihood, ref_logical, over_dims, probability_bins=None):
     """ 
-        Computes the Brier score(s) of an event given the comparison likelihood and reference logical 
-        event data. When comparison probability bins are also provided, this function also computes 
-        the reliability, resolution and uncertainty components of the Brier score, where Brier = 
-        reliability - resolution + uncertainty
-        Author: Dougie Squire
-        Date: 10/05/2018
+        Computes the Brier score(s) of an event given the comparison likelihood and reference logical \
+                event data. When comparison probability bins are also provided, this function also computes \
+                the reliability, resolution and uncertainty components of the Brier score, where Brier = \
+                reliability - resolution + uncertainty
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
         
         Parameters
         ----------
         cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = 
-            (da_cmp > 1).mean(dim='ensemble'))
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
         ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.
-            ref_logical = (da_ref > 1))
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
         over_dims : str or sequence of str
             Dimensions over which to compute the Brier score
         probability_bins : array_like, optional
-            Probability threshold bins. If specified, this function also computes the reliability, 
-            resolution and uncertainty components of the Brier score. Defaults to None
+            Probability threshold bins. If specified, this function also computes the reliability, \
+                    resolution and uncertainty components of the Brier score. Defaults to None
             
         Returns
         -------
         Brier : xarray DataArray or xarray DataSet
-            If probability_bins = None, returns a DataArray containing Brier scores. Otherwise returns 
-            a DataSet containing the reliability, resolution and uncertainty components of the Brier 
-            score, where Brier = reliability - resolution + uncertainty
+            If probability_bins = None, returns a DataArray containing Brier scores. Otherwise returns \
+                    a DataSet containing the reliability, resolution and uncertainty components of the Brier \
+                    score, where Brier = reliability - resolution + uncertainty
         
         Examples
         --------
@@ -534,14 +540,14 @@ def Brier_score(cmp_likelihood, ref_logical, over_dims, probability_bins=None):
         Coordinates:
           * y        (y) int64 0 1 2
         
-        To do
-        -----
-        Currently using a for-loop to process each probability bin separately. Is it possible
-        to remove this loop?
-    
         Notes
         -----
         See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
     """
     
     if over_dims is None:
@@ -630,8 +636,9 @@ def Brier_score(cmp_likelihood, ref_logical, over_dims, probability_bins=None):
 def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
     """ 
         Return the contingency table between da_cmp and da_ref for given categories
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -702,8 +709,9 @@ def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dim
 def _sum_contingency(contingency, category='total'):
     """ 
         Returns sums of specified categories in contingency table 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -754,8 +762,9 @@ def _sum_contingency(contingency, category='total'):
 def accuracy_score(contingency):
     """ 
         Returns the accuracy score given a contingency table
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -799,8 +808,9 @@ def accuracy_score(contingency):
 def Heidke_score(contingency):
     """ 
         Returns the Heidke skill score given a contingency table 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -847,10 +857,11 @@ def Heidke_score(contingency):
 # ===================================================================================================
 def Peirce_score(contingency):
     """ 
-        Returns the Peirce score (also called Hanssen and Kuipers discriminant) given a contingency 
-        table 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        Returns the Peirce score (also called Hanssen and Kuipers discriminant) given a contingency \
+                table 
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -901,8 +912,9 @@ def Peirce_score(contingency):
 def Gerrity_score(contingency):
     """ 
         Returns Gerrity equitable score given a contingency table 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -930,14 +942,14 @@ def Gerrity_score(contingency):
         Coordinates:
           * x        (x) int64 0 1 2
 
-        To do
-        -----
-        Currently computes the Gerrity scoring matrix using nested for-loops. Is it possible 
-        to remove these?
-        
         Notes
         -----
         See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently computes the Gerrity scoring matrix using nested for-loops. Is it possible \
+                to remove these?
     """
     
     def _Gerrity_S(a):
@@ -998,8 +1010,9 @@ def Gerrity_score(contingency):
 def bias_score(contingency, yes_category=2):
     """ 
         Returns the bias score given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1053,8 +1066,9 @@ def bias_score(contingency, yes_category=2):
 def hit_rate(contingency, yes_category=2):
     """ 
         Returns the hit rate (probability of detection) given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1106,8 +1120,9 @@ def hit_rate(contingency, yes_category=2):
 def false_alarm_ratio(contingency, yes_category=2):
     """ 
         Returns the false alarm ratio given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1159,8 +1174,9 @@ def false_alarm_ratio(contingency, yes_category=2):
 def false_alarm_rate(contingency, yes_category=2):
     """ 
         Returns the false alarm rate given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1212,8 +1228,9 @@ def false_alarm_rate(contingency, yes_category=2):
 def success_ratio(contingency, yes_category=2):
     """ 
         Returns the success ratio given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1265,8 +1282,9 @@ def success_ratio(contingency, yes_category=2):
 def threat_score(contingency, yes_category=2):
     """ 
         Returns the threat score given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1320,8 +1338,9 @@ def threat_score(contingency, yes_category=2):
 def equit_threat_score(contingency, yes_category=2):
     """ 
         Returns the equitable threat score given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1376,8 +1395,9 @@ def equit_threat_score(contingency, yes_category=2):
 def odds_ratio(contingency, yes_category=2):
     """ 
         Returns the odds ratio given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1433,8 +1453,9 @@ def odds_ratio(contingency, yes_category=2):
 def odds_ratio_skill_score(contingency, yes_category=2):
     """ 
         Returns the odds ratio skill score given dichotomous contingency data 
-        Author: Dougie Squire
-        Date: 12/05/2018
+        
+        | Author: Dougie Squire
+        | Date: 12/05/2018
         
         Parameters
         ----------
@@ -1493,8 +1514,9 @@ def odds_ratio_skill_score(contingency, yes_category=2):
 def mean_additive_bias(da_cmp, da_ref, over_dims):
     """ 
         Returns the additive bias between comparison and reference datasets
-        Author: Dougie Squire
-        Date: 28/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 28/04/2018
         
         Parameters
         ----------
@@ -1541,8 +1563,9 @@ def mean_additive_bias(da_cmp, da_ref, over_dims):
 def mean_multiplicative_bias(da_cmp, da_ref, over_dims):
     """ 
         Returns the multiplicative bias between comparison and reference datasets 
-        Author: Dougie Squire
-        Date: 28/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 28/04/2018
         
         Parameters
         ----------
@@ -1589,8 +1612,9 @@ def mean_multiplicative_bias(da_cmp, da_ref, over_dims):
 def mean_absolute_error(da_cmp, da_ref, over_dims):
     """ 
         Returns the mean absolute error between comparison and reference datasets 
-        Author: Dougie Squire
-        Date: 28/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 28/04/2018
         
         Parameters
         ----------
@@ -1637,8 +1661,9 @@ def mean_absolute_error(da_cmp, da_ref, over_dims):
 def mean_squared_error(da_cmp, da_ref, over_dims):
     """ 
         Returns the mean sqaured error between comparison and reference datasets 
-        Author: Dougie Squire
-        Date: 28/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 28/04/2018
         
         Parameters
         ----------
@@ -1685,8 +1710,9 @@ def mean_squared_error(da_cmp, da_ref, over_dims):
 def rms_error(da_cmp, da_ref, over_dims):
     """ 
         Returns the root mean sqaured error between comparison and reference datasets 
-        Author: Dougie Squire
-        Date: 28/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 28/04/2018
         
         Parameters
         ----------
@@ -1727,8 +1753,9 @@ def rms_error(da_cmp, da_ref, over_dims):
 def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
     """ 
         Returns the Pearson correlation coefficients over the specified dimensions. 
-        Author: Dougie Squire
-        Date: 28/04/2018
+        
+        | Author: Dougie Squire
+        | Date: 28/04/2018
         
         Parameters
         ----------
@@ -1739,8 +1766,8 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
         over_dims : str or sequence of str, optional
             Dimensions over which to compute the correlation coefficients
         subtract_local_mean : bool, optional
-            If True, this function will subtract the mean computed over over_dims. Otherwise, no mean
-            field is removed prior to computing the correlation
+            If True, this function will subtract the mean computed over over_dims. Otherwise, no mean\
+                    field is removed prior to computing the correlation
             
         Returns
         -------
@@ -1761,10 +1788,10 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
           
         Notes
         -----
-        If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is 
-        computed over all dimensions in over_dims that appear in both da_cmp and da_ref, and then 
-        averaged over any remaining dimensions in over_dims
-        See http://www.cawcr.gov.au/projects/verification/
+        | If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is \
+                computed over all dimensions in over_dims that appear in both da_cmp and da_ref, and then \
+                averaged over any remaining dimensions in over_dims
+        | See http://www.cawcr.gov.au/projects/verification/
     """
     
     if over_dims is None:
@@ -1794,8 +1821,9 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
 def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date'):
     """
         Returns the Delsole and Tippett sign test over the given time period
-        Author: Dougie Squire
-        Date: 26/03/2019
+        
+        | Author: Dougie Squire
+        | Date: 26/03/2019
         
         Parameters
         ----------
@@ -1835,7 +1863,7 @@ def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date'):
           
         Notes
         -----
-        See Delsole and Tippett 2016 Forecast Comparison Based on Random Walks
+        See Delsole and Tippett 2016 `Forecast Comparison Based on Random Walks`
     """
     
     cmp1_diff = abs(da_cmp1 - da_ref)
