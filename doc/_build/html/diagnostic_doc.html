@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Diagnostics &mdash; doppyo  documentation</title>
+  <title>diagnostic &mdash; doppyo  documentation</title>
   
 
   
@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/style.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Skill assessment" href="skill_doc.html" />
+    <link rel="next" title="skill" href="skill_doc.html" />
     <link rel="prev" title="Modules" href="modules_doc.html" /> 
 </head>
 
@@ -89,13 +89,12 @@
 <li class="toctree-l1"><a class="reference internal" href="overview_doc.html">What is doppyo?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_doc.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules_doc.html">Modules</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Diagnostics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="skill_doc.html">Skill assessment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils_doc.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skill_doc.html"><code class="docutils literal notranslate"><span class="pre">skill</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils_doc.html"><code class="docutils literal notranslate"><span class="pre">utils</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -145,7 +144,7 @@
         
           <li><a href="modules_doc.html">Modules</a> &raquo;</li>
         
-      <li>Diagnostics</li>
+      <li><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -165,63 +164,10 @@
            <div itemprop="articleBody">
             
   <div class="section" id="module-diagnostic">
-<span id="diagnostics"></span><h1>Diagnostics<a class="headerlink" href="#module-diagnostic" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<span id="diagnostic"></span><h1><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code><a class="headerlink" href="#module-diagnostic" title="Permalink to this headline">¶</a></h1>
 <p>doppyo functions for computing various ocean, atmosphere, &amp; climate diagnostics</p>
-</div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="diagnostic.isotherm_depth">
-<code class="descclassname">diagnostic.</code><code class="descname">isotherm_depth</code><span class="sig-paren">(</span><em>temp</em>, <em>target_temp=20</em>, <em>depth_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.isotherm_depth" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the depth of an isotherm given a target temperature. If no temperatures in the column
-exceed the target temperature, a nan is returned at that point</p>
-<div class="line-block">
-<div class="line">Author: Thomas Moore</div>
-<div class="line">Date: 02/10/2018</div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>temp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values of temperature with at least a depth dimension</p>
-</dd>
-<dt><strong>target_temp</strong><span class="classifier">value, optional</span></dt><dd><p>Value of temperature used to compute isotherm depth. Default value is 20 degC</p>
-</dd>
-<dt><strong>depth_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of depth coordinate. If None, doppyo will attempt to determine depth_name                     automatically</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>isotherm_depth</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the depth of the requested isotherm</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<div class="line-block">
-<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
-<div class="line">If multiple occurences of target occur along the depth coordinate, only the maximum value of                 coord is returned</div>
-<div class="line">The current version includes no interpolation between grid spacing. This should be added as                 an option in the future</div>
-</div>
-<p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">temp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">10</span><span class="p">)),</span> 
-<span class="gp">... </span>                    <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
-<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">200</span><span class="p">))])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">isotherm_depth</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
-<span class="go">&lt;xarray.DataArray &#39;isosurface&#39; (lat: 4, lon: 4)&gt;</span>
-<span class="go">array([[ 400., 1600., 2000.,  800.],</span>
-<span class="go">       [1800., 2000., 1800., 2000.],</span>
-<span class="go">       [2000., 2000., 2000., 1600.],</span>
-<span class="go">       [1400., 2000., 2000., 2000.]])</span>
-<span class="go">Coordinates:</span>
-<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
-<span class="go">  * lon      (lon) int64 0 90 180 270</span>
-</pre></div>
-</div>
-</dd></dl>
-
 <dl class="function">
 <dt id="diagnostic.velocity_potential">
 <code class="descclassname">diagnostic.</code><code class="descname">velocity_potential</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.velocity_potential" title="Permalink to this definition">¶</a></dt>
@@ -1080,6 +1026,56 @@ automatically</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="diagnostic.isotherm_depth">
+<code class="descclassname">diagnostic.</code><code class="descname">isotherm_depth</code><span class="sig-paren">(</span><em>temp</em>, <em>target_temp=20</em>, <em>depth_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.isotherm_depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the depth of an isotherm given a target temperature. If no temperatures in the column
+exceed the target temperature, a nan is returned at that point</p>
+<div class="line-block">
+<div class="line">Author: Thomas Moore</div>
+<div class="line">Date: 02/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>temp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values of temperature with at least a depth dimension</p>
+</dd>
+<dt><strong>target_temp</strong><span class="classifier">value, optional</span></dt><dd><p>Value of temperature used to compute isotherm depth. Default value is 20 degC</p>
+</dd>
+<dt><strong>depth_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of depth coordinate. If None, doppyo will attempt to determine depth_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>isotherm_depth</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the depth of the requested isotherm</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">If multiple occurences of target occur along the depth coordinate, only the maximum value of                 coord is returned</div>
+<div class="line">The current version includes no interpolation between grid spacing. This should be added as                 an option in the future</div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">temp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">10</span><span class="p">)),</span> 
+<span class="gp">... </span>                    <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">200</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">isotherm_depth</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;isosurface&#39; (lat: 4, lon: 4)&gt;</span>
+<span class="go">array([[ 400., 1600., 2000.,  800.],</span>
+<span class="go">       [1800., 2000., 1800., 2000.],</span>
+<span class="go">       [2000., 2000., 2000., 1600.],</span>
+<span class="go">       [1400., 2000., 2000., 2000.]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">  * lon      (lon) int64 0 90 180 270</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
 <dt id="diagnostic.pwelch">
 <code class="descclassname">diagnostic.</code><code class="descname">pwelch</code><span class="sig-paren">(</span><em>da1</em>, <em>da2</em>, <em>dim</em>, <em>nwindow</em>, <em>overlap=50</em>, <em>dx=None</em>, <em>hanning=False</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.pwelch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the cross/power spectral density along a dimension using welch’s method. Note that                 the spectral density is always computed relative to a “frequency” f = 1/dx (see Notes for                 details)</p>
@@ -1442,7 +1438,7 @@ automatically</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="skill_doc.html" class="btn btn-neutral float-right" title="Skill assessment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="skill_doc.html" class="btn btn-neutral float-right" title="skill" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="modules_doc.html" class="btn btn-neutral float-left" title="Modules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

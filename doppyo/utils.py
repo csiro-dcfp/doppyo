@@ -1,6 +1,4 @@
 """
-    Overview
-    ========
     General support functions for the doppyo package
 
     API
@@ -73,6 +71,33 @@ class constants(object):
         | Author: Dougie Squire
         | Date: 14/02/2018
     
+        Attributes
+        ----------
+        R_d 
+            Gas constant of dray air [J / (kg * degK)]
+        R_v
+            Gas constant of water vapor [J / (kg * degK)]
+        C_vd
+            Heat capacity of dry air at constant volume [J / (kg * degK)]
+        C_pd
+            Heat capacity of dry air at constant pressure [J / (kg * degK)]
+        C_vv
+            Heat capacity of water vapor at constant volume [J / (kg * degK)]
+        C_pv
+            Heat capacity of water vapor at constant pressure [J / (kg * degK)]
+        C_l
+            Heat capacity of liquid water [J / (kg * degK)] 
+        g
+            Gravitational acceleration [m / s^2]
+        R_earth
+            Radius of the earth [m]
+        Omega
+            Earth rotation rate [rad/s]
+        pi
+            Ratio of a circle's circumference to its diameter
+        Ce
+            Eady constant
+
         Examples
         --------
         >>> pi = doppyo.utils.constants().pi
@@ -1402,11 +1427,11 @@ def fftfilt(da, dim, method, dx, x_cut):
             Array to filter
         dim : str
             Dimension along which to filter
-        method : str
-            Filter method to use. Options are ``"low pass"``, ``"high pass"`` or ``"band pass"``
+        method : {``"low pass"``, ``"high pass"``, ``"band pass"``}
+            Filter method to use
         dx : value
             Define the spacing of the dimension.
-        xc : value or array_like (if method = 'band pass')
+        xc : value or array_like (if method = ``'band pass'``)
             Define the filter cut-off value(s), e.g. x_cut = 5*dx
             
         Returns

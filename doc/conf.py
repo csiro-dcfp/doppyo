@@ -42,7 +42,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'numpydoc',
-    'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
 ]
 
@@ -179,5 +178,5 @@ html_theme_options = {
 # of the sidebar.
 html_logo = "_static/doppyo.png"
 
-numpydoc_class_members_toctree = True
-numpydoc_show_class_members = False
+# numpydoc_class_members_toctree = True
+# numpydoc_show_class_members = False

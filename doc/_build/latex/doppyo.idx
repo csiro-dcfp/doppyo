@@ -1,24 +1,24 @@
 \indexentry{diagnostic (module)@\spxentry{diagnostic}\spxextra{module}|hyperpage}{5}
-\indexentry{isotherm\_depth() (in module diagnostic)@\spxentry{isotherm\_depth()}\spxextra{in module diagnostic}|hyperpage}{5}
-\indexentry{velocity\_potential() (in module diagnostic)@\spxentry{velocity\_potential()}\spxextra{in module diagnostic}|hyperpage}{6}
-\indexentry{stream\_function() (in module diagnostic)@\spxentry{stream\_function()}\spxextra{in module diagnostic}|hyperpage}{7}
-\indexentry{Rossby\_wave\_source() (in module diagnostic)@\spxentry{Rossby\_wave\_source()}\spxextra{in module diagnostic}|hyperpage}{8}
-\indexentry{divergent() (in module diagnostic)@\spxentry{divergent()}\spxextra{in module diagnostic}|hyperpage}{9}
-\indexentry{wave\_activity\_flux() (in module diagnostic)@\spxentry{wave\_activity\_flux()}\spxextra{in module diagnostic}|hyperpage}{10}
-\indexentry{Brunt\_Vaisala() (in module diagnostic)@\spxentry{Brunt\_Vaisala()}\spxextra{in module diagnostic}|hyperpage}{12}
-\indexentry{Rossby\_wave\_number() (in module diagnostic)@\spxentry{Rossby\_wave\_number()}\spxextra{in module diagnostic}|hyperpage}{13}
-\indexentry{Eady\_growth\_rate() (in module diagnostic)@\spxentry{Eady\_growth\_rate()}\spxextra{in module diagnostic}|hyperpage}{14}
-\indexentry{thermal\_wind() (in module diagnostic)@\spxentry{thermal\_wind()}\spxextra{in module diagnostic}|hyperpage}{16}
-\indexentry{eofs() (in module diagnostic)@\spxentry{eofs()}\spxextra{in module diagnostic}|hyperpage}{17}
-\indexentry{mean\_merid\_mass\_streamfunction() (in module diagnostic)@\spxentry{mean\_merid\_mass\_streamfunction()}\spxextra{in module diagnostic}|hyperpage}{18}
-\indexentry{atmos\_energy\_cycle() (in module diagnostic)@\spxentry{atmos\_energy\_cycle()}\spxextra{in module diagnostic}|hyperpage}{19}
+\indexentry{velocity\_potential() (in module diagnostic)@\spxentry{velocity\_potential()}\spxextra{in module diagnostic}|hyperpage}{5}
+\indexentry{stream\_function() (in module diagnostic)@\spxentry{stream\_function()}\spxextra{in module diagnostic}|hyperpage}{6}
+\indexentry{Rossby\_wave\_source() (in module diagnostic)@\spxentry{Rossby\_wave\_source()}\spxextra{in module diagnostic}|hyperpage}{7}
+\indexentry{divergent() (in module diagnostic)@\spxentry{divergent()}\spxextra{in module diagnostic}|hyperpage}{8}
+\indexentry{wave\_activity\_flux() (in module diagnostic)@\spxentry{wave\_activity\_flux()}\spxextra{in module diagnostic}|hyperpage}{9}
+\indexentry{Brunt\_Vaisala() (in module diagnostic)@\spxentry{Brunt\_Vaisala()}\spxextra{in module diagnostic}|hyperpage}{11}
+\indexentry{Rossby\_wave\_number() (in module diagnostic)@\spxentry{Rossby\_wave\_number()}\spxextra{in module diagnostic}|hyperpage}{12}
+\indexentry{Eady\_growth\_rate() (in module diagnostic)@\spxentry{Eady\_growth\_rate()}\spxextra{in module diagnostic}|hyperpage}{13}
+\indexentry{thermal\_wind() (in module diagnostic)@\spxentry{thermal\_wind()}\spxextra{in module diagnostic}|hyperpage}{15}
+\indexentry{eofs() (in module diagnostic)@\spxentry{eofs()}\spxextra{in module diagnostic}|hyperpage}{16}
+\indexentry{mean\_merid\_mass\_streamfunction() (in module diagnostic)@\spxentry{mean\_merid\_mass\_streamfunction()}\spxextra{in module diagnostic}|hyperpage}{17}
+\indexentry{atmos\_energy\_cycle() (in module diagnostic)@\spxentry{atmos\_energy\_cycle()}\spxextra{in module diagnostic}|hyperpage}{18}
+\indexentry{isotherm\_depth() (in module diagnostic)@\spxentry{isotherm\_depth()}\spxextra{in module diagnostic}|hyperpage}{21}
 \indexentry{pwelch() (in module diagnostic)@\spxentry{pwelch()}\spxextra{in module diagnostic}|hyperpage}{22}
 \indexentry{inband\_variance() (in module diagnostic)@\spxentry{inband\_variance()}\spxextra{in module diagnostic}|hyperpage}{23}
 \indexentry{nino3() (in module diagnostic)@\spxentry{nino3()}\spxextra{in module diagnostic}|hyperpage}{24}
 \indexentry{nino34() (in module diagnostic)@\spxentry{nino34()}\spxextra{in module diagnostic}|hyperpage}{25}
 \indexentry{nino4() (in module diagnostic)@\spxentry{nino4()}\spxextra{in module diagnostic}|hyperpage}{25}
 \indexentry{emi() (in module diagnostic)@\spxentry{emi()}\spxextra{in module diagnostic}|hyperpage}{26}
-\indexentry{dmi() (in module diagnostic)@\spxentry{dmi()}\spxextra{in module diagnostic}|hyperpage}{27}
+\indexentry{dmi() (in module diagnostic)@\spxentry{dmi()}\spxextra{in module diagnostic}|hyperpage}{26}
 \indexentry{soi() (in module diagnostic)@\spxentry{soi()}\spxextra{in module diagnostic}|hyperpage}{27}
 \indexentry{skill (module)@\spxentry{skill}\spxextra{module}|hyperpage}{28}
 \indexentry{rank\_histogram() (in module skill)@\spxentry{rank\_histogram()}\spxextra{in module skill}|hyperpage}{28}
@@ -51,13 +51,13 @@
 \indexentry{utils (module)@\spxentry{utils}\spxextra{module}|hyperpage}{49}
 \indexentry{timer (class in utils)@\spxentry{timer}\spxextra{class in utils}|hyperpage}{49}
 \indexentry{constants (class in utils)@\spxentry{constants}\spxextra{class in utils}|hyperpage}{49}
-\indexentry{skewness() (in module utils)@\spxentry{skewness()}\spxextra{in module utils}|hyperpage}{49}
+\indexentry{skewness() (in module utils)@\spxentry{skewness()}\spxextra{in module utils}|hyperpage}{50}
 \indexentry{kurtosis() (in module utils)@\spxentry{kurtosis()}\spxextra{in module utils}|hyperpage}{50}
 \indexentry{digitize() (in module utils)@\spxentry{digitize()}\spxextra{in module utils}|hyperpage}{51}
-\indexentry{pdf() (in module utils)@\spxentry{pdf()}\spxextra{in module utils}|hyperpage}{51}
+\indexentry{pdf() (in module utils)@\spxentry{pdf()}\spxextra{in module utils}|hyperpage}{52}
 \indexentry{cdf() (in module utils)@\spxentry{cdf()}\spxextra{in module utils}|hyperpage}{52}
 \indexentry{Gaussian\_pdf() (in module utils)@\spxentry{Gaussian\_pdf()}\spxextra{in module utils}|hyperpage}{53}
-\indexentry{Gaussian\_cdf() (in module utils)@\spxentry{Gaussian\_cdf()}\spxextra{in module utils}|hyperpage}{53}
+\indexentry{Gaussian\_cdf() (in module utils)@\spxentry{Gaussian\_cdf()}\spxextra{in module utils}|hyperpage}{54}
 \indexentry{histogram() (in module utils)@\spxentry{histogram()}\spxextra{in module utils}|hyperpage}{54}
 \indexentry{get\_bin\_edges() (in module utils)@\spxentry{get\_bin\_edges()}\spxextra{in module utils}|hyperpage}{55}
 \indexentry{polyfit() (in module utils)@\spxentry{polyfit()}\spxextra{in module utils}|hyperpage}{55}
@@ -74,8 +74,8 @@
 \indexentry{ifft() (in module utils)@\spxentry{ifft()}\spxextra{in module utils}|hyperpage}{63}
 \indexentry{fftfilt() (in module utils)@\spxentry{fftfilt()}\spxextra{in module utils}|hyperpage}{64}
 \indexentry{isosurface() (in module utils)@\spxentry{isosurface()}\spxextra{in module utils}|hyperpage}{65}
-\indexentry{load\_mean\_climatology() (in module utils)@\spxentry{load\_mean\_climatology()}\spxextra{in module utils}|hyperpage}{65}
-\indexentry{anomalize() (in module utils)@\spxentry{anomalize()}\spxextra{in module utils}|hyperpage}{66}
+\indexentry{load\_mean\_climatology() (in module utils)@\spxentry{load\_mean\_climatology()}\spxextra{in module utils}|hyperpage}{66}
+\indexentry{anomalize() (in module utils)@\spxentry{anomalize()}\spxextra{in module utils}|hyperpage}{67}
 \indexentry{trunc\_time() (in module utils)@\spxentry{trunc\_time()}\spxextra{in module utils}|hyperpage}{67}
 \indexentry{leadtime\_to\_datetime() (in module utils)@\spxentry{leadtime\_to\_datetime()}\spxextra{in module utils}|hyperpage}{68}
 \indexentry{datetime\_to\_leadtime() (in module utils)@\spxentry{datetime\_to\_leadtime()}\spxextra{in module utils}|hyperpage}{68}
@@ -91,5 +91,5 @@
 \indexentry{get\_lon\_name() (in module utils)@\spxentry{get\_lon\_name()}\spxextra{in module utils}|hyperpage}{74}
 \indexentry{get\_lat\_name() (in module utils)@\spxentry{get\_lat\_name()}\spxextra{in module utils}|hyperpage}{75}
 \indexentry{get\_depth\_name() (in module utils)@\spxentry{get\_depth\_name()}\spxextra{in module utils}|hyperpage}{75}
-\indexentry{get\_level\_name() (in module utils)@\spxentry{get\_level\_name()}\spxextra{in module utils}|hyperpage}{75}
+\indexentry{get\_level\_name() (in module utils)@\spxentry{get\_level\_name()}\spxextra{in module utils}|hyperpage}{76}
 \indexentry{get\_plevel\_name() (in module utils)@\spxentry{get\_plevel\_name()}\spxextra{in module utils}|hyperpage}{76}

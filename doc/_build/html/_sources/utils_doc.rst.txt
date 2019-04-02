@@ -1,4 +1,4 @@
-Utilities
+``utils``
 =========
 .. automodule:: utils
    :members:

@@ -1,10 +1,10 @@
 # Fdb version 3
-["makeindex doppyo.idx"] 1554107189 "doppyo.idx" "doppyo.ind" "doppyo" 1554107192
-  "doppyo.idx" 1554107192 10868 fb7ccbdda8da95df57b1d0180c3072f7 ""
+["makeindex doppyo.idx"] 1554160020 "doppyo.idx" "doppyo.ind" "doppyo" 1554160021
+  "doppyo.idx" 1554160021 10868 a658c79c1a1b870203aee1539331969c ""
   (generated)
-  "doppyo.ilg"
   "doppyo.ind"
-["pdflatex"] 1554107191 "doppyo.tex" "doppyo.pdf" "doppyo" 1554107192
+  "doppyo.ilg"
+["pdflatex"] 1554160020 "doppyo.tex" "doppyo.pdf" "doppyo" 1554160021
   "/usr/local/texlive/2017/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2017/texmf-dist/fonts/map/fontname/texfonts.map" 1480098670 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/courier/pcrb8r.tfm" 1480098688 1292 3059476c50a24578715759f22652f3d0 ""
@@ -153,21 +153,21 @@
   "/usr/local/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1495593472 2350277 a699055bee05bf8a40b0504752487295 ""
   "/usr/local/texlive/2017/texmf-var/web2c/pdftex/pdflatex.fmt" 1516339305 4129592 f718fd4e576725ea932d69655625cdf8 ""
   "/usr/local/texlive/2017/texmf.cnf" 1495593465 577 2b71d4d888f9e5560b2e99985915a9fa ""
-  "doppyo.aux" 1554107192 10941 1b3ff097f6ae1204d40ca0a595ee5285 ""
-  "doppyo.ind" 1554107190 8182 28579dc4a27339f730a2da97dcc6c847 "makeindex doppyo.idx"
-  "doppyo.out" 1554107192 1005 59baf17a7ce94d1cf317dcab089b5177 ""
-  "doppyo.tex" 1554107188 377936 1c79271a1ec563c63719d864c54fb986 ""
-  "doppyo.toc" 1554107192 1076 ca4d8afc70dd545e0d24ead7c3048d38 ""
+  "doppyo.aux" 1554160021 10903 ff178c154f10008f4f6973ca4e2a7d75 ""
+  "doppyo.ind" 1554160020 8182 c79d278a469420eda6257bf54289693c "makeindex doppyo.idx"
+  "doppyo.out" 1554160021 922 906d4585f5eb800b7f29e2c4dd49ed3c ""
+  "doppyo.tex" 1554160018 378538 ecb6743b76d23edded1ef6b3fa183016 ""
+  "doppyo.toc" 1554160021 965 e29e0cd0637ad36a5d5afac5c28194d0 ""
   "footnotehyper-sphinx.sty" 1554096017 8888 1bbd7bdeae8c8bed1d10d551bddb1cc9 ""
   "sphinx.sty" 1554096017 77208 3556b0a144030bef8427c8d5109dbe32 ""
-  "sphinxhighlight.sty" 1554107187 8137 38a433148fcb7611515a989ff1750dd5 ""
+  "sphinxhighlight.sty" 1554160018 8137 38a433148fcb7611515a989ff1750dd5 ""
   "sphinxmanual.cls" 1554096017 3764 e7c0a8da02dc45450256dd4cfdafb426 ""
-  "sphinxmessages.sty" 1554107188 731 4c7a75a0ce6092b44bece19aa46febe9 ""
+  "sphinxmessages.sty" 1554160018 731 4c7a75a0ce6092b44bece19aa46febe9 ""
   "sphinxmulticell.sty" 1554096017 14618 0defbdc8536ad2e67f1eac6a1431bc55 ""
   (generated)
-  "doppyo.idx"
-  "doppyo.toc"
-  "doppyo.pdf"
-  "doppyo.out"
   "doppyo.aux"
   "doppyo.log"
+  "doppyo.pdf"
+  "doppyo.idx"
+  "doppyo.out"
+  "doppyo.toc"

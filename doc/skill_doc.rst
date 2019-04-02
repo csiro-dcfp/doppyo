@@ -1,4 +1,4 @@
-Skill assessment
-================
+``skill``
+=========
 .. automodule:: skill
    :members:

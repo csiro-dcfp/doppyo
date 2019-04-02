@@ -1,15 +1,13 @@
 """
-    Overview
-    ========
     doppyo functions for computing various ocean, atmosphere, & climate diagnostics
 
     API
     ===
 """
 
-__all__ = ['isotherm_depth', 'velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 
-           'wave_activity_flux', 'Brunt_Vaisala', 'Rossby_wave_number', 'Eady_growth_rate', 
-           'thermal_wind', 'eofs', 'mean_merid_mass_streamfunction', 'atmos_energy_cycle', 'pwelch', 
+__all__ = ['velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 'wave_activity_flux', 
+           'Brunt_Vaisala', 'Rossby_wave_number', 'Eady_growth_rate', 'thermal_wind', 'eofs', 
+           'mean_merid_mass_streamfunction', 'atmos_energy_cycle', 'isotherm_depth', 'pwelch', 
            'inband_variance', 'nino3', 'nino34', 'nino4', 'emi', 'dmi', 'soi', '_int_over_atmos']
 
 # ===================================================================================================
@@ -25,62 +23,6 @@ from scipy.sparse import linalg
 # Load doppyo packages -----
 from doppyo import utils
 
-# ===================================================================================================
-# Ocean diagnostics
-# ===================================================================================================
-def isotherm_depth(temp, target_temp=20, depth_name=None):
-    """ 
-        Returns the depth of an isotherm given a target temperature. If no temperatures in the column
-        exceed the target temperature, a nan is returned at that point
-        
-        | Author: Thomas Moore
-        | Date: 02/10/2018
-        
-        Parameters
-        ----------
-        temp : xarray DataArray
-            Array containing values of temperature with at least a depth dimension
-        target_temp : value, optional
-            Value of temperature used to compute isotherm depth. Default value is 20 degC
-        depth_name : str, optional
-            Name of depth coordinate. If None, doppyo will attempt to determine depth_name \
-                    automatically
-            
-        Returns
-        -------
-        isotherm_depth : xarray DataArray
-            Array containing the depth of the requested isotherm
-
-        Examples
-        --------
-        >>> temp = xr.DataArray(20 + np.random.normal(scale=5, size=(4,4,10)), 
-        ...                     coords=[('lat', np.arange(-90,90,45)), ('lon', np.arange(0,360,90)), 
-        ...                             ('depth', np.arange(2000,0,-200))])
-        >>> doppyo.diagnostic.isotherm_depth(temp)
-        <xarray.DataArray 'isosurface' (lat: 4, lon: 4)>
-        array([[ 400., 1600., 2000.,  800.],
-               [1800., 2000., 1800., 2000.],
-               [2000., 2000., 2000., 1600.],
-               [1400., 2000., 2000., 2000.]])
-        Coordinates:
-          * lat      (lat) int64 -90 -45 0 45
-          * lon      (lon) int64 0 90 180 270
-        
-        Notes
-        -----------
-        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
-                ``doppyo.utils.get_lon_name()``, etc)
-        | If multiple occurences of target occur along the depth coordinate, only the maximum value of \
-                coord is returned
-        | The current version includes no interpolation between grid spacing. This should be added as \
-                an option in the future
-    """
-    
-    if depth_name is None:
-        depth_name = utils.get_depth_name(temp)
-
-    return utils.isosurface(temp, coord=depth_name, target=target_temp).rename('isotherm_depth')
-
 
 # ===================================================================================================
 # Flow field diagnostics
@@ -88,10 +30,10 @@ def isotherm_depth(temp, target_temp=20, depth_name=None):
 def velocity_potential(u, v, lat_name=None, lon_name=None):
     """ 
         Returns the velocity potential given fields of u and v
-        
+            
         | Author: Dougie Squire
         | Date: 11/07/2018
-        
+            
         Parameters
         ----------
         u : xarray DataArray
@@ -106,12 +48,12 @@ def velocity_potential(u, v, lat_name=None, lon_name=None):
         lon_name : str, optional
             Name of longitude coordinate. If None, doppyo will attempt to determine lon_name \
                     automatically
-            
+                
         Returns
         -------
         velocity_potential : xarray DataArray
             Array containing values of velocity potential
-            
+                
         Examples
         --------
         >>> u = xr.DataArray(np.random.normal(size=(6,4)), 
@@ -133,7 +75,7 @@ def velocity_potential(u, v, lat_name=None, lon_name=None):
             units:          m**2 s**-1
             standard_name:  atmosphere_horizontal_velocity_potential
             long_name:      velocity potential
-        
+    
         Notes
         -----------
         | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
@@ -142,7 +84,7 @@ def velocity_potential(u, v, lat_name=None, lon_name=None):
                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid \
                 is regular or Gaussian.
         | These calculations are not yet dask-compatible.
-        
+    
         To Do
 
         - Make dask-compatible by either developing the windspharm package, or using a kernel approach
@@ -1778,6 +1720,63 @@ def atmos_energy_cycle(temp, u, v, omega, gh, terms=None, vgradz=False, spectral
     
     return energies
         
+
+# ===================================================================================================
+# Ocean diagnostics
+# ===================================================================================================
+def isotherm_depth(temp, target_temp=20, depth_name=None):
+    """ 
+        Returns the depth of an isotherm given a target temperature. If no temperatures in the column
+        exceed the target temperature, a nan is returned at that point
+        
+        | Author: Thomas Moore
+        | Date: 02/10/2018
+        
+        Parameters
+        ----------
+        temp : xarray DataArray
+            Array containing values of temperature with at least a depth dimension
+        target_temp : value, optional
+            Value of temperature used to compute isotherm depth. Default value is 20 degC
+        depth_name : str, optional
+            Name of depth coordinate. If None, doppyo will attempt to determine depth_name \
+                    automatically
+            
+        Returns
+        -------
+        isotherm_depth : xarray DataArray
+            Array containing the depth of the requested isotherm
+
+        Examples
+        --------
+        >>> temp = xr.DataArray(20 + np.random.normal(scale=5, size=(4,4,10)), 
+        ...                     coords=[('lat', np.arange(-90,90,45)), ('lon', np.arange(0,360,90)), 
+        ...                             ('depth', np.arange(2000,0,-200))])
+        >>> doppyo.diagnostic.isotherm_depth(temp)
+        <xarray.DataArray 'isosurface' (lat: 4, lon: 4)>
+        array([[ 400., 1600., 2000.,  800.],
+               [1800., 2000., 1800., 2000.],
+               [2000., 2000., 2000., 1600.],
+               [1400., 2000., 2000., 2000.]])
+        Coordinates:
+          * lat      (lat) int64 -90 -45 0 45
+          * lon      (lon) int64 0 90 180 270
+        
+        Notes
+        -----------
+        | All input array coordinates must follow standard naming (see ``doppyo.utils.get_lat_name()``, \
+                ``doppyo.utils.get_lon_name()``, etc)
+        | If multiple occurences of target occur along the depth coordinate, only the maximum value of \
+                coord is returned
+        | The current version includes no interpolation between grid spacing. This should be added as \
+                an option in the future
+    """
+
+    if depth_name is None:
+        depth_name = utils.get_depth_name(temp)
+
+    return utils.isosurface(temp, coord=depth_name, target=target_temp).rename('isotherm_depth')
+
 
 # ===================================================================================================
 # General diagnostics

@@ -72,7 +72,7 @@
 
 
 \title{doppyo Documentation}
-\date{Apr 01, 2019}
+\date{Apr 02, 2019}
 \release{}
 \author{Dougie Squire}
 \newcommand{\sphinxlogo}{\vbox{}}
@@ -118,73 +118,13 @@ Need to host doppyo on public repo and provide instructions for installation
 \chapter{Modules}
 \label{\detokenize{modules_doc:modules}}\label{\detokenize{modules_doc::doc}}
 
-\section{Diagnostics}
-\label{\detokenize{diagnostic_doc:module-diagnostic}}\label{\detokenize{diagnostic_doc:diagnostics}}\label{\detokenize{diagnostic_doc::doc}}\index{diagnostic (module)@\spxentry{diagnostic}\spxextra{module}}
-
-\subsection{Overview}
-\label{\detokenize{diagnostic_doc:overview}}
+\section{\sphinxstyleliteralintitle{\sphinxupquote{diagnostic}}}
+\label{\detokenize{diagnostic_doc:module-diagnostic}}\label{\detokenize{diagnostic_doc:diagnostic}}\label{\detokenize{diagnostic_doc::doc}}\index{diagnostic (module)@\spxentry{diagnostic}\spxextra{module}}
 doppyo functions for computing various ocean, atmosphere, \& climate diagnostics
 
 
 \subsection{API}
-\label{\detokenize{diagnostic_doc:api}}\index{isotherm\_depth() (in module diagnostic)@\spxentry{isotherm\_depth()}\spxextra{in module diagnostic}}
-
-\begin{fulllineitems}
-\phantomsection\label{\detokenize{diagnostic_doc:diagnostic.isotherm_depth}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{diagnostic.}}\sphinxbfcode{\sphinxupquote{isotherm\_depth}}}{\emph{temp}, \emph{target\_temp=20}, \emph{depth\_name=None}}{}
-Returns the depth of an isotherm given a target temperature. If no temperatures in the column
-exceed the target temperature, a nan is returned at that point
-
-\begin{DUlineblock}{0em}
-\item[] Author: Thomas Moore
-\item[] Date: 02/10/2018
-\end{DUlineblock}
-\begin{quote}\begin{description}
-\item[{Parameters}] \leavevmode\begin{description}
-\item[{\sphinxstylestrong{temp}}] \leavevmode{[}xarray DataArray{]}
-Array containing values of temperature with at least a depth dimension
-
-\item[{\sphinxstylestrong{target\_temp}}] \leavevmode{[}value, optional{]}
-Value of temperature used to compute isotherm depth. Default value is 20 degC
-
-\item[{\sphinxstylestrong{depth\_name}}] \leavevmode{[}str, optional{]}
-Name of depth coordinate. If None, doppyo will attempt to determine depth\_name                     automatically
-
-\end{description}
-
-\item[{Returns}] \leavevmode\begin{description}
-\item[{\sphinxstylestrong{isotherm\_depth}}] \leavevmode{[}xarray DataArray{]}
-Array containing the depth of the requested isotherm
-
-\end{description}
-
-\end{description}\end{quote}
-\subsubsection*{Notes}
-
-\begin{DUlineblock}{0em}
-\item[] All input array coordinates must follow standard naming (see \sphinxcode{\sphinxupquote{doppyo.utils.get\_lat\_name()}},                 \sphinxcode{\sphinxupquote{doppyo.utils.get\_lon\_name()}}, etc)
-\item[] If multiple occurences of target occur along the depth coordinate, only the maximum value of                 coord is returned
-\item[] The current version includes no interpolation between grid spacing. This should be added as                 an option in the future
-\end{DUlineblock}
-\subsubsection*{Examples}
-
-\begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{temp} \PYG{o}{=} \PYG{n}{xr}\PYG{o}{.}\PYG{n}{DataArray}\PYG{p}{(}\PYG{l+m+mi}{20} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{normal}\PYG{p}{(}\PYG{n}{scale}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{,} \PYG{n}{size}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{,}\PYG{l+m+mi}{4}\PYG{p}{,}\PYG{l+m+mi}{10}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,} 
-\PYG{g+gp}{... }                    \PYG{n}{coords}\PYG{o}{=}\PYG{p}{[}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lat}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{90}\PYG{p}{,}\PYG{l+m+mi}{90}\PYG{p}{,}\PYG{l+m+mi}{45}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,} \PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lon}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{360}\PYG{p}{,}\PYG{l+m+mi}{90}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,} 
-\PYG{g+gp}{... }                            \PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{depth}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{2000}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{200}\PYG{p}{)}\PYG{p}{)}\PYG{p}{]}\PYG{p}{)}
-\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{doppyo}\PYG{o}{.}\PYG{n}{diagnostic}\PYG{o}{.}\PYG{n}{isotherm\PYGZus{}depth}\PYG{p}{(}\PYG{n}{temp}\PYG{p}{)}
-\PYG{g+go}{\PYGZlt{}xarray.DataArray \PYGZsq{}isosurface\PYGZsq{} (lat: 4, lon: 4)\PYGZgt{}}
-\PYG{g+go}{array([[ 400., 1600., 2000.,  800.],}
-\PYG{g+go}{       [1800., 2000., 1800., 2000.],}
-\PYG{g+go}{       [2000., 2000., 2000., 1600.],}
-\PYG{g+go}{       [1400., 2000., 2000., 2000.]])}
-\PYG{g+go}{Coordinates:}
-\PYG{g+go}{  * lat      (lat) int64 \PYGZhy{}90 \PYGZhy{}45 0 45}
-\PYG{g+go}{  * lon      (lon) int64 0 90 180 270}
-\end{sphinxVerbatim}
-
-\end{fulllineitems}
-
-\index{velocity\_potential() (in module diagnostic)@\spxentry{velocity\_potential()}\spxextra{in module diagnostic}}
+\label{\detokenize{diagnostic_doc:api}}\index{velocity\_potential() (in module diagnostic)@\spxentry{velocity\_potential()}\spxextra{in module diagnostic}}
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{diagnostic_doc:diagnostic.velocity_potential}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{diagnostic.}}\sphinxbfcode{\sphinxupquote{velocity\_potential}}}{\emph{u}, \emph{v}, \emph{lat\_name=None}, \emph{lon\_name=None}}{}
@@ -1177,6 +1117,63 @@ Arrays that are sufficiently large to be interesting currently max out the avail
 
 \end{fulllineitems}
 
+\index{isotherm\_depth() (in module diagnostic)@\spxentry{isotherm\_depth()}\spxextra{in module diagnostic}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{diagnostic_doc:diagnostic.isotherm_depth}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{diagnostic.}}\sphinxbfcode{\sphinxupquote{isotherm\_depth}}}{\emph{temp}, \emph{target\_temp=20}, \emph{depth\_name=None}}{}
+Returns the depth of an isotherm given a target temperature. If no temperatures in the column
+exceed the target temperature, a nan is returned at that point
+
+\begin{DUlineblock}{0em}
+\item[] Author: Thomas Moore
+\item[] Date: 02/10/2018
+\end{DUlineblock}
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode\begin{description}
+\item[{\sphinxstylestrong{temp}}] \leavevmode{[}xarray DataArray{]}
+Array containing values of temperature with at least a depth dimension
+
+\item[{\sphinxstylestrong{target\_temp}}] \leavevmode{[}value, optional{]}
+Value of temperature used to compute isotherm depth. Default value is 20 degC
+
+\item[{\sphinxstylestrong{depth\_name}}] \leavevmode{[}str, optional{]}
+Name of depth coordinate. If None, doppyo will attempt to determine depth\_name                     automatically
+
+\end{description}
+
+\item[{Returns}] \leavevmode\begin{description}
+\item[{\sphinxstylestrong{isotherm\_depth}}] \leavevmode{[}xarray DataArray{]}
+Array containing the depth of the requested isotherm
+
+\end{description}
+
+\end{description}\end{quote}
+\subsubsection*{Notes}
+
+\begin{DUlineblock}{0em}
+\item[] All input array coordinates must follow standard naming (see \sphinxcode{\sphinxupquote{doppyo.utils.get\_lat\_name()}},                 \sphinxcode{\sphinxupquote{doppyo.utils.get\_lon\_name()}}, etc)
+\item[] If multiple occurences of target occur along the depth coordinate, only the maximum value of                 coord is returned
+\item[] The current version includes no interpolation between grid spacing. This should be added as                 an option in the future
+\end{DUlineblock}
+\subsubsection*{Examples}
+
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{temp} \PYG{o}{=} \PYG{n}{xr}\PYG{o}{.}\PYG{n}{DataArray}\PYG{p}{(}\PYG{l+m+mi}{20} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{normal}\PYG{p}{(}\PYG{n}{scale}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{,} \PYG{n}{size}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{,}\PYG{l+m+mi}{4}\PYG{p}{,}\PYG{l+m+mi}{10}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,} 
+\PYG{g+gp}{... }                    \PYG{n}{coords}\PYG{o}{=}\PYG{p}{[}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lat}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{90}\PYG{p}{,}\PYG{l+m+mi}{90}\PYG{p}{,}\PYG{l+m+mi}{45}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,} \PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{lon}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{360}\PYG{p}{,}\PYG{l+m+mi}{90}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,} 
+\PYG{g+gp}{... }                            \PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{depth}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{2000}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{200}\PYG{p}{)}\PYG{p}{)}\PYG{p}{]}\PYG{p}{)}
+\PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{doppyo}\PYG{o}{.}\PYG{n}{diagnostic}\PYG{o}{.}\PYG{n}{isotherm\PYGZus{}depth}\PYG{p}{(}\PYG{n}{temp}\PYG{p}{)}
+\PYG{g+go}{\PYGZlt{}xarray.DataArray \PYGZsq{}isosurface\PYGZsq{} (lat: 4, lon: 4)\PYGZgt{}}
+\PYG{g+go}{array([[ 400., 1600., 2000.,  800.],}
+\PYG{g+go}{       [1800., 2000., 1800., 2000.],}
+\PYG{g+go}{       [2000., 2000., 2000., 1600.],}
+\PYG{g+go}{       [1400., 2000., 2000., 2000.]])}
+\PYG{g+go}{Coordinates:}
+\PYG{g+go}{  * lat      (lat) int64 \PYGZhy{}90 \PYGZhy{}45 0 45}
+\PYG{g+go}{  * lon      (lon) int64 0 90 180 270}
+\end{sphinxVerbatim}
+
+\end{fulllineitems}
+
 \index{pwelch() (in module diagnostic)@\spxentry{pwelch()}\spxextra{in module diagnostic}}
 
 \begin{fulllineitems}
@@ -1592,11 +1589,8 @@ Array containing the southern oscillation index
 
 
 
-\section{Skill assessment}
-\label{\detokenize{skill_doc:module-skill}}\label{\detokenize{skill_doc:skill-assessment}}\label{\detokenize{skill_doc::doc}}\index{skill (module)@\spxentry{skill}\spxextra{module}}
-
-\subsection{Overview}
-\label{\detokenize{skill_doc:overview}}
+\section{\sphinxstyleliteralintitle{\sphinxupquote{skill}}}
+\label{\detokenize{skill_doc:module-skill}}\label{\detokenize{skill_doc:skill}}\label{\detokenize{skill_doc::doc}}\index{skill (module)@\spxentry{skill}\spxextra{module}}
 doppyo functions for assessing one dataset relative to another (usually model output to observation)
 
 In the following we refer to the datasets being assessed as comparison data (da\_cmp) and reference
@@ -3071,11 +3065,8 @@ See Delsole and Tippett 2016 \sphinxtitleref{Forecast Comparison Based on Random
 
 
 
-\section{Utilities}
-\label{\detokenize{utils_doc:module-utils}}\label{\detokenize{utils_doc:utilities}}\label{\detokenize{utils_doc::doc}}\index{utils (module)@\spxentry{utils}\spxextra{module}}
-
-\subsection{Overview}
-\label{\detokenize{utils_doc:overview}}
+\section{\sphinxstyleliteralintitle{\sphinxupquote{utils}}}
+\label{\detokenize{utils_doc:module-utils}}\label{\detokenize{utils_doc:utils}}\label{\detokenize{utils_doc::doc}}\index{utils (module)@\spxentry{utils}\spxextra{module}}
 General support functions for the doppyo package
 
 
@@ -3115,6 +3106,23 @@ Returns commonly used constants.
 \begin{sphinxVerbatim}[commandchars=\\\{\}]
 \PYG{g+gp}{\PYGZgt{}\PYGZgt{}\PYGZgt{} }\PYG{n}{pi} \PYG{o}{=} \PYG{n}{doppyo}\PYG{o}{.}\PYG{n}{utils}\PYG{o}{.}\PYG{n}{constants}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{pi}
 \end{sphinxVerbatim}
+\begin{quote}\begin{description}
+\item[{Attributes}] \leavevmode\begin{description}
+\item[{\sphinxstylestrong{C\_l}}] \leavevmode
+\item[{\sphinxstylestrong{C\_pd}}] \leavevmode
+\item[{\sphinxstylestrong{C\_pv}}] \leavevmode
+\item[{\sphinxstylestrong{C\_vd}}] \leavevmode
+\item[{\sphinxstylestrong{C\_vv}}] \leavevmode
+\item[{\sphinxstylestrong{Ce}}] \leavevmode
+\item[{\sphinxstylestrong{Omega}}] \leavevmode
+\item[{\sphinxstylestrong{R\_d}}] \leavevmode
+\item[{\sphinxstylestrong{R\_earth}}] \leavevmode
+\item[{\sphinxstylestrong{R\_v}}] \leavevmode
+\item[{\sphinxstylestrong{g}}] \leavevmode
+\item[{\sphinxstylestrong{pi}}] \leavevmode
+\end{description}
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -4227,13 +4235,13 @@ Array to filter
 \item[{\sphinxstylestrong{dim}}] \leavevmode{[}str{]}
 Dimension along which to filter
 
-\item[{\sphinxstylestrong{method}}] \leavevmode{[}str{]}
-Filter method to use. Options are \sphinxcode{\sphinxupquote{"low pass"}}, \sphinxcode{\sphinxupquote{"high pass"}} or \sphinxcode{\sphinxupquote{"band pass"}}
+\item[{\sphinxstylestrong{method}}] \leavevmode{[}\{\sphinxcode{\sphinxupquote{"low pass"}}, \sphinxcode{\sphinxupquote{"high pass"}}, \sphinxcode{\sphinxupquote{"band pass"}}\}{]}
+Filter method to use
 
 \item[{\sphinxstylestrong{dx}}] \leavevmode{[}value{]}
 Define the spacing of the dimension.
 
-\item[{\sphinxstylestrong{xc}}] \leavevmode{[}value or array\_like (if method = ‘band pass’){]}
+\item[{\sphinxstylestrong{xc}}] \leavevmode{[}value or array\_like (if method = \sphinxcode{\sphinxupquote{'band pass'}}){]}
 Define the filter cut-off value(s), e.g. x\_cut = 5*dx
 
 \end{description}

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Utilities &mdash; doppyo  documentation</title>
+  <title>utils &mdash; doppyo  documentation</title>
   
 
   
@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/style.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Skill assessment" href="skill_doc.html" /> 
+    <link rel="prev" title="skill" href="skill_doc.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,10 +88,9 @@
 <li class="toctree-l1"><a class="reference internal" href="overview_doc.html">What is doppyo?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_doc.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules_doc.html">Modules</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="diagnostic_doc.html">Diagnostics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="skill_doc.html">Skill assessment</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagnostic_doc.html"><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="skill_doc.html"><code class="docutils literal notranslate"><span class="pre">skill</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">utils</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
 </ul>
 </li>
@@ -144,7 +143,7 @@
         
           <li><a href="modules_doc.html">Modules</a> &raquo;</li>
         
-      <li>Utilities</li>
+      <li><code class="docutils literal notranslate"><span class="pre">utils</span></code></li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -164,11 +163,8 @@
            <div itemprop="articleBody">
             
   <div class="section" id="module-utils">
-<span id="utilities"></span><h1>Utilities<a class="headerlink" href="#module-utils" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<span id="utils"></span><h1><code class="docutils literal notranslate"><span class="pre">utils</span></code><a class="headerlink" href="#module-utils" title="Permalink to this headline">¶</a></h1>
 <p>General support functions for the doppyo package</p>
-</div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -199,6 +195,36 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pi</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">constants</span><span class="p">()</span><span class="o">.</span><span class="n">pi</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>R_d</strong></dt><dd><p>Gas constant of dray air [J / (kg * degK)]</p>
+</dd>
+<dt><strong>R_v</strong></dt><dd><p>Gas constant of water vapor [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_vd</strong></dt><dd><p>Heat capacity of dry air at constant volume [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_pd</strong></dt><dd><p>Heat capacity of dry air at constant pressure [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_vv</strong></dt><dd><p>Heat capacity of water vapor at constant volume [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_pv</strong></dt><dd><p>Heat capacity of water vapor at constant pressure [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_l</strong></dt><dd><p>Heat capacity of liquid water [J / (kg * degK)]</p>
+</dd>
+<dt><strong>g</strong></dt><dd><p>Gravitational acceleration [m / s^2]</p>
+</dd>
+<dt><strong>R_earth</strong></dt><dd><p>Radius of the earth [m]</p>
+</dd>
+<dt><strong>Omega</strong></dt><dd><p>Earth rotation rate [rad/s]</p>
+</dd>
+<dt><strong>pi</strong></dt><dd><p>Ratio of a circle’s circumference to its diameter</p>
+</dd>
+<dt><strong>Ce</strong></dt><dd><p>Eady constant</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -1147,18 +1173,18 @@
 <div class="line">Author: Dougie Squire</div>
 <div class="line">Date: 15/09/2018</div>
 </div>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
+<dd class="field-odd"><dl>
 <dt><strong>da</strong><span class="classifier">xarray.DataArray</span></dt><dd><p>Array to filter</p>
 </dd>
 <dt><strong>dim</strong><span class="classifier">str</span></dt><dd><p>Dimension along which to filter</p>
 </dd>
-<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p>Filter method to use. Options are <code class="docutils literal notranslate"><span class="pre">&quot;low</span> <span class="pre">pass&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;high</span> <span class="pre">pass&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;band</span> <span class="pre">pass&quot;</span></code></p>
+<dt><strong>method</strong><span class="classifier">{<code class="docutils literal notranslate"><span class="pre">&quot;low</span> <span class="pre">pass&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;high</span> <span class="pre">pass&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;band</span> <span class="pre">pass&quot;</span></code>}</span></dt><dd><p>Filter method to use</p>
 </dd>
 <dt><strong>dx</strong><span class="classifier">value</span></dt><dd><p>Define the spacing of the dimension.</p>
 </dd>
-<dt><strong>xc</strong><span class="classifier">value or array_like (if method = ‘band pass’)</span></dt><dd><p>Define the filter cut-off value(s), e.g. x_cut = 5*dx</p>
+<dt><strong>xc</strong><span class="classifier">value or array_like (if method = <code class="docutils literal notranslate"><span class="pre">'band</span> <span class="pre">pass'</span></code>)</span></dt><dd><p>Define the filter cut-off value(s), e.g. x_cut = 5*dx</p>
 </dd>
 </dl>
 </dd>
@@ -1972,7 +1998,7 @@
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="skill_doc.html" class="btn btn-neutral float-left" title="Skill assessment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="skill_doc.html" class="btn btn-neutral float-left" title="skill" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

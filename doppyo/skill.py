@@ -1,6 +1,4 @@
 """
-    Overview
-    ========
     doppyo functions for assessing one dataset relative to another (usually model output to observation)
     
     In the following we refer to the datasets being assessed as comparison data (da_cmp) and reference
