@@ -1791,7 +1791,7 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
 
 
 # ===================================================================================================
-def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date'):
+def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', scaled=False):
     """
         Returns the Delsole and Tippett sign test over the given time period
         Author: Dougie Squire
@@ -1841,7 +1841,10 @@ def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date'):
     cmp1_diff = abs(da_cmp1 - da_ref)
     cmp2_diff = abs(da_cmp2 - da_ref)
     
-    sign_test = (1 * (cmp1_diff > cmp2_diff) - 1 * (cmp2_diff > cmp1_diff)).cumsum(time_dim)
+    if scaled:
+        sign_test = (cmp2_diff/cmp1_diff * (cmp1_diff < cmp2_diff) - cmp1_diff/cmp2_diff * (cmp2_diff < cmp1_diff)).cumsum(time_dim)
+    else:
+        sign_test = (1 * (cmp1_diff < cmp2_diff) - 1 * (cmp2_diff < cmp1_diff)).cumsum(time_dim)
     
     # Estimate 95% confidence interval -----
     confidence = da_ref[time_dim].copy()
