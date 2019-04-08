@@ -1847,10 +1847,10 @@ def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', scaled=False):
         sign_test = (1 * (cmp1_diff < cmp2_diff) - 1 * (cmp2_diff < cmp1_diff)).cumsum(time_dim)
     
     # Estimate 95% confidence interval -----
-    confidence = da_ref[time_dim].copy()
-    N = np.arange(1,len(confidence)+1)
+    notnan = 1*(cmp1_diff.notnull() & cmp2_diff.notnull())
+    N = notnan.cumsum(time_dim)
     # z_alpha is the value at which the standardized cumulative Gaussian distributed exceeds alpha
-    confidence.values = 1.95996496 * xr.ufuncs.sqrt(N) 
+    confidence = 1.95996496 * xr.ufuncs.sqrt(N) 
     
     return sign_test.rename('sign_test'), confidence.rename('confidence')
 
