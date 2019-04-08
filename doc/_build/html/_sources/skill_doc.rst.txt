@@ -1,0 +1,4 @@
+``skill``
+=========
+.. automodule:: skill
+   :members:

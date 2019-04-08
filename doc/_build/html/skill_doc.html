@@ -1,0 +1,1489 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>skill &mdash; doppyo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/style.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="utils" href="utils_doc.html" />
+    <link rel="prev" title="diagnostic" href="diagnostic_doc.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/doppyo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview_doc.html">What is doppyo?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_doc.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules_doc.html">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="diagnostic_doc.html"><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">skill</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils_doc.html"><code class="docutils literal notranslate"><span class="pre">utils</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">doppyo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules_doc.html">Modules</a> &raquo;</li>
+        
+      <li><code class="docutils literal notranslate"><span class="pre">skill</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/skill_doc.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-skill">
+<span id="skill"></span><h1><code class="docutils literal notranslate"><span class="pre">skill</span></code><a class="headerlink" href="#module-skill" title="Permalink to this headline">¶</a></h1>
+<p>doppyo functions for assessing one dataset relative to another (usually model output to observation)</p>
+<p>In the following we refer to the datasets being assessed as comparison data (da_cmp) and reference
+data (da_ref). We seek to assess the skill of the former relative to the latter. Usually, da_cmp
+and da_ref comprise model output (e.g. forecasts) and observations, respectively.</p>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="skill.rank_histogram">
+<code class="descclassname">skill.</code><code class="descname">rank_histogram</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em>, <em>norm=True</em>, <em>ensemble_dim='ensemble'</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.rank_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the rank histogram along the specified dimensions</p>
+<div class="line-block">
+<div class="line">Authors: Dougie Squire</div>
+<div class="line">Date: 01/11/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts). This data                     is used to rank the reference data. Must include an ensemble dimension</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations). This data is ranked within the                     comparison data. Dimensions should match those of da_cmp</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>The dimension(s) over which to compute the histogram of ranks</p>
+</dd>
+<dt><strong>norm</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, rank histograms are normalised by their enclosed area</p>
+</dd>
+<dt><strong>ensemble_dim</strong><span class="classifier">str, optional</span></dt><dd><p>The name of the ensemble dimension in da_cmp</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>rank_histogram</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object containing the rank histograms</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                              <span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                                                            <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">rank_histogram</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;rank_histogram&#39; (bins: 4, y: 3)&gt;</span>
+<span class="go">array([[1.      , 0.333333, 0.333333],</span>
+<span class="go">       [0.      , 0.333333, 0.333333],</span>
+<span class="go">       [0.      , 0.      , 0.333333],</span>
+<span class="go">       [0.      , 0.333333, 0.      ]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * bins     (bins) float64 1.0 2.0 3.0 4.0</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.rps">
+<code class="descclassname">skill.</code><code class="descname">rps</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>bins</em>, <em>over_dims=None</em>, <em>ensemble_dim='ensemble'</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.rps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ranked probability score</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>bins</strong><span class="classifier">array_like</span></dt><dd><p>Bins to compute the ranked probability score over</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to average the ranked probability score</p>
+</dd>
+<dt><strong>ensemble_dim</strong><span class="classifier">str, optional</span></dt><dd><p>Name of ensemble dimension</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>rps</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing ranked probability score</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                              <span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                                                            <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">rps</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;rps&#39; (y: 3)&gt;</span>
+<span class="go">array([0.36214 , 0.806584, 0.263374])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.reliability">
+<code class="descclassname">skill.</code><code class="descname">reliability</code><span class="sig-paren">(</span><em>cmp_likelihood</em>, <em>ref_logical</em>, <em>over_dims</em>, <em>probability_bins=array([0.</em>, <em>0.25</em>, <em>0.5</em>, <em>0.75</em>, <em>1.  ])</em>, <em>nans_as_zeros=True</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.reliability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the relative frequency of an event for a range of probability threshold bins                 given the comparison likelihood and reference logical event data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/05/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cmp_likelihood</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood =                     (da_cmp &gt; 1).mean(dim=’ensemble’))</p>
+</dd>
+<dt><strong>ref_logical</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing logical (True/False) outcomes of the event from the reference data (e.g.                    ref_logical = (da_ref &gt; 1))</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimensions over which to compute the reliability</p>
+</dd>
+<dt><strong>probability_bins</strong><span class="classifier">array_like, optional</span></dt><dd><p>Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1</p>
+</dd>
+<dt><strong>nans_as_zeros</strong><span class="classifier">bool, optional</span></dt><dd><p>Replace output nans (resulting fron bins with no data) with zeros</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>reliability</strong><span class="classifier">xarray DataSet</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">relative_freq; the relative frequency of occurence for each probability threshold bin</div>
+<div class="line">cmp_number; the number of instances that the comparison data fall within each probability                     threshold bin</div>
+<div class="line">ref_occur; the number of instances that the reference data is True when the comparison data                     falls within each probability threshold bin</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p>To do</p>
+<ul class="simple">
+<li><p>Currently using a for-loop to process each probability bin separately. Is it possible                 to remove this loop?</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                              <span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cmp_likelihood</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_cmp</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_logical</span> <span class="o">=</span> <span class="n">da_ref</span> <span class="o">&gt;</span> <span class="mf">0.1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">reliability</span><span class="p">(</span><span class="n">cmp_likelihood</span><span class="p">,</span> <span class="n">ref_logical</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:          (probability_bin: 5, y: 3)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y                (y) int64 0 1 2</span>
+<span class="go">  * probability_bin  (probability_bin) float64 0.0 0.25 0.5 0.75 1.0</span>
+<span class="go">Data variables:</span>
+<span class="go">    relative_freq    (probability_bin, y) float64 0.0 0.5 0.0 ... 1.0 0.0 0.0</span>
+<span class="go">    cmp_number       (probability_bin, y) int64 0 2 1 2 0 1 0 0 0 0 1 1 1 0 0</span>
+<span class="go">    ref_occur        (probability_bin, y) int64 0 1 0 1 0 0 0 0 0 0 0 1 1 0 0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.roc">
+<code class="descclassname">skill.</code><code class="descname">roc</code><span class="sig-paren">(</span><em>cmp_likelihood</em>, <em>ref_logical</em>, <em>over_dims</em>, <em>probability_bins=array([0.</em>, <em>0.25</em>, <em>0.5</em>, <em>0.75</em>, <em>1.  ])</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.roc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the relative operating characteristic of an event for a range of probability                 threshold bins given the comparison likelihood and reference logical event data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/05/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cmp_likelihood</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood =                     (da_cmp &gt; 1).mean(dim=’ensemble’))</p>
+</dd>
+<dt><strong>ref_logical</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing logical (True/False) outcomes of the event from the reference data (e.g.                    ref_logical = (da_ref &gt; 1))</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimensions over which to compute the relative operating characteristic</p>
+</dd>
+<dt><strong>probability_bins</strong><span class="classifier">array_like, optional</span></dt><dd><p>Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>roc</strong><span class="classifier">xarray DataSet</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">hit_rate; the hit rate in each probability bin</div>
+<div class="line">false_alarm_rate; the false alarm rate in each probability bin</div>
+<div class="line">area; the area under the roc curve (false alarm rate vs hit rate)</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p>To do</p>
+<ul class="simple">
+<li><p>Currently using a for-loop to process each probability bin separately. Is it possible                 to remove this loop?</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                              <span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cmp_likelihood</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_cmp</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_logical</span> <span class="o">=</span> <span class="n">da_ref</span> <span class="o">&gt;</span> <span class="mf">0.1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">roc</span><span class="p">(</span><span class="n">cmp_likelihood</span><span class="p">,</span> <span class="n">ref_logical</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:           (probability_bin: 5, y: 3)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y                 (y) int64 0 1 2</span>
+<span class="go">  * probability_bin   (probability_bin) float64 0.0 0.25 0.5 0.75 1.0</span>
+<span class="go">Data variables:</span>
+<span class="go">    hit_rate          (probability_bin, y) float64 1.0 1.0 1.0 ... nan 0.0 0.0</span>
+<span class="go">    false_alarm_rate  (probability_bin, y) float64 1.0 1.0 1.0 ... 0.0 0.0 0.0</span>
+<span class="go">    area              (y) float64 0.0 0.0 0.0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.discrimination">
+<code class="descclassname">skill.</code><code class="descname">discrimination</code><span class="sig-paren">(</span><em>cmp_likelihood</em>, <em>ref_logical</em>, <em>over_dims</em>, <em>probability_bins=array([0.</em>, <em>0.25</em>, <em>0.5</em>, <em>0.75</em>, <em>1.  ])</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.discrimination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the discrimination diagram of an event; the histogram of comparison likelihood when                 references indicate the event has occurred and has not occurred</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/05/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cmp_likelihood</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood =                     (da_cmp &gt; 1).mean(dim=’ensemble’))</p>
+</dd>
+<dt><strong>ref_logical</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing logical (True/False) outcomes of the event from the reference data (e.g.                    ref_logical = (da_ref &gt; 1))</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimensions over which to compute the discrimantion histograms</p>
+</dd>
+<dt><strong>probability_bins</strong><span class="classifier">array_like, optional</span></dt><dd><p>Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>discrimination</strong><span class="classifier">xarray DataSet</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">hist_event; histogram of comparison likelihoods when reference data indicates that the                     event has occurred</div>
+<div class="line">hist_no_event; histogram of comparison likelihoods when reference data indicates that the                     event has not occurred</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p>To do</p>
+<ul class="simple">
+<li><p>Currently using a for-loop to process each probability bin separately. Is it possible                 to remove this loop?</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                              <span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cmp_likelihood</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_cmp</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_logical</span> <span class="o">=</span> <span class="n">da_ref</span> <span class="o">&gt;</span> <span class="mf">0.1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">discrimination</span><span class="p">(</span><span class="n">cmp_likelihood</span><span class="p">,</span> <span class="n">ref_logical</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:        (bins: 5, y: 3)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * bins           (bins) float64 0.0 0.25 0.5 0.75 1.0</span>
+<span class="go">  * y              (y) int64 0 1 2</span>
+<span class="go">Data variables:</span>
+<span class="go">    hist_event     (bins, y) float64 0.0 0.0 nan 0.5 1.0 ... 0.0 nan 0.0 0.0 nan</span>
+<span class="go">    hist_no_event  (bins, y) float64 0.0 0.0 0.0 1.0 ... 0.3333 0.0 0.0 0.3333</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.Brier_score">
+<code class="descclassname">skill.</code><code class="descname">Brier_score</code><span class="sig-paren">(</span><em>cmp_likelihood</em>, <em>ref_logical</em>, <em>over_dims</em>, <em>probability_bins=None</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.Brier_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the Brier score(s) of an event given the comparison likelihood and reference logical                 event data. When comparison probability bins are also provided, this function also computes                 the reliability, resolution and uncertainty components of the Brier score, where Brier =                 reliability - resolution + uncertainty</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cmp_likelihood</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood =                     (da_cmp &gt; 1).mean(dim=’ensemble’))</p>
+</dd>
+<dt><strong>ref_logical</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing logical (True/False) outcomes of the event from the reference data (e.g.                    ref_logical = (da_ref &gt; 1))</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimensions over which to compute the Brier score</p>
+</dd>
+<dt><strong>probability_bins</strong><span class="classifier">array_like, optional</span></dt><dd><p>Probability threshold bins. If specified, this function also computes the reliability,                     resolution and uncertainty components of the Brier score. Defaults to None</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Brier</strong><span class="classifier">xarray DataArray or xarray DataSet</span></dt><dd><p>If probability_bins = None, returns a DataArray containing Brier scores. Otherwise returns                     a DataSet containing the reliability, resolution and uncertainty components of the Brier                     score, where Brier = reliability - resolution + uncertainty</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p>To do</p>
+<ul class="simple">
+<li><p>Currently using a for-loop to process each probability bin separately. Is it possible                 to remove this loop?</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                              <span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cmp_likelihood</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_cmp</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ensemble&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_logical</span> <span class="o">=</span> <span class="n">da_ref</span> <span class="o">&gt;</span> <span class="mf">0.1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">Brier_score</span><span class="p">(</span><span class="n">cmp_likelihood</span><span class="p">,</span> <span class="n">ref_logical</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (y: 3)&gt;</span>
+<span class="go">array([0.148148, 0.444444, 0.222222])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.contingency">
+<code class="descclassname">skill.</code><code class="descname">contingency</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>category_edges_cmp</em>, <em>category_edges_ref</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.contingency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the contingency table between da_cmp and da_ref for given categories</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>category_edges_cmp</strong><span class="classifier">array_like</span></dt><dd><p>Bin edges for categorising da_cmp</p>
+</dd>
+<dt><strong>category_edges_ref</strong><span class="classifier">array_like</span></dt><dd><p>Bin edges for categorising da_ref</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the contingency table</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Contingency table of input data</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="go">doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, </span>
+<span class="gp">... </span>                     <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">])</span>
+<span class="go">&lt;xarray.DataArray &#39;contingency&#39; (comparison_category: 4, reference_category: 4)&gt;</span>
+<span class="go">array([[0, 1, 0, 1],</span>
+<span class="go">       [1, 0, 1, 0],</span>
+<span class="go">       [0, 2, 1, 0],</span>
+<span class="go">       [0, 0, 0, 0]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * comparison_category  (comparison_category) int64 1 2 3 4</span>
+<span class="go">  * reference_category   (reference_category) int64 1 2 3 4</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.accuracy_score">
+<code class="descclassname">skill.</code><code class="descname">accuracy_score</code><span class="sig-paren">(</span><em>contingency</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.accuracy_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the accuracy score given a contingency table</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>accuracy_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the accuracy scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;accuracy_score&#39; (x: 3)&gt;</span>
+<span class="go">array([0.      , 0.333333, 0.333333])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.Heidke_score">
+<code class="descclassname">skill.</code><code class="descname">Heidke_score</code><span class="sig-paren">(</span><em>contingency</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.Heidke_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Heidke skill score given a contingency table</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Heidke_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the Heidke scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">Heidke_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;Heidke_score&#39; (x: 3)&gt;</span>
+<span class="go">array([-0.285714,  0.      ,  0.142857])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 22</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.Peirce_score">
+<code class="descclassname">skill.</code><code class="descname">Peirce_score</code><span class="sig-paren">(</span><em>contingency</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.Peirce_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Peirce score (also called Hanssen and Kuipers discriminant) given a contingency                 table</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Peirce_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the Peirce scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">Peirce_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;Peirce_score&#39; (x: 3)&gt;</span>
+<span class="go">array([-0.25,  0.  , -0.5 ])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.Gerrity_score">
+<code class="descclassname">skill.</code><code class="descname">Gerrity_score</code><span class="sig-paren">(</span><em>contingency</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.Gerrity_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Gerrity equitable score given a contingency table</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Gerrity_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the Gerrity scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p>To do</p>
+<ul class="simple">
+<li><p>Currently computes the Gerrity scoring matrix using nested for-loops. Is it possible                 to remove these?</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">Gerrity_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;Gerrity_score&#39; (x: 3)&gt;</span>
+<span class="go">array([-2.777778e-01,  0.000000e+00, -5.551115e-17])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.bias_score">
+<code class="descclassname">skill.</code><code class="descname">bias_score</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.bias_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the bias score given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>yes_category</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>bias_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the bias scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">bias_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;bias_score&#39; (x: 3)&gt;</span>
+<span class="go">array([0.5     , 0.333333, 1.      ])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.hit_rate">
+<code class="descclassname">skill.</code><code class="descname">hit_rate</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.hit_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hit rate (probability of detection) given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>yes_category</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>hit_rate</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the hit rates</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">hit_rate</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;hit_rate&#39; (x: 3)&gt;</span>
+<span class="go">array([ 0., nan,  1.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.false_alarm_ratio">
+<code class="descclassname">skill.</code><code class="descname">false_alarm_ratio</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.false_alarm_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the false alarm ratio given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>yes_category</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>false_alarm_ratio</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the false alarm ratios</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">false_alarm_ratio</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;false_alarm_ratio&#39; (x: 3)&gt;</span>
+<span class="go">array([nan, nan,  0.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.false_alarm_rate">
+<code class="descclassname">skill.</code><code class="descname">false_alarm_rate</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.false_alarm_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the false alarm rate given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>yes_category</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>false_alarm_rate</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the false alarm rates</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">false_alarm_rate</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;false_alarm_rate&#39; (x: 3)&gt;</span>
+<span class="go">array([ 0.,  0., nan])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.success_ratio">
+<code class="descclassname">skill.</code><code class="descname">success_ratio</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.success_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the success ratio given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>success_ratio</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>success_ratio</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the success ratios</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">success_ratio</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;success_ratio&#39; (x: 3)&gt;</span>
+<span class="go">array([nan, nan,  1.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.threat_score">
+<code class="descclassname">skill.</code><code class="descname">threat_score</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.threat_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the threat score given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>success_ratio</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>threat_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the threat scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">threat_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;threat_score&#39; (x: 3)&gt;</span>
+<span class="go">array([0. , 0. , 0.5])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.equit_threat_score">
+<code class="descclassname">skill.</code><code class="descname">equit_threat_score</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.equit_threat_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the equitable threat score given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>success_ratio</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>equit_threat_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the equitable threat scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">equit_threat_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;equit_threat_score&#39; (x: 3)&gt;</span>
+<span class="go">array([0., 0., 0.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.odds_ratio">
+<code class="descclassname">skill.</code><code class="descname">odds_ratio</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.odds_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the odds ratio given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>success_ratio</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>odds_ratio</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the equitable odds ratios</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">odds_ratio</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;odds_ratio&#39; (x: 3)&gt;</span>
+<span class="go">array([ 0.,  0., nan])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.odds_ratio_skill_score">
+<code class="descclassname">skill.</code><code class="descname">odds_ratio_skill_score</code><span class="sig-paren">(</span><em>contingency</em>, <em>yes_category=2</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.odds_ratio_skill_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the odds ratio skill score given dichotomous contingency data</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 12/05/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>contingency</strong><span class="classifier">xarray DataArray</span></dt><dd><p>A 2 category contingency table of the form output from doppyo.skill.contingency</p>
+</dd>
+<dt><strong>success_ratio</strong><span class="classifier">value, optional</span></dt><dd><p>The coordinate value of the category corresponding to ‘yes’</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>odds_ratio_skill_score</strong><span class="classifier">xarray DataArray</span></dt><dd><p>An array containing the equitable odds ratio skill scores</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_cmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">category_edges_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contingency</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">contingency</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">category_edges_cmp</span><span class="p">,</span> 
+<span class="gp">... </span>                                       <span class="n">category_edges_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">odds_ratio_skill_score</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;odds_ratio_skill&#39; (x: 3)&gt;</span>
+<span class="go">array([-1., -1., nan])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.mean_additive_bias">
+<code class="descclassname">skill.</code><code class="descname">mean_additive_bias</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.mean_additive_bias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the additive bias between comparison and reference datasets</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 28/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the mean additive bias</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mean_additive_bias</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the mean additive biases</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">mean_additive_bias</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;mean_additive_bias&#39; (y: 3)&gt;</span>
+<span class="go">array([0.328462, 0.172263, 0.402438])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.mean_multiplicative_bias">
+<code class="descclassname">skill.</code><code class="descname">mean_multiplicative_bias</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.mean_multiplicative_bias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the multiplicative bias between comparison and reference datasets</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 28/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the mean multiplicative bias</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mean_multiplicative_bias</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the mean multiplicative biases</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">mean_multiplicative_bias</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;mean_multiplicative_bias&#39; (y: 3)&gt;</span>
+<span class="go">array([ 2.108882,  4.356835, -0.83234 ])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.mean_absolute_error">
+<code class="descclassname">skill.</code><code class="descname">mean_absolute_error</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.mean_absolute_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the mean absolute error between comparison and reference datasets</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 28/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the mean absolute error</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mean_absolute_error</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the mean absolute error</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;mean_absolute_error&#39; (y: 3)&gt;</span>
+<span class="go">array([1.030629, 1.265555, 0.770711])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.mean_squared_error">
+<code class="descclassname">skill.</code><code class="descname">mean_squared_error</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.mean_squared_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the mean sqaured error between comparison and reference datasets</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 28/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the mean squared error</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mean_squared_error</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the mean squared error</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;mean_squared_error&#39; (y: 3)&gt;</span>
+<span class="go">array([1.257412, 1.725008, 0.721863])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.rms_error">
+<code class="descclassname">skill.</code><code class="descname">rms_error</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.rms_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the root mean sqaured error between comparison and reference datasets</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 28/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the root mean squared error</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>rms_error</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the root mean squared error</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">rms_error</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;root_mean_squared_error&#39; (y: 3)&gt;</span>
+<span class="go">array([1.964753, 1.426566, 1.20612 ])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.Pearson_corrcoeff">
+<code class="descclassname">skill.</code><code class="descname">Pearson_corrcoeff</code><span class="sig-paren">(</span><em>da_cmp</em>, <em>da_ref</em>, <em>over_dims</em>, <em>subtract_local_mean=True</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.Pearson_corrcoeff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Pearson correlation coefficients over the specified dimensions.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 28/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to reference dataset (usually forecasts)</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing reference data (usually observations)</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the correlation coefficients</p>
+</dd>
+<dt><strong>subtract_local_mean</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, this function will subtract the mean computed over over_dims. Otherwise, no mean                    field is removed prior to computing the correlation</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Pearson_corrcoeff</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the Pearson correlation coefficients</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">If any dimensions in over_dims do not exist in either da_cmp or da_ref, the correlation is                 computed over all dimensions in over_dims that appear in both da_cmp and da_ref, and then                 averaged over any remaining dimensions in over_dims</div>
+<div class="line">See <a class="reference external" href="http://www.cawcr.gov.au/projects/verification/">http://www.cawcr.gov.au/projects/verification/</a></div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da_cmp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">da_ref</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                      <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">skill</span><span class="o">.</span><span class="n">Pearson_corrcoeff</span><span class="p">(</span><span class="n">da_cmp</span><span class="p">,</span> <span class="n">da_ref</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;Pearson_corrcoeff&#39; (y: 3)&gt;</span>
+<span class="go">array([-0.040584, -0.037983, -0.020941])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="skill.sign_test">
+<code class="descclassname">skill.</code><code class="descname">sign_test</code><span class="sig-paren">(</span><em>da_cmp1</em>, <em>da_cmp2</em>, <em>da_ref</em>, <em>time_dim='init_date'</em><span class="sig-paren">)</span><a class="headerlink" href="#skill.sign_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Delsole and Tippett sign test over the given time period</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 26/03/2019</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da_cmp1</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to da_cmp1</p>
+</dd>
+<dt><strong>da_cmp2</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to be compared to da_cmp2</p>
+</dd>
+<dt><strong>da_ref</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing data to use as reference</p>
+</dd>
+<dt><strong>time_dim</strong><span class="classifier">str, optional</span></dt><dd><p>Name of dimension over which to compute the random walk</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>sign_test</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the results of the sign test</p>
+</dd>
+<dt><strong>confidence</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing 95% confidence bounds</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>See Delsole and Tippett 2016 <cite>Forecast Comparison Based on Random Walks</cite></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">o</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">walk</span><span class="p">,</span> <span class="n">confidence</span> <span class="o">=</span> <span class="n">sign_test</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">time_dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">walk</span>
+<span class="go">&lt;xarray.DataArray (t: 3, x: 3)&gt;</span>
+<span class="go">array([[-1, -1, -1],</span>
+<span class="go">       [ 0,  0, -2],</span>
+<span class="go">       [-1, -1, -3]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * t        (t) int64 0 1 2</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="utils_doc.html" class="btn btn-neutral float-right" title="utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="diagnostic_doc.html" class="btn btn-neutral float-left" title="diagnostic" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Dougie Squire
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

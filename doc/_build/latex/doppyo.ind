@@ -1,0 +1,168 @@
+\begin{sphinxtheindex}
+\let\bigletter\sphinxstyleindexlettergroup
+\let\spxpagem \sphinxstyleindexpagemain
+\let\spxentry \sphinxstyleindexentry
+\let\spxextra \sphinxstyleindexextra
+
+  \bigletter A
+  \item \spxentry{accuracy\_score()}\spxextra{in module skill}, \hyperpage{35}
+  \item \spxentry{add()}\spxextra{in module utils}, \hyperpage{59}
+  \item \spxentry{anomalize()}\spxextra{in module utils}, \hyperpage{67}
+  \item \spxentry{atmos\_energy\_cycle()}\spxextra{in module diagnostic}, \hyperpage{18}
+  \item \spxentry{average()}\spxextra{in module utils}, \hyperpage{61}
+
+  \indexspace
+  \bigletter B
+  \item \spxentry{bias\_score()}\spxextra{in module skill}, \hyperpage{37}
+  \item \spxentry{Brier\_score()}\spxextra{in module skill}, \hyperpage{33}
+  \item \spxentry{Brunt\_Vaisala()}\spxextra{in module diagnostic}, \hyperpage{11}
+
+  \indexspace
+  \bigletter C
+  \item \spxentry{cdf()}\spxextra{in module utils}, \hyperpage{52}
+  \item \spxentry{cftime\_to\_datetime64()}\spxextra{in module utils}, \hyperpage{73}
+  \item \spxentry{concat\_times()}\spxextra{in module utils}, \hyperpage{72}
+  \item \spxentry{constants}\spxextra{class in utils}, \hyperpage{49}
+  \item \spxentry{contingency()}\spxextra{in module skill}, \hyperpage{34}
+
+  \indexspace
+  \bigletter D
+  \item \spxentry{datetime\_to\_leadtime()}\spxextra{in module utils}, \hyperpage{68}
+  \item \spxentry{diagnostic}\spxextra{module}, \hyperpage{5}
+  \item \spxentry{differentiate\_wrt()}\spxextra{in module utils}, \hyperpage{57}
+  \item \spxentry{digitize()}\spxextra{in module utils}, \hyperpage{51}
+  \item \spxentry{discrimination()}\spxextra{in module skill}, \hyperpage{32}
+  \item \spxentry{divergent()}\spxextra{in module diagnostic}, \hyperpage{8}
+  \item \spxentry{divide()}\spxextra{in module utils}, \hyperpage{61}
+  \item \spxentry{dmi()}\spxextra{in module diagnostic}, \hyperpage{26}
+
+  \indexspace
+  \bigletter E
+  \item \spxentry{Eady\_growth\_rate()}\spxextra{in module diagnostic}, \hyperpage{13}
+  \item \spxentry{emi()}\spxextra{in module diagnostic}, \hyperpage{26}
+  \item \spxentry{eofs()}\spxextra{in module diagnostic}, \hyperpage{16}
+  \item \spxentry{equit\_threat\_score()}\spxextra{in module skill}, \hyperpage{42}
+
+  \indexspace
+  \bigletter F
+  \item \spxentry{false\_alarm\_rate()}\spxextra{in module skill}, \hyperpage{40}
+  \item \spxentry{false\_alarm\_ratio()}\spxextra{in module skill}, \hyperpage{39}
+  \item \spxentry{fft()}\spxextra{in module utils}, \hyperpage{62}
+  \item \spxentry{fftfilt()}\spxextra{in module utils}, \hyperpage{64}
+
+  \indexspace
+  \bigletter G
+  \item \spxentry{Gaussian\_cdf()}\spxextra{in module utils}, \hyperpage{54}
+  \item \spxentry{Gaussian\_pdf()}\spxextra{in module utils}, \hyperpage{53}
+  \item \spxentry{Gerrity\_score()}\spxextra{in module skill}, \hyperpage{37}
+  \item \spxentry{get\_bin\_edges()}\spxextra{in module utils}, \hyperpage{55}
+  \item \spxentry{get\_depth\_name()}\spxextra{in module utils}, \hyperpage{75}
+  \item \spxentry{get\_lat\_name()}\spxextra{in module utils}, \hyperpage{75}
+  \item \spxentry{get\_latlon\_region()}\spxextra{in module utils}, \hyperpage{70}
+  \item \spxentry{get\_level\_name()}\spxextra{in module utils}, \hyperpage{76}
+  \item \spxentry{get\_lon\_name()}\spxextra{in module utils}, \hyperpage{74}
+  \item \spxentry{get\_other\_dims()}\spxextra{in module utils}, \hyperpage{73}
+  \item \spxentry{get\_plevel\_name()}\spxextra{in module utils}, \hyperpage{76}
+  \item \spxentry{get\_time\_name()}\spxextra{in module utils}, \hyperpage{74}
+
+  \indexspace
+  \bigletter H
+  \item \spxentry{Heidke\_score()}\spxextra{in module skill}, \hyperpage{35}
+  \item \spxentry{histogram()}\spxextra{in module utils}, \hyperpage{54}
+  \item \spxentry{hit\_rate()}\spxextra{in module skill}, \hyperpage{38}
+
+  \indexspace
+  \bigletter I
+  \item \spxentry{ifft()}\spxextra{in module utils}, \hyperpage{63}
+  \item \spxentry{inband\_variance()}\spxextra{in module diagnostic}, \hyperpage{23}
+  \item \spxentry{integrate()}\spxextra{in module utils}, \hyperpage{58}
+  \item \spxentry{isosurface()}\spxextra{in module utils}, \hyperpage{65}
+  \item \spxentry{isotherm\_depth()}\spxextra{in module diagnostic}, \hyperpage{21}
+
+  \indexspace
+  \bigletter K
+  \item \spxentry{kurtosis()}\spxextra{in module utils}, \hyperpage{50}
+
+  \indexspace
+  \bigletter L
+  \item \spxentry{latlon\_average()}\spxextra{in module utils}, \hyperpage{70}
+  \item \spxentry{leadtime\_to\_datetime()}\spxextra{in module utils}, \hyperpage{68}
+  \item \spxentry{load\_mean\_climatology()}\spxextra{in module utils}, \hyperpage{66}
+
+  \indexspace
+  \bigletter M
+  \item \spxentry{mean\_absolute\_error()}\spxextra{in module skill}, \hyperpage{45}
+  \item \spxentry{mean\_additive\_bias()}\spxextra{in module skill}, \hyperpage{44}
+  \item \spxentry{mean\_merid\_mass\_streamfunction()}\spxextra{in module diagnostic}, 
+		\hyperpage{17}
+  \item \spxentry{mean\_multiplicative\_bias()}\spxextra{in module skill}, \hyperpage{44}
+  \item \spxentry{mean\_squared\_error()}\spxextra{in module skill}, \hyperpage{46}
+  \item \spxentry{multiply()}\spxextra{in module utils}, \hyperpage{60}
+
+  \indexspace
+  \bigletter N
+  \item \spxentry{nino3()}\spxextra{in module diagnostic}, \hyperpage{24}
+  \item \spxentry{nino34()}\spxextra{in module diagnostic}, \hyperpage{25}
+  \item \spxentry{nino4()}\spxextra{in module diagnostic}, \hyperpage{25}
+
+  \indexspace
+  \bigletter O
+  \item \spxentry{odds\_ratio()}\spxextra{in module skill}, \hyperpage{42}
+  \item \spxentry{odds\_ratio\_skill\_score()}\spxextra{in module skill}, \hyperpage{43}
+
+  \indexspace
+  \bigletter P
+  \item \spxentry{pdf()}\spxextra{in module utils}, \hyperpage{52}
+  \item \spxentry{Pearson\_corrcoeff()}\spxextra{in module skill}, \hyperpage{47}
+  \item \spxentry{Peirce\_score()}\spxextra{in module skill}, \hyperpage{36}
+  \item \spxentry{polyfit()}\spxextra{in module utils}, \hyperpage{55}
+  \item \spxentry{polyval()}\spxextra{in module utils}, \hyperpage{56}
+  \item \spxentry{prune()}\spxextra{in module utils}, \hyperpage{72}
+  \item \spxentry{pwelch()}\spxextra{in module diagnostic}, \hyperpage{22}
+
+  \indexspace
+  \bigletter R
+  \item \spxentry{rank\_histogram()}\spxextra{in module skill}, \hyperpage{28}
+  \item \spxentry{reliability()}\spxextra{in module skill}, \hyperpage{30}
+  \item \spxentry{repeat\_datapoint()}\spxextra{in module utils}, \hyperpage{69}
+  \item \spxentry{rms\_error()}\spxextra{in module skill}, \hyperpage{46}
+  \item \spxentry{roc()}\spxextra{in module skill}, \hyperpage{31}
+  \item \spxentry{Rossby\_wave\_number()}\spxextra{in module diagnostic}, \hyperpage{12}
+  \item \spxentry{Rossby\_wave\_source()}\spxextra{in module diagnostic}, \hyperpage{7}
+  \item \spxentry{rps()}\spxextra{in module skill}, \hyperpage{29}
+
+  \indexspace
+  \bigletter S
+  \item \spxentry{sign\_test()}\spxextra{in module skill}, \hyperpage{48}
+  \item \spxentry{skewness()}\spxextra{in module utils}, \hyperpage{50}
+  \item \spxentry{skill}\spxextra{module}, \hyperpage{28}
+  \item \spxentry{soi()}\spxextra{in module diagnostic}, \hyperpage{27}
+  \item \spxentry{stack\_by\_init\_date()}\spxextra{in module utils}, \hyperpage{71}
+  \item \spxentry{stream\_function()}\spxextra{in module diagnostic}, \hyperpage{6}
+  \item \spxentry{subtract()}\spxextra{in module utils}, \hyperpage{60}
+  \item \spxentry{success\_ratio()}\spxextra{in module skill}, \hyperpage{40}
+
+  \indexspace
+  \bigletter T
+  \item \spxentry{thermal\_wind()}\spxextra{in module diagnostic}, \hyperpage{15}
+  \item \spxentry{threat\_score()}\spxextra{in module skill}, \hyperpage{41}
+  \item \spxentry{timer}\spxextra{class in utils}, \hyperpage{49}
+  \item \spxentry{trunc\_time()}\spxextra{in module utils}, \hyperpage{67}
+
+  \indexspace
+  \bigletter U
+  \item \spxentry{utils}\spxextra{module}, \hyperpage{49}
+
+  \indexspace
+  \bigletter V
+  \item \spxentry{velocity\_potential()}\spxextra{in module diagnostic}, \hyperpage{5}
+
+  \indexspace
+  \bigletter W
+  \item \spxentry{wave\_activity\_flux()}\spxextra{in module diagnostic}, \hyperpage{9}
+
+  \indexspace
+  \bigletter X
+  \item \spxentry{xy\_from\_lonlat()}\spxextra{in module utils}, \hyperpage{58}
+
+\end{sphinxtheindex}

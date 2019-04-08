@@ -1,0 +1,2039 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>utils &mdash; doppyo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/style.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="skill" href="skill_doc.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/doppyo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview_doc.html">What is doppyo?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_doc.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules_doc.html">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="diagnostic_doc.html"><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="skill_doc.html"><code class="docutils literal notranslate"><span class="pre">skill</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">utils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">doppyo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules_doc.html">Modules</a> &raquo;</li>
+        
+      <li><code class="docutils literal notranslate"><span class="pre">utils</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/utils_doc.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-utils">
+<span id="utils"></span><h1><code class="docutils literal notranslate"><span class="pre">utils</span></code><a class="headerlink" href="#module-utils" title="Permalink to this headline">¶</a></h1>
+<p>General support functions for the doppyo package</p>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="utils.timer">
+<em class="property">class </em><code class="descclassname">utils.</code><code class="descname">timer</code><span class="sig-paren">(</span><em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.timer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reports time taken to complete code snippets.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 14/02/2018</div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">timer</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="go">Elapsed: 4.5299530029296875e-06 sec</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="utils.constants">
+<em class="property">class </em><code class="descclassname">utils.</code><code class="descname">constants</code><a class="headerlink" href="#utils.constants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns commonly used constants.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 14/02/2018</div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pi</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">constants</span><span class="p">()</span><span class="o">.</span><span class="n">pi</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>R_d</strong></dt><dd><p>Gas constant of dray air [J / (kg * degK)]</p>
+</dd>
+<dt><strong>R_v</strong></dt><dd><p>Gas constant of water vapor [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_vd</strong></dt><dd><p>Heat capacity of dry air at constant volume [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_pd</strong></dt><dd><p>Heat capacity of dry air at constant pressure [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_vv</strong></dt><dd><p>Heat capacity of water vapor at constant volume [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_pv</strong></dt><dd><p>Heat capacity of water vapor at constant pressure [J / (kg * degK)]</p>
+</dd>
+<dt><strong>C_l</strong></dt><dd><p>Heat capacity of liquid water [J / (kg * degK)]</p>
+</dd>
+<dt><strong>g</strong></dt><dd><p>Gravitational acceleration [m / s^2]</p>
+</dd>
+<dt><strong>R_earth</strong></dt><dd><p>Radius of the earth [m]</p>
+</dd>
+<dt><strong>Omega</strong></dt><dd><p>Earth rotation rate [rad/s]</p>
+</dd>
+<dt><strong>pi</strong></dt><dd><p>Ratio of a circle’s circumference to its diameter</p>
+</dd>
+<dt><strong>Ce</strong></dt><dd><p>Eady constant</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.skewness">
+<code class="descclassname">utils.</code><code class="descname">skewness</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.skewness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the skewness along dimension dim</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 20/08/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values for which to compute skewness</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimension(s) over which to compute the skewness</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>skewness</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object with skewness applied to its data and the indicated dimension(s) removed</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">]),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span>
+<span class="go">&lt;xarray.DataArray (x: 2, y: 3)&gt;</span>
+<span class="go">array([[0, 1, 2],</span>
+<span class="go">       [3, 4, 5]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) &lt;U1 &#39;a&#39; &#39;b&#39;</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">skewness</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (y: 3)&gt;</span>
+<span class="go">array([0., 0., 0.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.kurtosis">
+<code class="descclassname">utils.</code><code class="descname">kurtosis</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.kurtosis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the kurtosis along dimension dim</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 20/08/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values for which to compute kurtosis</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimension(s) over which to compute the kurtosis</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>kurtosis</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object with kurtosis applied to its data and the indicated dimension(s) removed</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">]),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span>
+<span class="go">&lt;xarray.DataArray (x: 2, y: 3)&gt;</span>
+<span class="go">array([[0, 1, 2],</span>
+<span class="go">       [3, 4, 5]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) &lt;U1 &#39;a&#39; &#39;b&#39;</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">kurtosis</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (y: 3)&gt;</span>
+<span class="go">array([1., 1., 1.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.digitize">
+<code class="descclassname">utils.</code><code class="descname">digitize</code><span class="sig-paren">(</span><em>da</em>, <em>bin_edges</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.digitize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the indices of the bins to which each value in input array belongs.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 31/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values to digitize</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">array_like</span></dt><dd><p>Array of bin edges. Output indices, i, are such that bin_edges[i-1] &lt;= x &lt; bin_edges[i]</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>digitized</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object of indices</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">40</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">20</span><span class="p">)),</span> 
+<span class="gp">... </span>                                                          <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">40</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;digitized&#39; (x: 20, y: 40)&gt;</span>
+<span class="go">array([[ 7,  6,  4, ...,  5,  6,  7],</span>
+<span class="go">       [ 5, 11,  2, ...,  7,  6,  0],</span>
+<span class="go">       [ 9,  3,  2, ...,  6,  5,  6],</span>
+<span class="go">       ...,</span>
+<span class="go">       [11, 10,  8, ...,  6,  5,  2],</span>
+<span class="go">       [ 3, 10,  3, ...,  8,  7,  7],</span>
+<span class="go">       [ 5,  4,  9, ...,  5,  5,  7]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19</span>
+<span class="go">  * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.pdf">
+<code class="descclassname">utils.</code><code class="descname">pdf</code><span class="sig-paren">(</span><em>da</em>, <em>bin_edges</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.pdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the probability distribution function along the specified dimensions</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 01/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values used to compute the pdf</p>
+</dd>
+<dt><strong>bin_edges</strong><span class="classifier">array_like</span></dt><dd><p>The bin edges, including the rightmost edge</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimension(s) over which to compute the pdf</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>pdf</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object containing pdf</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function uses <code class="docutils literal notranslate"><span class="pre">doppyo.utils.histogram()</span></code> which uses <code class="docutils literal notranslate"><span class="pre">xr.groupby_bins</span></code> when over_dims is a subset                 of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize                 groupby operations in xarray, see <a class="reference external" href="https://github.com/pydata/xarray/issues/585">https://github.com/pydata/xarray/issues/585</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">bin_edges</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (bins: 10, y: 100)&gt;</span>
+<span class="go">array([[0.069588, 0.046392, 0.046875, ..., 0.090909, 0.070312, 0.090909],</span>
+<span class="go">       [0.208763, 0.255155, 0.140625, ..., 0.113636, 0.117187, 0.113636],</span>
+<span class="go">       [0.278351, 0.115979, 0.304688, ..., 0.25    , 0.234375, 0.227273],</span>
+<span class="go">       ...,</span>
+<span class="go">       [0.115979, 0.255155, 0.46875 , ..., 0.25    , 0.210937, 0.136364],</span>
+<span class="go">       [0.046392, 0.139175, 0.117188, ..., 0.090909, 0.1875  , 0.136364],</span>
+<span class="go">       [0.046392, 0.069588, 0.046875, ..., 0.022727, 0.070312, 0.068182]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...</span>
+<span class="go">  * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.cdf">
+<code class="descclassname">utils.</code><code class="descname">cdf</code><span class="sig-paren">(</span><em>da</em>, <em>bin_edges</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.cdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cumulative probability distribution function along the specified dimensions</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 01/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values used to compute the cdf</p>
+</dd>
+<dt><strong>bin_edges</strong><span class="classifier">array_like</span></dt><dd><p>The bin edges, including the rightmost edge</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimension(s) over which to compute the cdf</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>cdf</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object containing cdf</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function uses <code class="docutils literal notranslate"><span class="pre">doppyo.utils.histogram()</span></code> which uses <code class="docutils literal notranslate"><span class="pre">xr.groupby_bins</span></code> when over_dims is a subset                 of da.dims and is therefore not parallelized in these cases. There are efforts underway to parallelize                 groupby operations in xarray, see <a class="reference external" href="https://github.com/pydata/xarray/issues/585">https://github.com/pydata/xarray/issues/585</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">bin_edges</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (bins: 10, y: 100)&gt;</span>
+<span class="go">array([[0.050505, 0.      , 0.030612, ..., 0.020202, 0.010204, 0.020619],</span>
+<span class="go">       [0.121212, 0.085106, 0.081633, ..., 0.080808, 0.081633, 0.061856],</span>
+<span class="go">       [0.232323, 0.138298, 0.142857, ..., 0.171717, 0.183673, 0.195876],</span>
+<span class="go">       ...,</span>
+<span class="go">       [0.939394, 0.925532, 0.908163, ..., 0.909091, 0.94898 , 0.907216],</span>
+<span class="go">       [0.979798, 0.968085, 0.969388, ..., 0.959596, 0.979592, 0.989691],</span>
+<span class="go">       [1.      , 1.      , 1.      , ..., 1.      , 1.      , 1.      ]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...</span>
+<span class="go">  * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.Gaussian_pdf">
+<code class="descclassname">utils.</code><code class="descname">Gaussian_pdf</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Gaussian_pdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate standard Gaussian pdf at x</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 26/03/2019</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">array_like, float</span></dt><dd><p>Point(s) at which to evaluate the Gaussian pdf</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">array_like, float</span></dt><dd><p>Same shape as x containing the evaluated pdf values</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">gaussian_pdf</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="go">0.3520653267642995</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.Gaussian_cdf">
+<code class="descclassname">utils.</code><code class="descname">Gaussian_cdf</code><span class="sig-paren">(</span><em>x</em>, <em>n=100</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.Gaussian_cdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate standard Gaussian cdf at x (numerical integral over n points)</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 26/03/2019</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">array_like, float</span></dt><dd><p>Point(s) at which to evaluate the Gaussian cdf</p>
+</dd>
+<dt><strong>n</strong><span class="classifier">int, optional</span></dt><dd><p>Number of points to use to evaulate the numerical integral</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>p</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Same shape as x containing the evaluated cdf values</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">gaussian_cdf</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;integral&#39; ()&gt;</span>
+<span class="go">array(0.691462)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.histogram">
+<code class="descclassname">utils.</code><code class="descname">histogram</code><span class="sig-paren">(</span><em>da</em>, <em>bin_edges</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the histogram over the specified dimensions</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 01/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values used to compute the histogram</p>
+</dd>
+<dt><strong>bin_edges</strong><span class="classifier">array_like</span></dt><dd><p>The bin edges, including the rightmost edge</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimension(s) over which to compute the histogram</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>histogram</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object containing the histogram</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.histogram</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">dask.array.histogram</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>This function uses <code class="docutils literal notranslate"><span class="pre">xr.groupby_bins</span></code> when over_dims is a subset of da.dims and is therefore not                 parallelized/lazy in these cases. There are efforts underway to parallelize groupby operations                 in xarray, see <a class="reference external" href="https://github.com/pydata/xarray/issues/585">https://github.com/pydata/xarray/issues/585</a></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">bin_edges</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;data&#39; (bins: 10, y: 100)&gt;</span>
+<span class="go">array([[ 3.,  1.,  6., ...,  2.,  4.,  3.],</span>
+<span class="go">       [ 2., 12.,  4., ...,  7.,  3.,  7.],</span>
+<span class="go">       [ 9.,  9., 11., ..., 19., 13.,  6.],</span>
+<span class="go">       ...,</span>
+<span class="go">       [13.,  9.,  4., ...,  6.,  6., 11.],</span>
+<span class="go">       [ 3.,  6.,  3., ...,  3.,  7.,  4.],</span>
+<span class="go">       [ 2.,  0.,  1., ...,  3.,  3.,  4.]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * bins     (bins) float64 -2.0 -1.556 -1.111 -0.6667 -0.2222 0.2222 0.6667 ...</span>
+<span class="go">  * y        (y) int64 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_bin_edges">
+<code class="descclassname">utils.</code><code class="descname">get_bin_edges</code><span class="sig-paren">(</span><em>bins</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_bin_edges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns bin edges of provided bins</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 06/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>bins</strong><span class="classifier">array_like</span></dt><dd><p>One-dimensional array of bin values to compute bin edges</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>edges</strong><span class="classifier">array_like</span></dt><dd><p>Array of bin edges where the first and last edge are computed using the spacing between                     the first-and-second and second-last-and-last bins, respectively. This array is one                    element larger than the input array</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bin_edges</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_bin_edges</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+<span class="go">array([-2.5, -1.5, -0.5,  0.5,  1.5,  2.5])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.polyfit">
+<code class="descclassname">utils.</code><code class="descname">polyfit</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>order</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.polyfit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns least squares polynomial fit of the specified order</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 25/03/2019</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing x-coordinates of the sample points</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing y-coordinates of the sample points</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the fit</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>coefficients</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the coefficients of the fit</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.polyfit</span></code></p>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">])</span>
+<span class="go">&lt;xarray.DataArray &#39;fit&#39; (z: 3, degree: 3)&gt;</span>
+<span class="go">array([[-0.17262 ,  0.423925,  0.644511],</span>
+<span class="go">       [-0.217319,  0.033146,  1.139249],</span>
+<span class="go">       [ 0.520737, -0.641632, -1.095306]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * z        (z) int64 0 1 2</span>
+<span class="go">  * degree   (degree) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.polyval">
+<code class="descclassname">utils.</code><code class="descname">polyval</code><span class="sig-paren">(</span><em>x</em>, <em>p</em>, <em>over_dims</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.polyval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate a polynomial at specific values</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 25/03/2019</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing x-coordinates of the sample points</p>
+</dd>
+<dt><strong>p</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the polynomial coefficients</p>
+</dd>
+<dt><strong>over_dims</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimensions over which to compute the fit. Should match over_dims handed to polyfit</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>fit</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Evaluated polynomial values</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.polyval</span></code></p>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xf</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">xf</span><span class="p">,</span> <span class="n">over_dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">])</span>
+<span class="go">&lt;xarray.DataArray (z: 3, x: 3, y: 3)&gt;</span>
+<span class="go">array([[[ 0.680063,  0.687067,  0.37378 ],</span>
+<span class="go">        [ 0.68157 ,  0.593822,  0.564625],</span>
+<span class="go">        [ 0.661166,  0.651231,  0.373721]],</span>
+<span class="gp">...</span>
+<span class="go">       [[-0.526172, -0.343878,  1.040153],</span>
+<span class="go">        [-0.310027, -0.374777,  0.251314],</span>
+<span class="go">        [-0.197566, -0.488106,  1.04039 ]],</span>
+<span class="gp">...</span>
+<span class="go">       [[ 1.009727, -0.11369 ,  0.517851],</span>
+<span class="go">        [-0.152397,  2.377984, -0.149194],</span>
+<span class="go">        [-0.227379,  1.532419,  0.518102]]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * z        (z) int64 0 1 2</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+<span class="go">  * y        (y) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.differentiate_wrt">
+<code class="descclassname">utils.</code><code class="descname">differentiate_wrt</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em>, <em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.differentiate_wrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the gradient along dim using x to compute differences. This function is required                 because the current implementation of xr.differentiate (0.10.9) can only differentiate with                 respect to a 1D coordinate. It is common to want to differentiate with respect to something                 that changes as a function of multiple dimensions (e.g. the zonal distance between regularly                 spaced lat/lon points varies as a function of lat and lon). Uses second order accurate central                 differencing in the interior points and first order accurate one-sided (forward or backwards)                 differencing at the boundaries.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 02/11/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values to differentiate</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str</span></dt><dd><p>The dimension to be used to compute the gradient</p>
+</dd>
+<dt><strong>x</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values to differentiate with respect to. Must be broadcastable with da</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>differentiated</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object containing the differentiate data</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">xarray.DataArray.differentiate</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.gradient</span></code></p>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span><span class="mi">360</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">1</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">xy_from_lonlat</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">differentiate_wrt</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;differentiated&#39; (lat: 180, lon: 360)&gt;</span>
+<span class="go">array([[ 3.674336e+10, -9.015981e+10, -2.150203e+11, ..., -6.471076e+10,</span>
+<span class="go">        -6.057067e+09,  1.253664e+11],</span>
+<span class="go">       [-4.133347e-07, -3.932972e-04, -5.982892e-04, ...,  2.972605e-04,</span>
+<span class="go">         9.456351e-04,  1.907131e-03],</span>
+<span class="go">       [-6.596434e-04,  6.147016e-06,  2.370071e-04, ..., -8.578490e-06,</span>
+<span class="go">         9.281731e-06,  2.211755e-04],</span>
+<span class="go">       ...,</span>
+<span class="go">       [-6.467389e-05,  6.315746e-05,  1.713705e-04, ...,  9.742767e-05,</span>
+<span class="go">         1.043358e-04,  1.066228e-04],</span>
+<span class="go">       [ 1.542484e-04,  2.802838e-04,  5.511727e-05, ...,  1.665500e-04,</span>
+<span class="go">        -6.087167e-06, -3.060961e-04],</span>
+<span class="go">       [-5.991109e-04,  2.085148e-04,  4.525132e-04, ..., -9.346556e-05,</span>
+<span class="go">        -7.977593e-05,  3.411080e-05]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -89 -88 -87 -86 -85 -84 ... 83 84 85 86 87 88 89</span>
+<span class="go">  * lon      (lon) int64 0 1 2 3 4 5 6 7 8 ... 352 353 354 355 356 357 358 359</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.xy_from_lonlat">
+<code class="descclassname">utils.</code><code class="descname">xy_from_lonlat</code><span class="sig-paren">(</span><em>lon</em>, <em>lat</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.xy_from_lonlat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns x/y in m from grid points that are in a longitude/latitude format.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 01/11/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>lon</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing longitudes stored relative to longitude dimension/coordinate</p>
+</dd>
+<dt><strong>lat</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing latitudes stored relative to latitude dimension/coordinate</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing zonal distance in m</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing meridional distance in m</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lat</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">),</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lon</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">),</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">xy_from_lonlat</span><span class="p">(</span><span class="n">lon</span><span class="o">=</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="n">lat</span><span class="p">)</span>
+<span class="go">(&lt;xarray.DataArray (lat: 2, lon: 4)&gt;</span>
+<span class="go"> array([[0.000000e+00, 6.127853e-10, 1.225571e-09, 1.838356e-09],</span>
+<span class="go">        [0.000000e+00, 1.000754e+07, 2.001509e+07, 3.002263e+07]])</span>
+<span class="go"> Dimensions without coordinates: lat, lon, &lt;xarray.DataArray (lat: 2, lon: 4)&gt;</span>
+<span class="go"> array([[-10007543.39801, -10007543.39801, -10007543.39801, -10007543.39801],</span>
+<span class="go">        [        0.     ,         0.     ,         0.     ,         0.     ]])</span>
+<span class="go"> Dimensions without coordinates: lat, lon)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.integrate">
+<code class="descclassname">utils.</code><code class="descname">integrate</code><span class="sig-paren">(</span><em>da</em>, <em>over_dim</em>, <em>x=None</em>, <em>dx=None</em>, <em>method='trapz'</em>, <em>cumulative=False</em>, <em>skipna=False</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.integrate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns trapezoidal/rectangular integration along specified dimension</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 16/08/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values to integrate</p>
+</dd>
+<dt><strong>over_dim</strong><span class="classifier">str</span></dt><dd><p>Dimension to integrate</p>
+</dd>
+<dt><strong>x</strong><span class="classifier">xarray DataArray, optional</span></dt><dd><p>Values to use for integrand. Must contain dimensions over_dim. If None, x is determined                    from the coords associated with over_dim</p>
+</dd>
+<dt><strong>dx</strong><span class="classifier">value, optional</span></dt><dd><p>Integrand spacing used to compute the integral. If None, dx is determined from x</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str, optional</span></dt><dd><p>Method of performing integral. Options are ‘trapz’ for trapezoidal integration, or ‘rect’                    for rectangular integration</p>
+</dd>
+<dt><strong>cumulative</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, return the cumulative integral</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>integral</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the integral along the specified dimension</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.trapz</span></code></p>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                                                       <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">over_dim</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;integral&#39; (y: 2)&gt;</span>
+<span class="go">array([-0.20331 , -0.781251])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.add">
+<code class="descclassname">utils.</code><code class="descname">add</code><span class="sig-paren">(</span><em>data_1</em>, <em>data_2</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the addition of two arrays, data_1 + data_2. Useful for xr.apply type operations</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 27/06/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data_1</strong><span class="classifier">array_like</span></dt><dd><p>The first array</p>
+</dd>
+<dt><strong>data_2</strong><span class="classifier">array_like</span></dt><dd><p>The second array</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>addition</strong><span class="classifier">array_like</span></dt><dd><p>The addition of data_1 and data_2</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (x: 3, y: 2)&gt;</span>
+<span class="go">array([[-0.333176,  0.344428],</span>
+<span class="go">       [ 0.629463,  0.515872],</span>
+<span class="go">       [ 1.121926,  0.567797]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+<span class="go">  * y        (y) int64 0 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.subtract">
+<code class="descclassname">utils.</code><code class="descname">subtract</code><span class="sig-paren">(</span><em>data_1</em>, <em>data_2</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.subtract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the difference of two arrays, data_1 - data_2. Useful for xr.apply type operations</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 27/06/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data_1</strong><span class="classifier">array_like</span></dt><dd><p>The first array</p>
+</dd>
+<dt><strong>data_2</strong><span class="classifier">array_like</span></dt><dd><p>The second array</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>subtraction</strong><span class="classifier">array_like</span></dt><dd><p>The difference between data_1 and data_2</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (x: 3, y: 2)&gt;</span>
+<span class="go">array([[-0.265376,  1.331496],</span>
+<span class="go">       [ 1.065077, -1.278974],</span>
+<span class="go">       [ 3.691209, -1.928883]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+<span class="go">  * y        (y) int64 0 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.multiply">
+<code class="descclassname">utils.</code><code class="descname">multiply</code><span class="sig-paren">(</span><em>data_1</em>, <em>data_2</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.multiply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the multiplication of two fields, data_1 * data_2. Useful for xr.apply type operations</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 27/06/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data_1</strong><span class="classifier">array_like</span></dt><dd><p>The first array</p>
+</dd>
+<dt><strong>data_2</strong><span class="classifier">array_like</span></dt><dd><p>The second array</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>multiplication</strong><span class="classifier">array_like</span></dt><dd><p>The multiplication of data_1 and data_2</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (x: 3, y: 2)&gt;</span>
+<span class="go">array([[-0.219773,  0.235889],</span>
+<span class="go">       [-0.529542, -1.30342 ],</span>
+<span class="go">       [-1.048924,  0.20482 ]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+<span class="go">  * y        (y) int64 0 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.divide">
+<code class="descclassname">utils.</code><code class="descname">divide</code><span class="sig-paren">(</span><em>data_1</em>, <em>data_2</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.divide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the division of two fields, data_1 / data_2. Useful for xr.apply type operations</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 27/06/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data_1</strong><span class="classifier">array_like</span></dt><dd><p>The first array</p>
+</dd>
+<dt><strong>data_2</strong><span class="classifier">array_like</span></dt><dd><p>The second array</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>division</strong><span class="classifier">array_like</span></dt><dd><p>The division of data_1 by data_2</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (x: 3, y: 2)&gt;</span>
+<span class="go">array([[-0.310139,  0.071369],</span>
+<span class="go">       [-0.647227, -0.427525],</span>
+<span class="go">       [-0.179623,  1.229811]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+<span class="go">  * y        (y) int64 0 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.average">
+<code class="descclassname">utils.</code><code class="descname">average</code><span class="sig-paren">(</span><em>da</em>, <em>dim=None</em>, <em>weights=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.average" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the weighted average</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 06/08/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to be averaged</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str or sequence of str, optional</span></dt><dd><p>Dimension(s) over which to compute weighted average. If None, average is computed over all                    dimensions</p>
+</dd>
+<dt><strong>weights</strong><span class="classifier">xarray DataArray, optional</span></dt><dd><p>Weights to apply during averaging. Shape of weights must be broadcastable to shape of da.                    If None, unity weighting is applied</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>weighted</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Weighted average of input array along specified dimensions</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> 
+<span class="gp">... </span>                                                       <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">degtorad</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">constants</span><span class="p">()</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cos_lat</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">ufuncs</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">degtorad</span><span class="p">)</span> 
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">cos_lat</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (lon: 4)&gt;</span>
+<span class="go">array([-0.473632, -0.241208, -0.954826,  0.498559])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lon      (lon) int64 0 90 180 270</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.fft">
+<code class="descclassname">utils.</code><code class="descname">fft</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em>, <em>nfft=None</em>, <em>dx=None</em>, <em>twosided=False</em>, <em>shift=True</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.fft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the sequentual ffts of the provided array along the specified dimensions</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 06/08/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray.DataArray</span></dt><dd><p>Array from which compute the fft</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str or sequence</span></dt><dd><p>Dimensions along which to compute the fft</p>
+</dd>
+<dt><strong>nfft</strong><span class="classifier">float or sequence, optional</span></dt><dd><p>Number of points in each dimensions to use in the transformation. If None, the full length                    of each dimension is used.</p>
+</dd>
+<dt><strong>dx</strong><span class="classifier">float or sequence, optional</span></dt><dd><p>Define the spacing of the dimensions. If None, the spacing is computed directly from the                     coordinates associated with the dimensions. If dx is a time array, frequencies are computed                     in Hz</p>
+</dd>
+<dt><strong>twosided</strong><span class="classifier">bool, optional</span></dt><dd><p>When the DFT is computed for purely real input, the output is Hermitian-symmetric,                     meaning the negative frequency terms are just the complex conjugates of the corresponding                     positive-frequency terms, and the negative-frequency terms are therefore redundant.                    If True, force the fft to include negative and positive frequencies, even if the input                     data is real. If the input array is complex, one must set twosided=True</p>
+</dd>
+<dt><strong>shift</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the frequency axes are shifted to center the 0 frequency, otherwise negative                     frequencies follow positive frequencies as in <code class="docutils literal notranslate"><span class="pre">numpy.fft.ftt</span></code></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>fft</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the sequentual ffts of the provided array along the specified dimensions</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dask.array.fft</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.fft</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>A real fft is performed over the first dimension, which is faster. The transforms over the                 remaining dimensions are then computed with the classic fft.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2018&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">twosided</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;fft&#39; (lat: 4, f_time: 4)&gt;</span>
+<span class="go">array([[ 2.996572+0.j      , -2.833156-0.676355j, -0.038218+0.j      ,</span>
+<span class="go">        -2.833156+0.676355j],</span>
+<span class="go">       [-0.66788 +0.j      ,  0.551732-3.406326j,  2.003329+0.j      ,</span>
+<span class="go">         0.551732+3.406326j],</span>
+<span class="go">       [ 2.032978+0.j      ,  0.657454+1.703941j,  2.085695+0.j      ,</span>
+<span class="go">         0.657454-1.703941j],</span>
+<span class="go">       [ 0.462405+0.j      , -0.815011+2.357146j, -1.257371+0.j      ,</span>
+<span class="go">        -0.815011-2.357146j]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">  * f_time   (f_time) float64 -5.787e-06 -2.894e-06 0.0 2.894e-06</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.ifft">
+<code class="descclassname">utils.</code><code class="descname">ifft</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em>, <em>nifft=None</em>, <em>shifted=True</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.ifft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the sequentual iffts of the provided array along the specified dimensions. Note, it is                 not possible to reconstruct the  dimension along which the fft was performed (r_dim) from                 knowledge only of the fft “frequencies” (f_dim). For example, time cannot be reconstructed from                 frequency. Here, r_dim is defined relative to 0 in steps of dx as determined from f_dim. It may                 be necessary for the user to use the original (pre-fft) dimension to redefine r_dim after the                ifft is performed (see the Examples s ection of this docstring).</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 06/08/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray.DataArray</span></dt><dd><p>Array from which compute the ifft</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str or sequence</span></dt><dd><p>Dimensions along which to compute the ifft</p>
+</dd>
+<dt><strong>nifft</strong><span class="classifier">float or sequence, optional</span></dt><dd><p>Number of points in each dimensions to use in the transformation. If None, the full length                    of each dimension is used.</p>
+</dd>
+<dt><strong>shifted</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, assumes that the input dimensions are shifted to center the 0 frequency, otherwise                     assumes negative frequencies follow positive frequencies as in <code class="docutils literal notranslate"><span class="pre">numpy.fft.ftt</span></code></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>ifft</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the sequentual iffts of the provided array along the specified dimensions</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dask.array.ifft</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ifft</span></code></p>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2018&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_fft</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">twosided</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_new</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">A_fft</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;f_lat&#39;</span><span class="p">,</span> <span class="s1">&#39;f_time&#39;</span><span class="p">],</span> <span class="n">shifted</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">A_new</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;ifft&#39; (lat: 4, time: 4)&gt;</span>
+<span class="go">array([[-0.821396, -0.321925, -0.183761,  1.020338],</span>
+<span class="go">       [ 0.147125,  0.17867 ,  0.343659,  1.487173],</span>
+<span class="go">       [-1.53012 ,  1.586665, -0.097846,  1.535701],</span>
+<span class="go">       [ 0.663949, -0.9256  ,  0.086642,  0.586463]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) float64 0.0 45.0 90.0 135.0</span>
+<span class="go">  * time     (time) float64 0.0 8.64e+04 1.728e+05 2.592e+05</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_new</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_new</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">A_new</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;ifft&#39; (lat: 4, time: 4)&gt;</span>
+<span class="go">array([[-0.821396, -0.321925, -0.183761,  1.020338],</span>
+<span class="go">       [ 0.147125,  0.17867 ,  0.343659,  1.487173],</span>
+<span class="go">       [-1.53012 ,  1.586665, -0.097846,  1.535701],</span>
+<span class="go">       [ 0.663949, -0.9256  ,  0.086642,  0.586463]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">  * time     (time) datetime64[ns] 2018-01-01 2018-01-02 2018-01-03 2018-01-04</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.fftfilt">
+<code class="descclassname">utils.</code><code class="descname">fftfilt</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em>, <em>method</em>, <em>dx</em>, <em>x_cut</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.fftfilt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spectrally filters the provided array along dimension dim.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 15/09/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>da</strong><span class="classifier">xarray.DataArray</span></dt><dd><p>Array to filter</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str</span></dt><dd><p>Dimension along which to filter</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">{<code class="docutils literal notranslate"><span class="pre">&quot;low</span> <span class="pre">pass&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;high</span> <span class="pre">pass&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;band</span> <span class="pre">pass&quot;</span></code>}</span></dt><dd><p>Filter method to use</p>
+</dd>
+<dt><strong>dx</strong><span class="classifier">value</span></dt><dd><p>Define the spacing of the dimension.</p>
+</dd>
+<dt><strong>xc</strong><span class="classifier">value or array_like (if method = <code class="docutils literal notranslate"><span class="pre">'band</span> <span class="pre">pass'</span></code>)</span></dt><dd><p>Define the filter cut-off value(s), e.g. x_cut = 5*dx</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>filtered</strong><span class="classifier">xarray.DataArray</span></dt><dd><p>Filtered array</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2018&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_filt</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">fftfilt</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;low pass&#39;</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">x_cut</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">A_filt</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;filtered&#39; (time: 1000)&gt;</span>
+<span class="go">array([ 0.120893,  0.059256, -0.085101, ..., -0.351555, -0.112201,  0.061701])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2018-01-01 2018-01-02 ... 2020-09-26</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_filt</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.isosurface">
+<code class="descclassname">utils.</code><code class="descname">isosurface</code><span class="sig-paren">(</span><em>da</em>, <em>coord</em>, <em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.isosurface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the values of a coordinate in the input array where the input array values equals                 a prescribed target. E.g. returns the depth of the 20 degC isotherm. Returns nans for all                 points in input array where isosurface is not defined. If</p>
+<div class="line-block">
+<div class="line">Author: Thomas Moore and Dougie Squire</div>
+<div class="line">Date: 02/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array of values to be isosurfaced</p>
+</dd>
+<dt><strong>coord</strong><span class="classifier">str</span></dt><dd><p>Name of coordinate to contruct isosurface about</p>
+</dd>
+<dt><strong>target</strong><span class="classifier">value</span></dt><dd><p>Isosurface value</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>isosurface</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Values of coord where da is closest to target. If multiple occurences of target occur                     along coord, only the maximum value of coord is returned</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If multiple occurences of target occur along coord, only the maximum value of coord is                returned</p>
+<p>To do</p>
+<ul class="simple">
+<li><p>The current version includes no interpolation between grid spacing. This should be added as                 an option in the future</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">isosurface</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">isosurface</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;isosurface&#39; (y: 5)&gt;</span>
+<span class="go">array([ 4.,  1., nan,  3.,  4.])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * y        (y) int64 0 1 2 3 4</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.load_mean_climatology">
+<code class="descclassname">utils.</code><code class="descname">load_mean_climatology</code><span class="sig-paren">(</span><em>clim</em>, <em>freq</em>, <em>variable=None</em>, <em>time_name=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.load_mean_climatology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns pre-saved climatology at desired frequency.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>clim</strong><span class="classifier">str</span></dt><dd><p>Name of climatology to load. Currently available options are: <code class="docutils literal notranslate"><span class="pre">&quot;jra_1958-2016&quot;</span></code>,                     <code class="docutils literal notranslate"><span class="pre">&quot;cafe_f1_atmos_2003-2017&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cafe_f1_ocean_2003-2017&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cafe_c2_atmos_400-499&quot;</span></code>,                     <code class="docutils literal notranslate"><span class="pre">&quot;cafe_c2_atmos_500-549&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cafe_c2_ocean_400-499&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cafe_c2_ocean_500-549&quot;</span></code>,                     <code class="docutils literal notranslate"><span class="pre">&quot;HadISST_1870-2018&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;REMSS_2002-2018&quot;</span></code></p>
+</dd>
+<dt><strong>freq</strong><span class="classifier">str</span></dt><dd><p>Desired frequency of climatology (daily or longer) e.g. ‘D’, ‘M’</p>
+</dd>
+<dt><strong>variable</strong><span class="classifier">str, optional</span></dt><dd><p>Variable to load. If None, all variables are returned</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the time dimension. If None, doppyo will attempt to determine time_name                     automatically</p>
+</dd>
+<dt><strong>**kwargs</strong><span class="classifier">dict</span></dt><dd><p>Additional arguments to pass to load command</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>climatology</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Requested climatology</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Can only be run from a system connected to Bowen cloud storage</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">load_mean_climatology</span><span class="p">(</span><span class="n">clim</span><span class="o">=</span><span class="s1">&#39;cafe_c2_atmos_500-549&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="s1">&#39;u&#39;</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;u&#39; (time: 366, level: 37, lat: 90, lon: 144)&gt;</span>
+<span class="go">[175504320 values with dtype=float32]</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lon      (lon) float64 1.25 3.75 6.25 8.75 11.25 ... 351.2 353.8 356.2 358.8</span>
+<span class="go">  * lat      (lat) float64 -89.49 -87.98 -85.96 -83.93 ... 85.96 87.98 89.49</span>
+<span class="go">  * level    (level) float32 1.0 2.0 3.0 5.0 7.0 ... 925.0 950.0 975.0 1000.0</span>
+<span class="go">  * time     (time) datetime64[ns] 2016-01-01T12:00:00 ... 2016-12-31T12:00:00</span>
+<span class="go">Attributes:</span>
+<span class="go">    long_name:      zonal wind</span>
+<span class="go">    units:          m/sec</span>
+<span class="go">    valid_range:    [-32767  32767]</span>
+<span class="go">    packing:        4</span>
+<span class="go">    cell_methods:   time: mean</span>
+<span class="go">    time_avg_info:  average_T1,average_T2,average_DT</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.anomalize">
+<code class="descclassname">utils.</code><code class="descname">anomalize</code><span class="sig-paren">(</span><em>data</em>, <em>clim</em>, <em>time_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.anomalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns anomalies of data about clim</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to compute anomalies from</p>
+</dd>
+<dt><strong>clim</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to compute anomalies about</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the time dimension. If None, doppyo will attempt to determine time_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>anomalies</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing anomalies of data about clim</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Cannot anomalize about multiple day/month/year climatologies, e.g. 5-day averages</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2000&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A_clim</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">A_clim</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (time: 1000)&gt;</span>
+<span class="go">array([-3.050884, -0.361403, -0.893451, ...,  0.685141,  0.477916, -1.175434])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-01 2000-01-02 ... 2002-09-26</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.trunc_time">
+<code class="descclassname">utils.</code><code class="descname">trunc_time</code><span class="sig-paren">(</span><em>da</em>, <em>freq</em>, <em>time_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.trunc_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Truncates values in provided array to provided frequency</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing time coordinate to be truncated</p>
+</dd>
+<dt><strong>freq</strong><span class="classifier">str</span></dt><dd><p>Truncation frequency. Options are ‘s’, ‘m’, ‘h’, D’, ‘M’, ‘Y’</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the time dimension. If None, doppyo will attempt to determine time_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>truncated</strong><span class="classifier">xarray DataArray</span></dt><dd><p>time-truncated array</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2000&#39;</span><span class="p">,</span> 
+<span class="gp">... </span>                          <span class="n">periods</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">trunc_time</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">)</span> 
+<span class="go">&lt;xarray.DataArray (time: 10)&gt;</span>
+<span class="go">array([-0.197528,  1.022739, -0.50139 ,  0.128189, -0.886135,  0.570657,</span>
+<span class="go">       -0.336125, -0.499281,  1.143722,  1.987681])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-02-01 2000-03-01 ... 2000-11-01</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.leadtime_to_datetime">
+<code class="descclassname">utils.</code><code class="descname">leadtime_to_datetime</code><span class="sig-paren">(</span><em>da</em>, <em>init_date_name='init_date'</em>, <em>lead_time_name='lead_time'</em>, <em>time_name='time'</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.leadtime_to_datetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts time information from initial date / lead time dimension pair to single datetime                 dimension (i.e. timeseries)</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array in initial date / lead time format to convert to datetime format</p>
+</dd>
+<dt><strong>init_date_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of initial date dimension</p>
+</dd>
+<dt><strong>lead_time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of lead time dimension</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of time dimension to create</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>converted</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array converted to datetime format</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2000&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">datetime_to_leadtime</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">leadtime_to_datetime</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (time: 10)&gt;</span>
+<span class="go">array([-0.158172,  1.319148,  0.648378,  0.577859,  0.371392, -1.380317,</span>
+<span class="go">        0.126416,  1.184546,  0.107898,  1.304755])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2000-10-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.datetime_to_leadtime">
+<code class="descclassname">utils.</code><code class="descname">datetime_to_leadtime</code><span class="sig-paren">(</span><em>da</em>, <em>init_date_name='init_date'</em>, <em>lead_time_name='lead_time'</em>, <em>time_name='time'</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.datetime_to_leadtime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts time information from single datetime dimension (i.e. timeseries) to initial date /                lead time dimension pair</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to in datetime format to convert to initial date / lead time format</p>
+</dd>
+<dt><strong>init_date_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of initial date dimension to create</p>
+</dd>
+<dt><strong>lead_time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of lead time dimension to create</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of time dimension</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>converted</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array converted to initial date / lead time format</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Only compatible with time coordinates that have frequencies that can be determined by pandas.infer_freq().                 This means that ambiguous frequencies, such as month-centred monthly frequencies must be preprocessed for                compatibility (see doppyo.utils.trunc_freq())</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2000&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">datetime_to_leadtime</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (lead_time: 10)&gt;</span>
+<span class="go">array([ 0.450976, -1.671764,  0.681519,  0.836319, -0.005434,  0.144954,</span>
+<span class="go">        0.719887,  0.344615,  0.461055,  0.736307])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lead_time  (lead_time) int64 0 1 2 3 4 5 6 7 8 9</span>
+<span class="go">    init_date  datetime64[ns] 2000-01-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.repeat_datapoint">
+<code class="descclassname">utils.</code><code class="descname">repeat_datapoint</code><span class="sig-paren">(</span><em>da</em>, <em>coord</em>, <em>coord_val</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.repeat_datapoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns array with data at coord = coord_val repeated across all other elements in coord.                 This is useful for generating persistence forecasts</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 02/06/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing darta to repeat</p>
+</dd>
+<dt><strong>coord</strong><span class="classifier">str</span></dt><dd><p>Coordinate in da over which to repeat the data at coord = coord_val</p>
+</dd>
+<dt><strong>coord_val</strong><span class="classifier">value</span></dt><dd><p>The value of coord giving the data to be repeated</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>repeated</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with data at coord=coord_val repeated across all other elements in coord</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">repeat_datapoint</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (x: 3, y: 2)&gt;</span>
+<span class="go">array([[-1.805652,  0.526434],</span>
+<span class="go">       [-1.805652,  0.526434],</span>
+<span class="go">       [-1.805652,  0.526434]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+<span class="go">  * y        (y) int64 0 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_latlon_region">
+<code class="descclassname">utils.</code><code class="descname">get_latlon_region</code><span class="sig-paren">(</span><em>da</em>, <em>box</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_latlon_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array containing those elements of the input array that fall within the provided                lat-lon box</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to extract lat-lon box from</p>
+</dd>
+<dt><strong>box</strong><span class="classifier">array_like</span></dt><dd><p>Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>reduced</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing those elements of the input array that fall within the box</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span><span class="mi">360</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">1</span><span class="p">)),(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">280</span><span class="p">,</span><span class="mi">80</span><span class="p">,</span><span class="mi">1</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_latlon_region</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">90</span><span class="p">])</span>
+<span class="go">&lt;xarray.DataArray (lat: 21, lon: 21)&gt;</span>
+<span class="go">array([[ 0.854745,  1.53709 ,  0.491165, ..., -0.675664,  1.572102, -0.931492],</span>
+<span class="go">       [ 0.570822,  0.60621 , -0.125524, ..., -1.731507,  0.853652,  0.845369],</span>
+<span class="go">       [-0.061811,  0.758512,  1.215573, ..., -1.275482,  2.668203,  0.791314],</span>
+<span class="go">       ...,</span>
+<span class="go">       [-0.263597,  0.102755, -2.775252, ..., -0.736136,  0.944762,  0.005952],</span>
+<span class="go">       [ 0.009949,  0.409897, -0.138621, ...,  1.054246,  1.30817 , -0.539534],</span>
+<span class="go">       [ 1.281245, -0.792166, -1.736007, ...,  0.474207, -0.781518,  0.738593]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10</span>
+<span class="go">  * lon      (lon) int64 -280 -279 -278 -277 -276 -275 ... 74 75 76 77 78 79</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.latlon_average">
+<code class="descclassname">utils.</code><code class="descname">latlon_average</code><span class="sig-paren">(</span><em>da</em>, <em>box</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.latlon_average" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the average of the input array over a provide lat-lon box,</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to average lat-lon box from</p>
+</dd>
+<dt><strong>box</strong><span class="classifier">array_like</span></dt><dd><p>Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>reduced</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing those elements of the input array that fall within the box</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span><span class="mi">360</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">1</span><span class="p">)),(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">280</span><span class="p">,</span><span class="mi">80</span><span class="p">,</span><span class="mi">1</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">latlon_average</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">90</span><span class="p">])</span>
+<span class="go">&lt;xarray.DataArray ()&gt;</span>
+<span class="go">array(-0.056776)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.stack_by_init_date">
+<code class="descclassname">utils.</code><code class="descname">stack_by_init_date</code><span class="sig-paren">(</span><em>da</em>, <em>init_dates</em>, <em>N_lead_steps</em>, <em>init_date_name='init_date'</em>, <em>lead_time_name='lead_time'</em>, <em>time_name='time'</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.stack_by_init_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks provided timeseries array in an inital date / lead time format. Note this process                 replicates data and can substantially increase memory usage. Lead time frequency will match                 frequency of input data. Returns nans if requested times lie outside of the available range</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 14/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Timeseries array to be stacked</p>
+</dd>
+<dt><strong>init_dates</strong><span class="classifier">array_like of datetime objects</span></dt><dd><p>Initial dates to stack onto</p>
+</dd>
+<dt><strong>N_lead_steps</strong><span class="classifier">value</span></dt><dd><p>Number of lead time steps</p>
+</dd>
+<dt><strong>init_date_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of initial date dimension</p>
+</dd>
+<dt><strong>lead_time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of lead time dimension</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of time dimension</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>stacked</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Stacked xarray in inital date / lead time format</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;MS&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">init_dates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1999-11-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;MS&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">stack_by_init_date</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">init_dates</span><span class="o">=</span><span class="n">init_dates</span><span class="p">,</span> <span class="n">N_lead_steps</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (init_date: 3, lead_time: 3)&gt;</span>
+<span class="go">array([[      nan,       nan,       nan],</span>
+<span class="go">       [      nan,       nan,       nan],</span>
+<span class="go">       [ 0.509276, -3.046124, -0.665343]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lead_time  (lead_time) int64 0 1 2</span>
+<span class="go">  * init_date  (init_date) datetime64[ns] 1999-11-01 1999-12-01 2000-01-01</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.concat_times">
+<code class="descclassname">utils.</code><code class="descname">concat_times</code><span class="sig-paren">(</span><em>da</em>, <em>init_date_name='init_date'</em>, <em>lead_time_name='lead_time'</em>, <em>time_name='time'</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.concat_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unstack and concatenate all init_date/lead_time rows into single time dimension</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 22/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to be unstacked and concatenated</p>
+</dd>
+<dt><strong>init_date_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of initial date dimension</p>
+</dd>
+<dt><strong>lead_time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of lead time dimension</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of time dimension</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>concatenated</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Unstacked and concatenated array</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;init_date&#39;</span><span class="p">,</span> 
+<span class="gp">... </span>                          <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;1/1/2018&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;lead_time&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">[</span><span class="s1">&#39;lead_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">concat_times</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (time: 9)&gt;</span>
+<span class="go">array([-1.65746 ,  0.57727 ,  0.010619, -0.008245,  0.119201, -0.445606,</span>
+<span class="go">       -0.546745,  0.157267, -1.616096])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2018-01-31 2018-02-28 ... 2018-05-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.prune">
+<code class="descclassname">utils.</code><code class="descname">prune</code><span class="sig-paren">(</span><em>da</em>, <em>squeeze=False</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.prune" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes all coordinates that are not dimensions</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 22/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to prune</p>
+</dd>
+<dt><strong>squeeze</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, squeeze the array (i.e. remove 1D dimensions) prior to pruning</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>pruned</strong><span class="classifier">xarray DataArray</span></dt><dd><p>The pruned array</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">))])</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">prune</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">squeeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray (x: 3)&gt;</span>
+<span class="go">array([-1.323662,  1.464171,  0.480917])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * x        (x) int64 0 1 2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_other_dims">
+<code class="descclassname">utils.</code><code class="descname">get_other_dims</code><span class="sig-paren">(</span><em>da</em>, <em>dims_exclude</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_other_dims" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all dimensions in provided dataset excluding dim_exclude</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 22/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array to retreive dimensions from</p>
+</dd>
+<dt><strong>dims_exclude</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimensions to exclude</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dims</strong><span class="classifier">str or sequence of str</span></dt><dd><p>Dimensions of input array, excluding dims_exclude</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> 
+<span class="gp">... </span>                                                       <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_other_dims</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="go">&#39;x&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.cftime_to_datetime64">
+<code class="descclassname">utils.</code><code class="descname">cftime_to_datetime64</code><span class="sig-paren">(</span><em>time</em>, <em>shift_year=0</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.cftime_to_datetime64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert cftime object to datetime64 object, allowing for <cite>NOLEAP</cite> calendar configuration</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 04/09/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>time</strong><span class="classifier">cftime or array_like of cftime</span></dt><dd><p>Times to be converted to datetime64</p>
+</dd>
+<dt><strong>shift_year: values</strong></dt><dd><p>Number of years to shift times by. cftime objects are generated by xarray when times fall                     outside of the range 1678-2261. Shifting years to within this range enables conversion to                     datetime64 within an xarray object</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>converted</strong><span class="classifier">numpy datetime64 or array_like of numpy datetime64</span></dt><dd><p>Input times converted from cftime to numpy datetime64</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Times must be sequential and monotonic</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">13</span><span class="p">)]))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cftime_to_datetime64</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="n">shift_year</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span>
+<span class="go">&lt;xarray.DataArray (time: 12)&gt;</span>
+<span class="go">array([ 0.391673, -1.317681,  1.51771 , -0.195475,  0.525342,  0.390625,</span>
+<span class="go">        1.426725, -0.261821,  1.021318,  1.205761, -0.907714,  1.009402])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-01 2000-02-01 ... 2000-12-01</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_time_name">
+<code class="descclassname">utils.</code><code class="descname">get_time_name</code><span class="sig-paren">(</span><em>da</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_time_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns name of time dimension in input array</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 03/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with coordinate corresponding to time</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of dimension corresponding to time</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_time_name</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&#39;time&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_lon_name">
+<code class="descclassname">utils.</code><code class="descname">get_lon_name</code><span class="sig-paren">(</span><em>da</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_lon_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns name of longitude dimension in input array</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 03/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with coordinate corresponding to longitude</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of dimension corresponding to longitude</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_lon_name</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&#39;lon&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_lat_name">
+<code class="descclassname">utils.</code><code class="descname">get_lat_name</code><span class="sig-paren">(</span><em>da</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_lat_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns name of latitude dimension in input array</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 03/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with coordinate corresponding to latitude</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of dimension corresponding to latitude</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_lat_name</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&#39;lat&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_depth_name">
+<code class="descclassname">utils.</code><code class="descname">get_depth_name</code><span class="sig-paren">(</span><em>da</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_depth_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns name of depth dimension in input array</p>
+<div class="line-block">
+<div class="line">Author: Thomas Moore</div>
+<div class="line">Date: 31/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with coordinate corresponding to depth</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of dimension corresponding to depth</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_depth_name</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&#39;depth&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_level_name">
+<code class="descclassname">utils.</code><code class="descname">get_level_name</code><span class="sig-paren">(</span><em>da</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_level_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns name of atmospheric level dimension in input array</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 03/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with coordinate corresponding to atmospheric level</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of dimension corresponding to atmospheric level</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_level_name</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&#39;level&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.get_plevel_name">
+<code class="descclassname">utils.</code><code class="descname">get_plevel_name</code><span class="sig-paren">(</span><em>da</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.get_plevel_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns name of pressure level dimension in input array</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 03/03/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with coordinate corresponding to pressure level</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of dimension corresponding to pressure level</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_plevel_name</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&#39;level&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="skill_doc.html" class="btn btn-neutral float-left" title="skill" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Dougie Squire
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

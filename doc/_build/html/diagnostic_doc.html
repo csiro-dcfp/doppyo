@@ -1,0 +1,1482 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>diagnostic &mdash; doppyo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/style.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="skill" href="skill_doc.html" />
+    <link rel="prev" title="Modules" href="modules_doc.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/doppyo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview_doc.html">What is doppyo?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_doc.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules_doc.html">Modules</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="skill_doc.html"><code class="docutils literal notranslate"><span class="pre">skill</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils_doc.html"><code class="docutils literal notranslate"><span class="pre">utils</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">doppyo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules_doc.html">Modules</a> &raquo;</li>
+        
+      <li><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/diagnostic_doc.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-diagnostic">
+<span id="diagnostic"></span><h1><code class="docutils literal notranslate"><span class="pre">diagnostic</span></code><a class="headerlink" href="#module-diagnostic" title="Permalink to this headline">¶</a></h1>
+<p>doppyo functions for computing various ocean, atmosphere, &amp; climate diagnostics</p>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="diagnostic.velocity_potential">
+<code class="descclassname">diagnostic.</code><code class="descname">velocity_potential</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.velocity_potential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the velocity potential given fields of u and v</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 11/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude and longitude                     (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude and                     longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>velocity_potential</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values of velocity potential</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">This function utilises the windspharm package, which is a wrapper on pyspharm, which is a                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid                 is regular or Gaussian.</div>
+<div class="line">These calculations are not yet dask-compatible.</div>
+</div>
+<p>To Do</p>
+<ul class="simple">
+<li><p>Make dask-compatible by either developing the windspharm package, or using a kernel approach</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">velocity_potential</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;velocity_potential&#39; (lat: 6, lon: 4)&gt;</span>
+<span class="go">array([[  431486.75 ,   431486.75 ,   431486.75 ,   431486.75 ],</span>
+<span class="go">       [ -240990.94 , -3553409.   ,  -970673.56 ,  2341744.5  ],</span>
+<span class="go">       [ 3338223.5  ,  1497203.9  , -1723363.2  ,   117656.31 ],</span>
+<span class="go">       [ 1009613.5  ,  1571693.6  ,   326689.3  ,  -235390.69 ],</span>
+<span class="go">       [ -931064.8  ,  -124736.375, -2516887.8  , -3323216.   ],</span>
+<span class="go">       [-1526244.   , -1526244.   , -1526244.   , -1526244.   ]], dtype=float32)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 75 45 15 -15 -45 -75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">Attributes:</span>
+<span class="go">    units:          m**2 s**-1</span>
+<span class="go">    standard_name:  atmosphere_horizontal_velocity_potential</span>
+<span class="go">    long_name:      velocity potential</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.stream_function">
+<code class="descclassname">diagnostic.</code><code class="descname">stream_function</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.stream_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the stream function given fields of u and v</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 11/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude and longitude                     (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude and                     longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>stream_function</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values of stream function</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">This function utilises the windspharm package, which is a wrapper on pyspharm, which is a                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid                 is regular or Gaussian.</div>
+<div class="line">These calculations are not yet dask-compatible.</div>
+</div>
+<p>To Do</p>
+<ul class="simple">
+<li><p>Make dask-compatible by either developing the windspharm package, or using a kernel approach</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">stream_function</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;psi&#39; (lat: 6, lon: 4)&gt;</span>
+<span class="go">array([[ -690643.6 ,  -690643.6 ,  -690643.6 ,  -690643.6 ],</span>
+<span class="go">       [-2041977.8 , -1060127.  , -3052305.8 , -4034156.5 ],</span>
+<span class="go">       [ 4112389.2 ,  4630193.5 , -5212595.5 , -5730399.5 ],</span>
+<span class="go">       [  528500.75,  4670647.5 ,  2589393.  , -1552753.9 ],</span>
+<span class="go">       [-2686391.2 ,  -707369.25,  4204334.  ,  2225311.5 ],</span>
+<span class="go">       [ 1703481.9 ,  1703481.9 ,  1703481.9 ,  1703481.9 ]], dtype=float32)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 75 45 15 -15 -45 -75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">Attributes:</span>
+<span class="go">    units:          m**2 s**-1</span>
+<span class="go">    standard_name:  atmosphere_horizontal_streamfunction</span>
+<span class="go">    long_name:      streamfunction</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.Rossby_wave_source">
+<code class="descclassname">diagnostic.</code><code class="descname">Rossby_wave_source</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.Rossby_wave_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Rossby wave source given fields of u and v</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 11/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude and longitude                     (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude and                     longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Rossby_wave_source</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values of Rossby wave source</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">This function utilises the windspharm package, which is a wrapper on pyspharm, which is a                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid                 is regular or Gaussian.</div>
+<div class="line">These calculations are not yet dask-compatible.</div>
+</div>
+<p>To Do</p>
+<ul class="simple">
+<li><p>Make dask-compatible by either developing the windspharm package, or using a kernel approach</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">Rossby_wave_source</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;rws&#39; (lat: 6, lon: 4)&gt;</span>
+<span class="go">array([[ 4.382918,  4.382918,  4.382918,  4.382918],</span>
+<span class="go">       [-2.226769,  5.020311, -2.600087, -9.838818],</span>
+<span class="go">       [ 2.1693  , -2.133569,  0.498156,  4.818402],</span>
+<span class="go">       [-1.404836,  0.192032,  0.112654, -1.494616],</span>
+<span class="go">       [-0.103261,  4.518184,  0.648616, -4.05276 ],</span>
+<span class="go">       [ 4.070806,  4.070806,  4.070806,  4.070806]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 75 45 15 -15 -45 -75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">Attributes:</span>
+<span class="go">    units:      1e-11/s^2</span>
+<span class="go">    long_name:  Rossby wave source</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.divergent">
+<code class="descclassname">diagnostic.</code><code class="descname">divergent</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.divergent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the irrotational (divergent) component of u and v</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 11/07/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude and longitude                     (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude and                     longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>divergent</strong><span class="classifier">xarray Dataset</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">u_chi; array containing the irrotational component of u</div>
+<div class="line">v_chi; array containing the irrotational component of v</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">This function utilises the windspharm package, which is a wrapper on pyspharm, which is a                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid                 is regular or Gaussian.</div>
+<div class="line">These calculations are not yet dask-compatible.</div>
+</div>
+<p>To Do</p>
+<ul class="simple">
+<li><p>Make dask-compatible by either developing the windspharm package, or using a kernel approach</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">divergent</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:  (lat: 6, lon: 4)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 75 45 15 -15 -45 -75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">Data variables:</span>
+<span class="go">    u_chi     (lat, lon) float32 0.5355302 -0.45865965 ... -0.7270669 -0.64930713</span>
+<span class="go">    v_chi     (lat, lon) float32 -0.45865965 -0.5355302 ... 0.64930713 -0.7270669</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.wave_activity_flux">
+<code class="descclassname">diagnostic.</code><code class="descname">wave_activity_flux</code><span class="sig-paren">(</span><em>psi_anom</em>, <em>u</em>, <em>v</em>, <em>plevel=None</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.wave_activity_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the stationary component of the wave activity flux, following Takaya and Nakamura,                 (2001) using zonal and meridional velocity fields on one or more isobaric surface(s)</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 11/07/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>psi_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of stream function anomalies with at least coordinates latitude                     and longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude and longitude                     (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude and                     longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>plevel</strong><span class="classifier">value, optional</span></dt><dd><p>Value of the pressure level corresponding to the provided arrays. If None, pressure                     level(s) are extracted from the psi_anom/u/v coordinate. Pressure levels must be provided                     in units of hPa</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>wave_activity_flux</strong><span class="classifier">xarray Dataset</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">u_waf; array containing the zonal component of the wave activity flux</div>
+<div class="line">v_waf; array containing the meridonal component of the wave activity flux</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">Pressure levels must be provided in units of hPa</div>
+<div class="line">This function utilises the windspharm package, which is a wrapper on pyspharm, which is a                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid                 is regular or Gaussian.</div>
+<div class="line">These calculations are not yet dask-compatible</div>
+</div>
+<p>To Do</p>
+<ul class="simple">
+<li><p>Make dask-compatible by either developing the windspharm package, or using a kernel approach</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">500</span><span class="p">]),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">500</span><span class="p">]),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">u_clim</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v_clim</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">u_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">u_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">psi_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">stream_function</span><span class="p">(</span><span class="n">u_anom</span><span class="p">,</span> <span class="n">v_anom</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">wave_activity_flux</span><span class="p">(</span><span class="n">psi_anom</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:  (lat: 6, level: 2, lon: 4, time: 24)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * level    (level) int64 100 500</span>
+<span class="go">  * lat      (lat) int64 -75 -45 -15 15 45 75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+<span class="go">Data variables:</span>
+<span class="go">    u_waf     (level, lat, lon, time) float64 0.003852 0.0001439 ... -0.06913</span>
+<span class="go">    v_waf     (level, lat, lon, time) float64 0.01495 3.032e-05 ... 0.02944</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.Brunt_Vaisala">
+<code class="descclassname">diagnostic.</code><code class="descname">Brunt_Vaisala</code><span class="sig-paren">(</span><em>temp</em>, <em>plevel_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.Brunt_Vaisala" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Brunt Väisälä frequency</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 15/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>temp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of temperature with at least coordinates latitude, longitude and                     pressure level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>plevel_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>nsq</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with same dimensions as input arrays containing the Brunt Väisälä frequency</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">Pressure levels must be provided in units of hPa</div>
+</div>
+<p>To do</p>
+<ul class="simple">
+<li><p>Add switch for atmosphere/ocean input</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">temp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                    <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">200</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">Brunt_Vaisala</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;nsq&#39; (level: 2, lon: 4, lat: 4)&gt;</span>
+<span class="go">array([[[-2.928266e-01, -2.709919e+01,  2.826585e-02,  6.083374e-01],</span>
+<span class="go">        [ 3.260879e-01,  1.933501e-01, -9.033669e+00, -1.468327e+00],</span>
+<span class="go">        [-1.957892e+00,  2.408426e-01,  5.597183e-01, -2.548981e+01],</span>
+<span class="go">        [-3.234550e-01, -1.907664e+00,  2.506510e-01, -7.385499e-01]],</span>
+<span class="gp">...</span>
+<span class="go">       [[-1.136451e-01, -1.796130e+00, -1.095550e-02,  5.748574e+00],</span>
+<span class="go">        [ 4.407484e+02,  4.736099e-01, -5.086917e-01, -6.610682e-01],</span>
+<span class="go">        [-2.458302e+00,  6.864762e+00,  2.633289e+00, -4.246873e-01],</span>
+<span class="go">        [-1.839424e+01, -1.194455e+00,  5.659980e+02, -2.567729e+00]]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">  * lon      (lon) int64 0 90 180 270</span>
+<span class="go">  * level    (level) int64 100 200</span>
+<span class="go">Attributes:</span>
+<span class="go">    long_name:  Brunt-Vaisala frequency squared</span>
+<span class="go">    units:      s^-2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.Rossby_wave_number">
+<code class="descclassname">diagnostic.</code><code class="descname">Rossby_wave_number</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>u_clim</em>, <em>lat_name=None</em>, <em>lon_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.Rossby_wave_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the square of the stationary Rossby wave number, Ks**2</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 11/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude and longitude                     (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude and                     longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>u_clim</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing climatological fields of zonal velocity with at least coordinates latitude                     and longitude (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Rossby_wave_number</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the square of the Rossby wave source</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">The input u_clim must have the same dimensions as u and v. One can project a mean climatology,                 A_clim, over the time dimension in A using <code class="docutils literal notranslate"><span class="pre">doppyo.utils.anomalize(0*A,</span> <span class="pre">-A_clim)</span></code></div>
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">This function utilises the windspharm package, which is a wrapper on pyspharm, which is a                 wrapper on SPHEREPACK. These packages require that the latitudinal and longitudinal grid                 is regular or Gaussian.</div>
+<div class="line">These calculations are not yet dask-compatible.</div>
+</div>
+<p>To Do</p>
+<ul class="simple">
+<li><p>Make dask-compatible by either developing the windspharm package, or using a kernel approach</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span><span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">u_clim</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">u_clim</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="mi">0</span><span class="o">*</span><span class="n">u</span><span class="p">,</span> <span class="o">-</span><span class="n">u_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">Rossby_wave_number</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u_clim</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;ks2&#39; (lat: 6, lon: 4, time: 24)&gt;</span>
+<span class="go">array([[[ 8.077277e-01,  1.885835e-01, ...,  6.383953e-01, -4.686696e-01],</span>
+<span class="go">        [-3.756420e-01,  1.210226e+00, ..., -2.055076e+00, -2.291500e+00],</span>
+<span class="go">        [ 8.786361e-01,  4.181778e-01, ..., -2.071749e+00,  4.018699e-01],</span>
+<span class="go">        [ 8.218020e-01,  5.197270e+00, ...,  5.181735e+00,  7.112056e-01]],</span>
+<span class="gp">...</span>
+<span class="go">       [[-5.323813e+02, -2.894449e+02, ..., -5.063012e+03, -3.921559e+02],</span>
+<span class="go">        [ 3.167388e+02, -5.406136e+02, ..., -1.987485e+03, -2.692395e+02],</span>
+<span class="go">        [ 2.916992e+03,  2.318578e+02, ...,  8.611478e+02,  8.559919e+02],</span>
+<span class="go">        [-4.380459e+02, -5.035198e+02, ..., -1.844072e+03, -2.856807e+02]],</span>
+<span class="go">...,</span>
+<span class="go">       [[ 3.832781e+02, -1.272144e+03, ...,  3.900539e+02, -5.402686e+02],</span>
+<span class="go">        [-2.494814e+02, -2.041985e+02, ...,  3.426493e+02, -5.557717e+02],</span>
+<span class="go">        [-6.290198e+03,  1.606871e+03, ...,  2.894713e+03,  3.284330e+02],</span>
+<span class="go">        [-3.325505e+02, -2.406172e+02, ..., -3.270787e+03, -1.040641e+03]],</span>
+<span class="gp">...</span>
+<span class="go">       [[ 1.401437e+00,  6.053096e-01, ...,  1.725558e-01, -7.287578e+01],</span>
+<span class="go">        [-8.905873e-01,  1.469694e-01, ...,  1.308367e+00, -7.136195e-01],</span>
+<span class="go">        [ 4.318194e+01, -1.850361e-01, ..., -2.447798e-01, -4.454747e-01],</span>
+<span class="go">        [ 1.247740e+00,  9.826164e-02, ...,  2.808380e+00,  1.254609e+00]]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 75 45 15 -15 -45 -75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+<span class="go">Attributes:</span>
+<span class="go">    units:      real number</span>
+<span class="go">    long_name:  Square of Rossby stationary wavenumber</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.Eady_growth_rate">
+<code class="descclassname">diagnostic.</code><code class="descname">Eady_growth_rate</code><span class="sig-paren">(</span><em>u</em>, <em>v</em>, <em>gh</em>, <em>nsq</em>, <em>lat_name=None</em>, <em>lon_name=None</em>, <em>level_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.Eady_growth_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the square of the Eady growth rate</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 15/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude, longitude and                     level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>gh</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of geopotential height with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>nsq</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of Brunt Väisälä frequency with at least coordinates latitude,                     longitude and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+<dt><strong>level_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of level coordinate. If None, doppyo will attempt to determine level_name
+automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Eady^2</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the square of the Eady growth rate</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">temp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                    <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gh</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                          <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">])])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nsq</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">Brunt_Vaisala</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">Eady_growth_rate</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">gh</span><span class="p">,</span> <span class="n">nsq</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;Eady^2&#39; (level: 2, lon: 4, lat: 6)&gt;</span>
+<span class="go">array([[[-5.371897e-08,  1.338133e-11, -7.254014e-13, -8.196598e-12,</span>
+<span class="go">          2.062633e-09, -7.200158e-12],</span>
+<span class="go">        [ 9.906932e-10, -7.349832e-09, -2.558847e-12, -1.695842e-09,</span>
+<span class="go">          4.986779e-09, -3.090147e-09],</span>
+<span class="go">        [ 3.948602e-07,  1.397756e-09,  1.508010e-10,  1.481968e-10,</span>
+<span class="go">          5.627093e-11,  7.463454e-10],</span>
+<span class="go">        [ 4.326971e-09, -2.528522e-09, -1.243954e-13, -3.138463e-11,</span>
+<span class="go">         -6.801250e-09, -6.286382e-10]],</span>
+<span class="gp">...</span>
+<span class="go">       [[-8.580527e-10,  7.040065e-12, -3.760004e-13, -1.213131e-12,</span>
+<span class="go">          2.437557e-11, -6.522981e-11],</span>
+<span class="go">        [ 6.119671e-09, -1.644123e-09, -5.124997e-11,  1.725101e-08,</span>
+<span class="go">          2.574158e-08, -3.101566e-10],</span>
+<span class="go">        [ 1.601742e-06,  1.994867e-11,  3.341006e-11,  1.641253e-11,</span>
+<span class="go">          5.601919e-08,  5.527214e-11],</span>
+<span class="go">        [ 4.700271e-09, -1.422149e-11, -1.302035e-12, -2.153002e-11,</span>
+<span class="go">         -4.607096e-10, -3.813686e-09]]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -75 -45 -15 15 45 75</span>
+<span class="go">  * lon      (lon) int64 45 135 225 315</span>
+<span class="go">  * level    (level) int64 200 500</span>
+<span class="go">Attributes:</span>
+<span class="go">    units:      s^-2</span>
+<span class="go">    long_name:  Square of Eady growth rate</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.thermal_wind">
+<code class="descclassname">diagnostic.</code><code class="descname">thermal_wind</code><span class="sig-paren">(</span><em>gh</em>, <em>plevel_lower</em>, <em>plevel_upper</em>, <em>lat_name=None</em>, <em>lon_name=None</em>, <em>plevel_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.thermal_wind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the thermal wind, (u_tw, v_tw) = 1/f x k x grad(thickness), where f = 2*Omega*sin(lat)</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 15/07/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>gh</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of geopotential height with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>plevel_lower</strong><span class="classifier">value</span></dt><dd><p>Value of lower pressure level used to compute termal wind. Must exist in level coordinate of                     gh</p>
+</dd>
+<dt><strong>plevel_upper</strong><span class="classifier">value</span></dt><dd><p>Value of upper pressure level used to compute termal wind. Must exist in level coordinate of                     gh</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+<dt><strong>plevel_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>thermal_wind</strong><span class="classifier">xarray Dataset</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">u_tw; array containing the zonal component of the thermal wind</div>
+<div class="line">v_tw; array containing the meridonal component of the thermal wind</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">Pressure levels must be provided in units of hPa</div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gh</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">400</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">600</span><span class="p">]),</span> <span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">thermal_wind</span><span class="p">(</span><span class="n">gh</span><span class="p">,</span> <span class="n">plevel_lower</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">plevel_upper</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:  (lat: 4, lon: 4)</span>
+<span class="go">Coordinates:</span>
+<span class="go">    level    float64 500.0</span>
+<span class="go">  * lon      (lon) int64 0 90 180 270</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">Data variables:</span>
+<span class="go">    u_tw     (lon, lat) float64 0.003727 0.0006837 inf ... inf -0.0001238</span>
+<span class="go">    v_tw     (lat, lon) float64 4.515e+12 -1.443e+12 ... -0.000569 -0.0002777</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.eofs">
+<code class="descclassname">diagnostic.</code><code class="descname">eofs</code><span class="sig-paren">(</span><em>da</em>, <em>sample_dim='time'</em>, <em>weight=None</em>, <em>n_modes=20</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.eofs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the empirical orthogonal functions (EOFs), and associated principle component                 timeseries (PCs), and explained variances of provided array. Follows notation used in                 “Bjornsson H. and Venegas S. A. 1997 A Manual for EOF and SVD analyses of Climatic Data”,                 whereby, (phi, sqrt_lambdas, EOFs) = svd(data) and PCs = phi * sqrt_lambdas</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 19/18/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>da</strong><span class="classifier">xarray DataArray or sequence of xarray DataArrays</span></dt><dd><p>Array to use to compute EOFs. When input array is a list of xarray objects, returns the                     joint EOFs associated with each object. In this case, all xarray objects in da must have                     sample_dim dimensions of equal length.</p>
+</dd>
+<dt><strong>sample_dim</strong><span class="classifier">str, optional</span></dt><dd><p>EOFs sample dimension</p>
+</dd>
+<dt><strong>weight</strong><span class="classifier">xarray DataArray or sequence of xarray DataArrays, optional</span></dt><dd><p>Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used. If weight                     is specified, it must be the same length as da with each element broadcastable onto each                     element of da</p>
+</dd>
+<dt><strong>n_modes</strong><span class="classifier">values, optional</span></dt><dd><p>Number of EOF modes to return</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>eofs</strong><span class="classifier">xarray Dataset</span></dt><dd><div class="line-block">
+<div class="line">Dataset containing the following variables:</div>
+<div class="line">EOFs; array containing the empirical orthogonal functions</div>
+<div class="line">PCs; array containing the associated principle component timeseries</div>
+<div class="line">lambdas; array containing the eigenvalues of the covariance of the input data</div>
+<div class="line">explained_var; array containing the fraction of the total variance explained by each EOF                     mode</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function is a wrapper on scipy.sparse.linalg.svds which is a naive implementation                 using ARPACK. Thus, the approach implemented here is non-lazy and could incur large                 increases in memory usage.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">40</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span><span class="mi">76</span><span class="p">,</span><span class="mi">30</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span><span class="mi">316</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">eofs</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:        (lat: 6, lon: 4, mode: 20, time: 40)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time           (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2003-04-30</span>
+<span class="go">  * mode           (mode) int64 1 2 3 4 5 6 7 8 9 ... 12 13 14 15 16 17 18 19 20</span>
+<span class="go">  * lat            (lat) int64 -75 -45 -15 15 45 75</span>
+<span class="go">  * lon            (lon) int64 45 135 225 315</span>
+<span class="go">Data variables:</span>
+<span class="go">    EOFs           (mode, lat, lon) float64 -0.05723 -0.01997 ... 0.08166</span>
+<span class="go">    PCs            (time, mode) float64 1.183 -1.107 -0.5385 ... -0.08552 0.1951</span>
+<span class="go">    lambdas        (mode) float64 87.76 80.37 68.5 58.14 ... 8.269 6.279 4.74</span>
+<span class="go">    explained_var  (mode) float64 0.1348 0.1234 0.1052 ... 0.009644 0.00728</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.mean_merid_mass_streamfunction">
+<code class="descclassname">diagnostic.</code><code class="descname">mean_merid_mass_streamfunction</code><span class="sig-paren">(</span><em>v</em>, <em>lat_name=None</em>, <em>lon_name=None</em>, <em>plevel_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.mean_merid_mass_streamfunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the mean meridional mass stream function averaged over all provided longitudes</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 15/07/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+<dt><strong>plevel_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name                    automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mmms</strong><span class="classifier">xarray DataArray</span></dt><dd><p>New DataArray object containing the mean meridional mass stream function</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">Pressure levels must be provided in units of hPa</div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">400</span><span class="p">,</span> <span class="mi">600</span><span class="p">]),</span> <span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">mean_merid_mass_streamfunction</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;mmms&#39; (lat: 4, level: 2)&gt;</span>
+<span class="go">array([[ 0.000000e+00, -1.336316e-07],</span>
+<span class="go">       [ 0.000000e+00, -1.447547e+10],</span>
+<span class="go">       [ 0.000000e+00, -3.208457e+09],</span>
+<span class="go">       [ 0.000000e+00, -2.562681e+10]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">  * level    (level) int64 400 600</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.atmos_energy_cycle">
+<code class="descclassname">diagnostic.</code><code class="descname">atmos_energy_cycle</code><span class="sig-paren">(</span><em>temp</em>, <em>u</em>, <em>v</em>, <em>omega</em>, <em>gh</em>, <em>terms=None</em>, <em>vgradz=False</em>, <em>spectral=False</em>, <em>n_wavenumbers=20</em>, <em>integrate=True</em>, <em>lat_name=None</em>, <em>lon_name=None</em>, <em>plevel_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.atmos_energy_cycle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all terms in the Lorenz energy cycle. Follows formulae and notation used in <cite>Marques                 et al. 2011 Global diagnostic energetics of five state-of-the-art climate models. Climate                 Dynamics</cite>. Note that this decomposition is in the space domain. A space-time decomposition                 can also be carried out (though not in Fourier space, but this is not implemented here (see                 <cite>Oort. 1964 On Estimates of the atmospheric energy cycle. Monthly Weather Review</cite>).</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 15/07/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>temp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of temperature with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>u</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of zonal velocity with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>v</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of meridional velocity with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>omega</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of vertical velocity (pressure coordinates) with at least coordinates                     latitude, longitude and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>gh</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing fields of geopotential height with at least coordinates latitude, longitude                     and level (following standard naming - see Notes)</p>
+</dd>
+<dt><strong>terms</strong><span class="classifier">str or sequence of str</span></dt><dd><div class="line-block">
+<div class="line">List of terms to compute. If None, returns all terms. Available options are:</div>
+<div class="line"><strong>Pz</strong>; total available potential energy in the zonally averaged temperature distribution</div>
+<div class="line"><strong>Kz</strong>; total kinetic energy in zonally averaged motion</div>
+<div class="line"><strong>Pe</strong>; total eddy available potential energy [= sum_n Pn (n &gt; 0 only) for spectral=True] (Note that                     for spectral=True, an additional term, Sn, quantifying the rate of transfer of available potential                     energy to eddies of wavenumber n from eddies of all other wavenumbers is also returned)</div>
+<div class="line"><strong>Ke</strong>; total eddy kinetic energy [= sum_n Kn (n &gt; 0 only) for spectral=True] (Note that for                     spectral=True, an additional term, Ln, quantifying the rate of transfer of kinetic energy to eddies                     of wavenumber n from eddies of all other wavenumbers is also returned)</div>
+<div class="line"><strong>Cz</strong>; rate of conversion of zonal available potential energy to zonal kinetic energy</div>
+<div class="line"><strong>Ca</strong>; rate of transfer of total available potential energy in the zonally averaged temperature                     distribution (Pz) to total eddy available potential energy (Pe) [= sum_n Rn (n &gt; 0 only) for                     spectral=True]</div>
+<div class="line"><strong>Ce</strong>; rate of transfer of total eddy available potential energy (Pe) to total eddy kinetic energy                     (Ke) [= sum_n Cn (n &gt; 0 only) for spectral=True]</div>
+<div class="line"><strong>Ck</strong>; rate of transfer of total eddy kinetic energy (Ke) to total kinetic energy in zonally                     averaged motion (Kz) [= sum_n Mn (n &gt; 0 only) for spectral=True]</div>
+<div class="line"><strong>Gz</strong>; rate of generation of zonal available potential energy due to the zonally averaged heating (Pz).                     Note that this term is computed as a residual (Cz + Ca) and cannot be returned in spectral space.                     If Gz is requested with spectral=True, Gz is returned in real-space only</div>
+<div class="line"><strong>Ge</strong>; rate of generation of eddy available potential energy (Pe). Note that this term is computed as                     a residual (Ce - Ca) and cannot be returned in spectral space. If Ge is requested with spectral=True,                     Ge is returned in real-space only</div>
+<div class="line"><strong>Dz</strong>; rate of viscous dissipation of zonal kinetic energy (Kz). Note that this term is computed as a                     residual (Cz - Ck) and cannot be returned in spectral space. If Dz is requested with spectral=True, Dz                     is returned in real-space only</div>
+<div class="line"><strong>De</strong>; rate of dissipation of eddy kinetic energy (Ke). Note that this term is computed as a residual                     (Ce - Ck) and cannot be returned in spectral space. If De is requested with spectral=True, De is                     returned in real-space only</div>
+</div>
+</dd>
+<dt><strong>vgradz</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, uses <cite>v-grad-z</cite> approach for computing terms relating to conversion of potential energy to                     kinetic energy. Otherwise, defaults to using the <cite>omega-alpha</cite> approach (see reference above for details)</p>
+</dd>
+<dt><strong>spectral</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, computes all terms as a function of wavenumber on longitudinal bands. To use this                     option, longitudes must be regularly spaced. Note that Ge and De are computed as residuals and                     cannot be computed in spectral space</p>
+</dd>
+<dt><strong>n_wavenumbers</strong><span class="classifier">int, optional</span></dt><dd><p>Number of wavenumbers to retain either side of wavenumber=0. Obviously only does anything if                     spectral=True</p>
+</dd>
+<dt><strong>integrate</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, computes and returns the integral of each term over the mass of the atmosphere. Otherwise,                     only the integrands are returned</p>
+</dd>
+<dt><strong>lat_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of latitude coordinate. If None, doppyo will attempt to determine lat_name                     automatically</p>
+</dd>
+<dt><strong>lon_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of longitude coordinate. If None, doppyo will attempt to determine lon_name                     automatically</p>
+</dd>
+<dt><strong>plevel_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of pressure level coordinate. If None, doppyo will attempt to determine plevel_name                    automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>atmos_energy_cycle</strong><span class="classifier">xarray Dataset</span></dt><dd><p>Dataset containing the requested variables plus gamma, the stability parameter. If integrate=True,                     both the integrand (&lt;term&gt;_int) and the integral over the mass of the atmosphere (&lt;term&gt;) are                     returned for each requested term. Otherwise, only the integrands are returned.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">The following notation is used below (stackable, e.g. *_ZT indicates the time average of the zonal average):</div>
+<div class="line">*_A -&gt; area average over an isobaric surface</div>
+<div class="line">*_a -&gt; departure from area average</div>
+<div class="line">*_Z -&gt; zonal average</div>
+<div class="line">*_z -&gt; departure from zonal average</div>
+<div class="line">*_T -&gt; time average</div>
+<div class="line">*_t -&gt; departure from time average</div>
+<div class="line">Additionally, capital variables indicate Fourier transforms:</div>
+<div class="line">F(u) = U</div>
+<div class="line">F(v) = V</div>
+<div class="line">F(omega) = O</div>
+<div class="line">F(gh) = A</div>
+<div class="line">F(temp) = B</div>
+</div>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc).</div>
+<div class="line">Pressure levels must be provided in units of hPa</div>
+<div class="line">The terms Sn and Ln, which are computed when Pe and Ke are requested with spectral=True,                 rely on “triple terms” that are very intensive and can take a significant amount of time                 and memory to compute (see _triple_terms() below). Often (i.e. for arrays of sufficient                 size to be of interest) requesting these terms yeilds a MemoryError–if working in memory                –or a KilledWorkerError–if working out of memory</div>
+</div>
+<p>To do</p>
+<ul class="simple">
+<li><p>Arrays that are sufficiently large to be interesting currently max out the available memory when                 Sn or Ln are requested. I need to implement a less hungry method for computing the “triple terms”                 (see _triple_terms() below)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">temp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span> 
+<span class="gp">... </span>                    <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                         <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">omega</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span> 
+<span class="gp">... </span>                     <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                             <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                             <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gh</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span> 
+<span class="gp">... </span>                  <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                          <span class="p">(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> 
+<span class="gp">... </span>                          <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">atmos_energy_cycle</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">omega</span><span class="p">,</span> <span class="n">gh</span><span class="p">,</span> <span class="n">spectral</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:  (lat: 90, level: 9, n: 41, time: 5)</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * level    (level) int64 100 200 300 400 500 600 700 800 900</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2000-05-31</span>
+<span class="go">  * lat      (lat) int64 -90 -88 -86 -84 -82 -80 -78 ... 76 78 80 82 84 86 88</span>
+<span class="go">  * n        (n) float64 -20.0 -19.0 -18.0 -17.0 -16.0 ... 17.0 18.0 19.0 20.0</span>
+<span class="go">Data variables:</span>
+<span class="go">    gamma    (level, time) float64 8.993 120.3 68.1 ... -6.874 1.083 -1.383</span>
+<span class="go">    Pz_int   (level, time, lat) float64 83.76 64.07 67.67 ... -8.283 -0.7205</span>
+<span class="go">    Pz       (time) float64 -9.73e+04 8.225e+05 -1.892e+04 -4.197e+06 -9.113e+05</span>
+<span class="go">    Kz_int   (lat, level, time) float64 0.03326 0.01417 ... 0.01454 0.005276</span>
+<span class="go">    Kz       (time) float64 88.08 93.48 97.19 91.19 85.38</span>
+<span class="go">    Cz_int   (level, lat, time) float64 0.0001505 -6.762e-05 ... -3.222e-06</span>
+<span class="go">    Cz       (time) float64 0.01983 0.02128 -0.04917 -0.04136 -0.04431</span>
+<span class="go">    Pn_int   (level, time, lat, n) float64 109.5 163.6 132.4 ... -0.5592 -31.31</span>
+<span class="go">    Pn       (time, n) float64 -1.496e+05 -1.48e+05 ... -1.712e+06 -1.534e+06</span>
+<span class="go">    Sn_int   (level, time, n, lat) complex128 (-1.635e+12+1.365e+12j) ... (1.546e-04-3.464e-03j)</span>
+<span class="go">    Sn       (time, n) float64 54.46 42.84 39.39 10.27 ... 43.73 55.43 37.28</span>
+<span class="go">    Kn_int   (lat, n, level, time) float64 0.02795 0.02618 ... 0.0314 0.005119</span>
+<span class="go">    Kn       (n, time) float64 184.5 179.1 183.1 186.4 ... 183.1 186.4 176.6</span>
+<span class="go">    Ln_int   (n, lat, level, time) complex128 (-1.401e+09+4.623e+08j) ... (2.400e-06+9.272e-07j)</span>
+<span class="go">    Ln       (n, time) float64 7.325e-05 0.0001285 ... 8.57e-05 0.0001433</span>
+<span class="go">    Rn_int   (level, time, lat, n) complex128 (5.631e-03-1.433e-17j) ... (-3.295e-04+8.862e-19j)</span>
+<span class="go">    Rn       (time, n) float64 0.3357 0.5211 0.00877 ... 3.811 0.04257 3.209</span>
+<span class="go">    Cn_int   (level, lat, n, time) complex128 (-1.694e-04+4.232e-19j) ... (-1.836e-04+4.979e-19j)</span>
+<span class="go">    Cn       (n, time) float64 0.09795 0.04268 0.01845 ... 0.04054 0.03553</span>
+<span class="go">    Mn_int   (lat, n, level, time) complex128 (-1.376e+06+2.933e-09j) ... (5.344e-07-1.670e-21j)</span>
+<span class="go">    Mn       (n, time) float64 1.526e+06 8.963e+05 ... 4.038e+06 8.648e+05</span>
+<span class="go">    Gz_int   (level, lat, time) float64 -0.01321 -0.2201 ... -6.633e-05</span>
+<span class="go">    Gz       (time) float64 1.33 -10.62 27.5 -31.06 -10.44</span>
+<span class="go">    Ge_int   (level, lat, time) float64 0.01375 0.2213 ... 0.0007708 2.494e-05</span>
+<span class="go">    Ge       (time) float64 -1.011 10.69 -27.39 31.14 10.57</span>
+<span class="go">    Dz_int   (level, lat, time) float64 7.444e+07 -6.406e+07 ... -3.544e-06</span>
+<span class="go">    Dz       (time) float64 1.009e+07 6.951e+06 1.85e+07 1.491e+07 1.306e+07</span>
+<span class="go">    De_int   (level, lat, time) float64 7.444e+07 -6.406e+07 ... -3.849e-05</span>
+<span class="go">    De       (time) float64 1.009e+07 6.951e+06 1.85e+07 1.491e+07 1.306e+07</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.isotherm_depth">
+<code class="descclassname">diagnostic.</code><code class="descname">isotherm_depth</code><span class="sig-paren">(</span><em>temp</em>, <em>target_temp=20</em>, <em>depth_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.isotherm_depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the depth of an isotherm given a target temperature. If no temperatures in the column
+exceed the target temperature, a nan is returned at that point</p>
+<div class="line-block">
+<div class="line">Author: Thomas Moore</div>
+<div class="line">Date: 02/10/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>temp</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing values of temperature with at least a depth dimension</p>
+</dd>
+<dt><strong>target_temp</strong><span class="classifier">value, optional</span></dt><dd><p>Value of temperature used to compute isotherm depth. Default value is 20 degC</p>
+</dd>
+<dt><strong>depth_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of depth coordinate. If None, doppyo will attempt to determine depth_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>isotherm_depth</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the depth of the requested isotherm</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="line-block">
+<div class="line">All input array coordinates must follow standard naming (see <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lat_name()</span></code>,                 <code class="docutils literal notranslate"><span class="pre">doppyo.utils.get_lon_name()</span></code>, etc)</div>
+<div class="line">If multiple occurences of target occur along the depth coordinate, only the maximum value of                 coord is returned</div>
+<div class="line">The current version includes no interpolation between grid spacing. This should be added as                 an option in the future</div>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">temp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="mi">20</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">10</span><span class="p">)),</span> 
+<span class="gp">... </span>                    <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">45</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">90</span><span class="p">)),</span> 
+<span class="gp">... </span>                            <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">200</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">isotherm_depth</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;isosurface&#39; (lat: 4, lon: 4)&gt;</span>
+<span class="go">array([[ 400., 1600., 2000.,  800.],</span>
+<span class="go">       [1800., 2000., 1800., 2000.],</span>
+<span class="go">       [2000., 2000., 2000., 1600.],</span>
+<span class="go">       [1400., 2000., 2000., 2000.]])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * lat      (lat) int64 -90 -45 0 45</span>
+<span class="go">  * lon      (lon) int64 0 90 180 270</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.pwelch">
+<code class="descclassname">diagnostic.</code><code class="descname">pwelch</code><span class="sig-paren">(</span><em>da1</em>, <em>da2</em>, <em>dim</em>, <em>nwindow</em>, <em>overlap=50</em>, <em>dx=None</em>, <em>hanning=False</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.pwelch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the cross/power spectral density along a dimension using welch’s method. Note that                 the spectral density is always computed relative to a “frequency” f = 1/dx (see Notes for                 details)</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 20/07/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>da1</strong><span class="classifier">xarray DataArray</span></dt><dd><p>First array of data to use in spectral density calculation. For power spectral density,                     da1 = da2</p>
+</dd>
+<dt><strong>da2</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Second array of data to use in spectral density calculation. For power spectral density,                     da1 = da2</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str</span></dt><dd><p>Dimension to compute spectral density along</p>
+</dd>
+<dt><strong>nwindow</strong><span class="classifier">value</span></dt><dd><p>Length of the signal segments for pwelch calculation</p>
+</dd>
+<dt><strong>overlap</strong><span class="classifier">value, optional</span></dt><dd><p>Percentage overlap of the signal segments for pwelch calculation</p>
+</dd>
+<dt><strong>dx</strong><span class="classifier">value, optional</span></dt><dd><p>Spacing along the dimension dim. If None, dx is determined from the coordinate dim. For                     consistency between spatial and temporal dim, spectra is computed relative to a “frequency”,                     f = 1/dx, where dx is the spacing along dim, e.g.:</p>
+<ul class="simple">
+<li><p>for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz</p></li>
+<li><p>for spatial dim in meters, f = 1/meters = k/(2*pi)</p></li>
+<li><p>for spatial dim in degrees, f = 1/degrees = k/360</p></li>
+</ul>
+<p>If converting the “frequency” to wavenumber, for example, one must also adjust the spectra                     magnitude so that the integral remains equal to the variance, e.g. for spatial spectra,                    k = f*(2*pi)  -&gt;  phi_new = phi_old/(2*pi)</p>
+</dd>
+<dt><strong>hanning</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, a Hanning window weighting is applied prior to the fft</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>spectra</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the power spectral density of the input array(s)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spectra</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">pwelch</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">nwindow</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">seconds_to_days</span> <span class="o">=</span> <span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;f_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">seconds_to_days</span><span class="o">*</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;f_time&#39;</span><span class="p">]</span> <span class="c1"># Change freq from Hz to 1/days</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spectra</span> <span class="o">=</span> <span class="n">spectra</span><span class="o">/</span><span class="n">seconds_to_days</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">spectra</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;spectra&#39; (f_time: 11)&gt;</span>
+<span class="go">array([1.381912, 1.89882 , 1.641378, 1.939686, 2.218824, 1.941639, 2.142277,</span>
+<span class="go">       1.689319, 1.983302, 2.225709, 2.732023])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * f_time   (f_time) float64 0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.inband_variance">
+<code class="descclassname">diagnostic.</code><code class="descname">inband_variance</code><span class="sig-paren">(</span><em>da</em>, <em>dim</em>, <em>bounds</em>, <em>nwindow</em>, <em>overlap=50</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.inband_variance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the in-band variance along a specified dimension.</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 20/07/2018</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>da</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array with which to compute in-band variance</p>
+</dd>
+<dt><strong>dim</strong><span class="classifier">str</span></dt><dd><p>Dimension along which to compute in-band variance</p>
+</dd>
+<dt><strong>bounds</strong><span class="classifier">sequence</span></dt><dd><p>Frequency bounds for in-band variance calculation. Note that for consistency between                     spatial and temporal dim, all spectra are computed relative to a “frequency”, f = 1/dx,                     where dx is the spacing along dim, e.g.:</p>
+<ul class="simple">
+<li><p>for temporal dim, dx is computed in seconds. Thus, f = 1/seconds = Hz</p></li>
+<li><p>for spatial dim in meters, f = 1/meters = k/(2*pi)</p></li>
+<li><p>for spatial dim in degrees, f = 1/degrees = k/360</p></li>
+</ul>
+<p>Thus, bounds must be provided in a way consistent with this, e.g.:</p>
+<ul class="simple">
+<li><p>for temporal dim, bounds = 1 / (60*60*24*[d1, d2, d3]), where d# are numbers of days</p></li>
+<li><p>for spatial dim, bounds = 1 / [l1, l2, l3], where l# are numbers of meters, degrees, etc</p></li>
+</ul>
+</dd>
+<dt><strong>nwindow</strong><span class="classifier">value</span></dt><dd><p>Length of the signal segments for pwelch calculation</p>
+</dd>
+<dt><strong>overlap</strong><span class="classifier">value, optional</span></dt><dd><p>Percentage overlap of the signal segments for pwelch calculation</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>inband_var</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the in-band variances of the input array</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">)),</span> 
+<span class="gp">... </span>                 <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">inband_variance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> 
+<span class="gp">... </span>                                  <span class="n">bounds</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">])),</span> <span class="n">nwindow</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;in-band&#39; (f_time_bins: 2)&gt;</span>
+<span class="go">array([0.106615, 0.492033])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * f_time_bins  (f_time_bins) object [1.16e-06, 2.31e-06) [2.31e-06, 5.79e-06)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.nino3">
+<code class="descclassname">diagnostic.</code><code class="descname">nino3</code><span class="sig-paren">(</span><em>sst_anom</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.nino3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Nino-3 index</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sst_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing sea surface temperature anomalies</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>nino3</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Average of the provided sst anomalies over the nino-3 box</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sst</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                           <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_clim</span> <span class="o">=</span> <span class="n">sst</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">sst</span><span class="p">,</span> <span class="n">sst_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">nino3</span><span class="p">(</span><span class="n">sst_anom</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;nino3&#39; (time: 24)&gt;</span>
+<span class="go">array([-0.137317, -0.094808, -0.01091 , -0.04653 ,  0.030562, -0.065515,</span>
+<span class="go">       -0.109851,  0.118016,  0.092496, -0.030821, -0.011724, -0.002773,</span>
+<span class="go">        0.137317,  0.094808,  0.01091 ,  0.04653 , -0.030562,  0.065515,</span>
+<span class="go">        0.109851, -0.118016, -0.092496,  0.030821,  0.011724,  0.002773])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.nino34">
+<code class="descclassname">diagnostic.</code><code class="descname">nino34</code><span class="sig-paren">(</span><em>sst_anom</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.nino34" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Nino-3.4 index</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sst_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing sea surface temperature anomalies</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>nino34</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Average of the provided sst anomalies over the nino-3.4 box</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sst</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                           <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_clim</span> <span class="o">=</span> <span class="n">sst</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">sst</span><span class="p">,</span> <span class="n">sst_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">nino34</span><span class="p">(</span><span class="n">sst_anom</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;nino34&#39; (time: 24)&gt;</span>
+<span class="go">array([-0.052202,  0.00467 ,  0.121013,  0.007983, -0.070645,  0.051945,</span>
+<span class="go">       -0.045485,  0.065569, -0.018723, -0.053734,  0.10527 , -0.113451,</span>
+<span class="go">        0.052202, -0.00467 , -0.121013, -0.007983,  0.070645, -0.051945,</span>
+<span class="go">        0.045485, -0.065569,  0.018723,  0.053734, -0.10527 ,  0.113451])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.nino4">
+<code class="descclassname">diagnostic.</code><code class="descname">nino4</code><span class="sig-paren">(</span><em>sst_anom</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.nino4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Nino-4 index</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sst_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing sea surface temperature anomalies</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>nino4</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Average of the provided sst anomalies over the nino-4 box</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sst</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                           <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_clim</span> <span class="o">=</span> <span class="n">sst</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">sst</span><span class="p">,</span> <span class="n">sst_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">nino4</span><span class="p">(</span><span class="n">sst_anom</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;nino4&#39; (time: 24)&gt;</span>
+<span class="go">array([ 0.017431, -0.086129,  0.106992, -0.097994,  0.109215, -0.120221,</span>
+<span class="go">        0.042459, -0.189595,  0.005097,  0.034218,  0.019478,  0.054122,</span>
+<span class="go">       -0.017431,  0.086129, -0.106992,  0.097994, -0.109215,  0.120221,</span>
+<span class="go">       -0.042459,  0.189595, -0.005097, -0.034218, -0.019478, -0.054122])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.emi">
+<code class="descclassname">diagnostic.</code><code class="descname">emi</code><span class="sig-paren">(</span><em>sst_anom</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.emi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns El Nino Modoki index</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sst_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing sea surface temperature anomalies</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>emi</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the El Nino Modoki index</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sst</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                           <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_clim</span> <span class="o">=</span> <span class="n">sst</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">sst</span><span class="p">,</span> <span class="n">sst_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">emi</span><span class="p">(</span><span class="n">sst_anom</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;emi&#39; (time: 24)&gt;</span>
+<span class="go">array([-0.046743,  0.181795,  0.020386, -0.215317, -0.209294,  0.109291,</span>
+<span class="go">        0.202055, -0.021001, -0.013106,  0.094376, -0.000516, -0.021762,</span>
+<span class="go">        0.046743, -0.181795, -0.020386,  0.215317,  0.209294, -0.109291,</span>
+<span class="go">       -0.202055,  0.021001,  0.013106, -0.094376,  0.000516,  0.021762])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.dmi">
+<code class="descclassname">diagnostic.</code><code class="descname">dmi</code><span class="sig-paren">(</span><em>sst_anom</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.dmi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns dipole mode index</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sst_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing sea surface temperature anomalies</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dmi</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the dipole mode index</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sst</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                           <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_clim</span> <span class="o">=</span> <span class="n">sst</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sst_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">sst</span><span class="p">,</span> <span class="n">sst_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">dmi</span><span class="p">(</span><span class="n">sst_anom</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;dmi&#39; (time: 24)&gt;</span>
+<span class="go">array([-0.225498,  0.220686,  0.032038,  0.019634,  0.00511 , -0.202789,</span>
+<span class="go">       -0.014349, -0.293248,  0.020925,  0.114059,  0.066389,  0.238707,</span>
+<span class="go">        0.225498, -0.220686, -0.032038, -0.019634, -0.00511 ,  0.202789,</span>
+<span class="go">        0.014349,  0.293248, -0.020925, -0.114059, -0.066389, -0.238707])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="diagnostic.soi">
+<code class="descclassname">diagnostic.</code><code class="descname">soi</code><span class="sig-paren">(</span><em>slp_anom</em>, <em>lat_name=None</em>, <em>lon_name=None</em>, <em>time_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diagnostic.soi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns southern oscillation index as defined by NOAA (see, for example,                 <a class="reference external" href="https://www.esrl.noaa.gov/psd/gcos_wgsp/Timeseries/SOI/">https://www.esrl.noaa.gov/psd/gcos_wgsp/Timeseries/SOI/</a>)</p>
+<div class="line-block">
+<div class="line">Author: Dougie Squire</div>
+<div class="line">Date: 10/04/2018</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>slp_anom</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing sea level pressure anomalies</p>
+</dd>
+<dt><strong>time_name</strong><span class="classifier">str, optional</span></dt><dd><p>Name of the time dimension. If None, doppyo will attempt to determine time_name                     automatically</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>soi</strong><span class="classifier">xarray DataArray</span></dt><dd><p>Array containing the southern oscillation index</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">slp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">24</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="n">coords</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">360</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span> 
+<span class="gp">... </span>                   <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2000-01-01&#39;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;M&#39;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">slp_clim</span> <span class="o">=</span> <span class="n">slp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time.month&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">slp_anom</span> <span class="o">=</span> <span class="n">doppyo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">anomalize</span><span class="p">(</span><span class="n">slp</span><span class="p">,</span> <span class="n">slp_clim</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doppyo</span><span class="o">.</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">soi</span><span class="p">(</span><span class="n">slp_anom</span><span class="p">)</span>
+<span class="go">&lt;xarray.DataArray &#39;soi&#39; (time: 24)&gt;</span>
+<span class="go">array([ 0.355277,  0.38263 ,  0.563005, -1.256122, -1.252341,  0.202942,</span>
+<span class="go">        0.691819,  0.412523, -1.368695,  0.421943,  2.349053,  0.069382,</span>
+<span class="go">       -0.355277, -0.38263 , -0.563005,  1.256122,  1.252341, -0.202942,</span>
+<span class="go">       -0.691819, -0.412523,  1.368695, -0.421943, -2.349053, -0.069382])</span>
+<span class="go">Coordinates:</span>
+<span class="go">  * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="skill_doc.html" class="btn btn-neutral float-right" title="skill" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="modules_doc.html" class="btn btn-neutral float-left" title="Modules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Dougie Squire
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
