@@ -2018,7 +2018,7 @@ def get_latlon_region(da, box):
         box[3] = box[3]+360
         
     # Make sure lats are organised in same way between da and box -----
-    if da.lat[-1] < da.lat[0]:
+    if da[lat_name][-1] < da[lat_name][0]:
         box = [box[1], box[0], box[2], box[3]]
         
     # Account for datasets with negative longitudes -----
