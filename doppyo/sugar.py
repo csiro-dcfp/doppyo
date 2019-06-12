@@ -1575,7 +1575,7 @@ def _load_ncfile(row, variables, chunks, time2lead, clip_time, time_dim='time', 
     path = row[-1]
     
     # Lazily load the dataset -----
-    dataset = xr.open_mfdataset(path, chunks, autoclose=True, parallel=True, preprocess=_drop_offending_variables, **kwargs)[variables]
+    dataset = xr.open_mfdataset(path, chunks, parallel=True, preprocess=_drop_offending_variables, **kwargs)[variables]
     
     # Clip time dimension -----
     if (clip_time is not None) and (clip_time < len(dataset[time_dim])):
