@@ -11,6 +11,7 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
+import dask
 
 import cartopy
 from collections import Sequence
@@ -582,7 +583,7 @@ def get_nearest_point(da, lat, lon):
 # visualization tools
 # ===================================================================================================
 def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=None, clims=None, squeeze_row=1, 
-                squeeze_col=1, squeeze_cbar=1, shift_cbar=1, cmap='viridis', fontsize=12, invert=False):
+                squeeze_col=1, squeeze_cbar=1, shift_cbar=1, cmaps='viridis', fontsize=12, invert=False):
     """ Plots tiles of figures """
     
     def _depth(seq):
@@ -616,10 +617,12 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
     over_count = 1
     for idx,dat in enumerate(data):
         if one_cbar:
+            cmaps = cmap
             vmin, vmax = vlims
             if clims is not None:
                 cmin, cmax = clims
         else:
+            cmap = cmaps[idx]
             vmin, vmax = vlims[idx]
             if clims is not None:
                 cmin, cmax = clims[idx]
@@ -627,7 +630,7 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
         if ('lat' in dat.dims) and ('lon' in dat.dims):
             trans = cartopy.crs.PlateCarree()
             ax = plt.subplot(nrow, ncol, over_count, projection=cartopy.crs.PlateCarree(central_longitude=180))
-            extent = [dat.lon.min(), dat.lon.max(), 
+            extent = [dat.lon.min()+1e-6, dat.lon.max(), 
                       dat.lat.min(), dat.lat.max()]
 
             if contour is True:
@@ -1555,3 +1558,77 @@ def auto_merge(paths, preprocess=None, parallel=True, **kwargs):
         merged = _combine_along_last_dim(merged)
 
     return merged[0]
+
+
+# ===================================================================================================
+def _drop_offending_variables(ds):
+    drop_vars = ['average_T1','average_T2','average_DT','time_bounds', 'geolat_t', 'geolat_c', 'geolon_t', 'geolon_c']
+    for drop_var in drop_vars:
+        if drop_var in ds.data_vars:
+            ds = ds.drop(drop_var)
+    return ds
+
+def _load_ncfile(row, variables, chunks, time2lead, clip_time, time_dim='time', **kwargs):
+    """ Lazily load row[1] and add coordinates stored in dictionary in row[0] """
+    
+    coords = row[0]
+    path = row[-1]
+    
+    # Lazily load the dataset -----
+    dataset = xr.open_mfdataset(path, chunks, autoclose=True, parallel=True, preprocess=_drop_offending_variables, **kwargs)[variables]
+    
+    # Clip time dimension -----
+    if (clip_time is not None) and (clip_time < len(dataset[time_dim])):
+        dataset = dataset.isel({time_dim : range(clip_time)})
+        
+    # Add new coordinates -----
+    for key, value in zip(coords.keys(), coords.values()):
+        dataset.coords[key] = value
+        
+    # Convert "time" dimension to a "time since date" (lead_time) dimension -----
+    if time2lead:
+        freq = pd.infer_freq(dataset[time_dim].values)
+        dataset[time_dim] = np.arange(len(dataset[time_dim]))
+        dataset = dataset.rename({time_dim : 'lead_time'})
+        dataset.lead_time.attrs = {'units' : freq}
+
+    if isinstance(variables, list):
+        return dataset
+    else:
+        return dataset.to_dataset()
+
+def load_and_concat(rows, variables, chunks=None, time2lead=False, clip_time=None, isel=None, 
+                    time_dim='time', **kwargs):
+    """ Lazily load all paths in rows in parallel and concatenate into single object 
+        The loading functions below expect a list of tuples with the following format:
+            ```
+            paths = [({dictionary of coordinate names, and their values, to expand and concatentate along}, [list of files corresponding to coordinates in dictionary])]
+            ```
+        For example,
+            ```
+            paths = [({'ensemble' : 1}, ['path/to/file_1_containing_ensemble_1', 'path/to/file_2_containing_ensemble_1']), 
+                     ({'ensemble' : 2}, ['path/to/file_1_containing_ensemble_2', 'path/to/file_2_containing_ensemble_2'])]
+            ```
+    """
+    
+    open_ = dask.delayed(_load_ncfile)
+    datasets = [open_(row, variables=variables, chunks=chunks, time2lead=time2lead, 
+                      clip_time=clip_time, time_dim=time_dim, **kwargs) for row in rows]
+    datasets = dask.compute(datasets)[0]
+
+    # Get list of new_dims, dropping those which only have a single element -----
+    all_dims = [row[0] for row in rows]
+    new_dims = []
+    for key in all_dims[0]:
+        if len(np.unique([val[key] for val in all_dims])) > 1:
+            new_dims.append(key)
+    
+    if (chunks is not None) & (time2lead is True):
+        chunks['lead_time'] = chunks.pop(time_dim)
+    if len(new_dims) == 0:
+        return xr.auto_combine(datasets)[variables]
+    elif len(new_dims) == 1:
+        return xr.concat(datasets, dim=new_dims[0])[variables]
+    else:
+        return xr.concat(datasets, dim='stack') \
+                 .set_index(stack=new_dims).unstack('stack')[variables]

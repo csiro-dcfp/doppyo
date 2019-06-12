@@ -1,4 +1,5 @@
 # Specific local files
+/dask-worker-space
 
 # python and jupyter notebook files
 .ipynb_checkpoints
