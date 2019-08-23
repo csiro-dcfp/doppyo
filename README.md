@@ -1,6 +1,4 @@
-========
-doppyo
-========
+# doppyo
 
 doppyo is a diagnostics/verification package for climate forecast systems. It is still in the very early stages of development.
 
