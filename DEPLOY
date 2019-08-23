@@ -1,0 +1,7 @@
+Build distribution
+
+python setup.py sdist bdist_wheel
+
+Upload to pypi
+
+twine upload dist/*
