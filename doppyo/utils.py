@@ -6,13 +6,13 @@
 """
 
 __all__ = ['timer', 'constants', 'skewness', 'kurtosis', 'digitize', 'pdf', 'cdf', 'Gaussian_pdf', 
-           'Gaussian_cdf', 'histogram', 'get_bin_edges', 'polyfit', 'polyval', 'differentiate_wrt', 
-           'xy_from_lonlat', 'integrate', 'add', 'subtract', 'multiply', 'divide', 'average', 'fft', 
-           'ifft', 'fftfilt', 'isosurface', 'load_mean_climatology', 'anomalize', 'trunc_time', 
-           'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_datapoint', 'get_latlon_region', 
-           'latlon_average', 'stack_by_init_date', 'concat_times', 'prune', 'get_other_dims', 
-           'cftime_to_datetime64', 'get_time_name', 'get_lon_name', 'get_lat_name', 'get_depth_name', 
-           'get_level_name', 'get_plevel_name', '_is_datetime']
+           'Gaussian_cdf', 'histogram', 'get_bin_edges', 'polyfit', 'polyval', 'fit', 'predict', 
+           'differentiate_wrt', 'xy_from_lonlat', 'integrate', 'add', 'subtract', 'multiply', 'divide', 
+           'average', 'fft', 'ifft', 'fftfilt', 'isosurface', 'load_mean_climatology', 'anomalize', 
+           'trunc_time', 'leadtime_to_datetime', 'datetime_to_leadtime', 'repeat_datapoint', 
+           'get_latlon_region', 'latlon_average', 'stack_by_init_date', 'concat_times', 'prune', 
+           'get_other_dims', 'cftime_to_datetime64', 'get_time_name', 'get_lon_name', 'get_lat_name', 
+           'get_depth_name', 'get_level_name', 'get_plevel_name', '_is_datetime']
 
 # ===================================================================================================
 # Packages
@@ -30,6 +30,7 @@ from scipy import ndimage
 import dask.array
 import copy
 import warnings
+import sklearn
 
 # Load doppyo packages -----
 from doppyo import skill
@@ -728,6 +729,139 @@ def polyval(x, p, over_dims):
                         output_dtypes=[float])
     
     return da.rename('fit')
+
+
+# ===================================================================================================
+def fit(x, y, model, over_dims):
+    """
+        Returns fits for a single predictor scikit learn model
+        
+        | Author: Dougie Squire
+        | Date: 09/07/2019
+        
+        Parameters
+        ----------
+        x : xarray DataArray
+            Array containing x-coordinates of the sample points
+        y : xarray DataArray
+            Array containing y-coordinates of the sample points
+        model : scikit learn model object
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the fit
+            
+        Returns
+        -------
+        fits : xarray DataArray
+            Array containing the fit objects
+            
+        Examples
+        --------
+        >>> model = sklearn.linear_model.LinearRegression()
+        >>> x = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> y = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> doppyo.utils.fit(x, y, model, over_dims=['x','y'])
+        <xarray.DataArray 'fits' (z: 3)>
+        array([LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None, normalize=False),
+               LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None, normalize=False),
+               LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None, normalize=False)],
+              dtype=object)
+        Coordinates:
+          * z        (z) int64 0 1 2
+
+        See Also
+        --------
+        sklearn
+    """
+    
+    def _fit(x, y, model):
+        notnan = np.isfinite(x) & np.isfinite(y)
+        fit = sklearn.base.clone(model, safe=True).fit(x[notnan].reshape(-1, 1), y[notnan])
+        fit.ndim = 1
+        fit.shape = (1,1)
+        return fit
+    
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+
+    da = xr.apply_ufunc(_fit, x , y,
+                        input_core_dims=[over_dims, over_dims],
+                        vectorize=True, 
+                        dask='parallelized', 
+                        kwargs={'model' : model})
+    
+    return da.rename('fits')
+
+
+# ===================================================================================================
+def predict(x, p, over_dims):
+    """
+        Returns predictions for a single predictor scikit learn model, given the fits
+        
+        | Author: Dougie Squire
+        | Date: 09/07/2019
+        
+        Parameters
+        ----------
+        x : xarray DataArray
+            Array containing x-coordinates of the sample points
+        p : xarray DataArray
+            Array containing the fits (see doppyo.utils.fit)
+        over_dims : str or sequence of str, optional
+            Dimensions over which to compute the fit. Should match over_dims handed to polyfit
+            
+        Returns
+        -------
+        predict : xarray DataArray
+            Predicted values
+            
+        Examples
+        --------
+        >>> model = sklearn.linear_model.LinearRegression()
+        >>> x = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> y = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                  coords=[('x', np.arange(3)), ('y', np.arange(3)), ('z', np.arange(3))])
+        >>> p = doppyo.utils.fit(x, y, model, over_dims=['x','y'])
+        >>> xf = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                   coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> doppyo.utils.predict(xf, p, over_dims=['x','y'])
+        <xarray.DataArray 'fit' (z: 3, x: 3, y: 3)>
+        array([[[ 0.416292, -0.153238, -0.08342 ],
+                [ 0.128766, -0.257814,  0.548825],
+                [ 0.201487,  0.046645,  0.194222]],
+
+               [[-0.257667, -0.124501, -0.140826],
+                [-0.190438, -0.100049, -0.288655],
+                [-0.207442, -0.171237, -0.205743]],
+
+               [[-0.072059,  0.643329,  0.555631],
+                [ 0.289103,  0.774688, -0.238533],
+                [ 0.197758,  0.392256,  0.206884]]])
+        Coordinates:
+          * z        (z) int64 0 1 2
+          * x        (x) int64 0 1 2
+          * y        (y) int64 0 1 2
+
+        See Also
+        --------
+        sklearn
+    """
+
+    def _predict(p, x):
+        return p.predict(x.reshape(-1, 1)).reshape(x.shape)
+    
+    if isinstance(over_dims, str):
+        over_dims = [over_dims]
+
+    da = xr.apply_ufunc(_predict, p , x,
+                        input_core_dims=[[], over_dims],
+                        output_core_dims=[over_dims],
+                        vectorize=True, 
+                        dask='parallelized')
+    
+    return da.rename('predict')
 
 
 # ===================================================================================================
@@ -2268,12 +2402,8 @@ def get_other_dims(da, dims_exclude):
             dims_exclude = [dims_exclude]
 
         other_dims = tuple(set(dims).difference(set(dims_exclude)))
-        if len(other_dims) == 0:
-            return None
-        elif len(other_dims) == 1:
-            return other_dims[0]
-        else:
-            return other_dims
+        
+        return other_dims
 
 
 # ===================================================================================================

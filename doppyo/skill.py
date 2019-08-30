@@ -1816,7 +1816,7 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
 
 
 # ===================================================================================================
-def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', scaled=False):
+def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', categorical=False):
     """
         Returns the Delsole and Tippett sign test over the given time period
         
@@ -1833,6 +1833,8 @@ def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', scaled=False):
             Array containing data to use as reference
         time_dim : str, optional
             Name of dimension over which to compute the random walk
+        categorical : bool, optional
+            If True, the winning forecast is only rewarded a point if it exactly equals the observations
             
         Returns
         -------
@@ -1864,13 +1866,14 @@ def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', scaled=False):
         See Delsole and Tippett 2016 `Forecast Comparison Based on Random Walks`
     """
     
-    cmp1_diff = abs(da_cmp1 - da_ref)
-    cmp2_diff = abs(da_cmp2 - da_ref)
-    
-    if scaled:
-        sign_test = (cmp2_diff/cmp1_diff * (cmp1_diff < cmp2_diff) - cmp1_diff/cmp2_diff * (cmp2_diff < cmp1_diff)).cumsum(time_dim)
+    if categorical:
+        cmp1_diff = -1*(da_cmp1 == da_ref)
+        cmp2_diff = -1*(da_cmp2 == da_ref)
     else:
-        sign_test = (1 * (cmp1_diff < cmp2_diff) - 1 * (cmp2_diff < cmp1_diff)).cumsum(time_dim)
+        cmp1_diff = abs(da_cmp1 - da_ref)
+        cmp2_diff = abs(da_cmp2 - da_ref)
+
+    sign_test = (1 * (cmp1_diff < cmp2_diff) - 1 * (cmp2_diff < cmp1_diff)).cumsum(time_dim)
     
     # Estimate 95% confidence interval -----
     notnan = 1*(cmp1_diff.notnull() & cmp2_diff.notnull())

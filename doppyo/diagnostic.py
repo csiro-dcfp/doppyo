@@ -2186,6 +2186,12 @@ def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
         ----------
         slp_anom : xarray DataArray
             Array containing sea level pressure anomalies
+        lat_name : str, optional
+            Name of the latitude dimension. If None, doppyo will attempt to determine lat_name \
+                    automatically
+        lon_name : str, optional
+            Name of the longitude dimension. If None, doppyo will attempt to determine lon_name \
+                    automatically
         time_name : str, optional
             Name of the time dimension. If None, doppyo will attempt to determine time_name \
                     automatically
@@ -2237,6 +2243,67 @@ def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
         
     return ((da_Tahiti_stdzd - da_Darwin_stdzd) / MSD).rename('soi')
 
+
+# ===================================================================================================
+def sam(slp_anom, lat_name=None, lon_name=None, time_name=None):
+    """
+        Returns southern annular mode index as defined by Gong, D. and Wang, S., 1999. Definition \
+            of Antarctic oscillation index. Geophysical research letters, 26(4), pp.459-462.
+        
+        | Author: Dougie Squire
+        | Date: 21/06/2019
+        
+        Parameters
+        ----------
+        slp_anom : xarray DataArray
+            Array containing sea level pressure anomalies
+        lat_name : str, optional
+            Name of the latitude dimension. If None, doppyo will attempt to determine lat_name \
+                    automatically
+        lon_name : str, optional
+            Name of the longitude dimension. If None, doppyo will attempt to determine lon_name \
+                    automatically
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
+            
+        Returns
+        -------
+        sam : xarray DataArray
+            Array containing the Gong and Wang (1999) southern annular mode index
+            
+        Examples
+        --------
+        >>> slp = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                    ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> slp_clim = slp.groupby('time.month').mean(dim='time')
+        >>> slp_anom = doppyo.utils.anomalize(slp, slp_clim)
+        >>> doppyo.diagnostic.soi(slp_anom)
+        <xarray.DataArray 'soi' (time: 24)>
+        array([ 0.355277,  0.38263 ,  0.563005, -1.256122, -1.252341,  0.202942,
+                0.691819,  0.412523, -1.368695,  0.421943,  2.349053,  0.069382,
+               -0.355277, -0.38263 , -0.563005,  1.256122,  1.252341, -0.202942,
+               -0.691819, -0.412523,  1.368695, -0.421943, -2.349053, -0.069382])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """
+    
+    if lat_name is None:
+        lat_name = utils.get_lat_name(slp_anom)
+    if lon_name is None:
+        lon_name = utils.get_lon_name(slp_anom)
+    if time_name is None:
+        time_name = utils.get_time_name(slp_anom)
+    
+    slp_40 = slp_anom.interp({lat_name:-40}).mean(lon_name)
+    slp_40_stdzd = slp_40 / slp_40.std(dim=time_name)
+    
+    slp_65 = slp_anom.interp({lat_name:-65}).mean(lon_name)
+    slp_65_stdzd = slp_65 / slp_65.std(dim=time_name)
+    
+    return (slp_40_stdzd - slp_65_stdzd).rename('sam')
+    
 
 # ===================================================================================================
 # General functions

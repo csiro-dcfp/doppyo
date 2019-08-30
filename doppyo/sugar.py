@@ -582,7 +582,7 @@ def get_nearest_point(da, lat, lon):
 # ===================================================================================================
 # visualization tools
 # ===================================================================================================
-def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=None, clims=None, squeeze_row=1, 
+def plot_fields(data, title=None, headings=None, ncol=2, ncontour=None, vlims=None, clims=None, squeeze_row=1, 
                 squeeze_col=1, squeeze_cbar=1, shift_cbar=1, cmaps='viridis', fontsize=12, invert=False):
     """ Plots tiles of figures """
     
@@ -617,12 +617,15 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
     over_count = 1
     for idx,dat in enumerate(data):
         if one_cbar:
-            cmaps = cmap
+            cmap = cmaps
             vmin, vmax = vlims
             if clims is not None:
                 cmin, cmax = clims
         else:
-            cmap = cmaps[idx]
+            if isinstance(cmaps, list):
+                cmap = cmaps[idx]
+            else:
+                cmap = cmaps
             vmin, vmax = vlims[idx]
             if clims is not None:
                 cmin, cmax = clims[idx]
@@ -633,14 +636,14 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
             extent = [dat.lon.min()+1e-6, dat.lon.max(), 
                       dat.lat.min(), dat.lat.max()]
 
-            if contour is True:
+            if ncontour is not None:
                 if clims is not None:
                     ax.coastlines(color='gray')
-                    im = ax.contourf(dat.lon, dat.lat, dat, levels=np.linspace(vmin,vmax,12), origin='lower', transform=trans, 
+                    im = ax.contourf(dat.lon, dat.lat, dat, levels=np.linspace(vmin,vmax,ncontour), origin='lower', transform=trans, 
                                      vmin=vmin, vmax=vmax, cmap=cmap)
-                    ax.contour(dat.lon, dat.lat, dat, levels=np.linspace(cmin,cmax,12), origin='lower', transform=trans,
+                    ax.contour(dat.lon, dat.lat, dat, levels=np.linspace(cmin,cmax,ncontour), origin='lower', transform=trans,
                                vmin=vmin, vmax=vmax, colors='w', linewidths=2)
-                    ax.contour(dat.lon, dat.lat, dat, levels=np.linspace(cmin,cmax,12), origin='lower', transform=trans,
+                    ax.contour(dat.lon, dat.lat, dat, levels=np.linspace(cmin,cmax,ncontour), origin='lower', transform=trans,
                                vmin=vmin, vmax=vmax, colors='k', linewidths=1)
                 else:
                     ax.coastlines(color='black')
@@ -665,6 +668,7 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
             gl.ylocator = mticker.FixedLocator([-90, -60, 0, 60, 90])
             gl.xformatter = LONGITUDE_FORMATTER
             gl.yformatter = LATITUDE_FORMATTER
+            ax.set_extent(extent)
             
             if not one_cbar:
                 cbar = plt.colorbar(im, ax=ax, orientation="horizontal", aspect=30/squeeze_cbar, pad=shift_cbar*0.1)
@@ -678,19 +682,39 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
         else:
             if len(dat.dims) == 1:
                 ax = plt.subplot(nrow, ncol, over_count)
-                x_plt = 0
-                y_plt = dat
-                
-                if 'asp' not in locals():
-                    asp = 1
+                if len(dat) == 1:
+                    x_plt = 0
+                    y_plt = dat
+
+                    if 'asp' not in locals():
+                        asp = 1
+
+                    ax.bar(x_plt, y_plt, width=asp*y_plt*1)
+                    ax.set_xlim(-asp*y_plt,asp*y_plt)
+                    ax.set_xticks([])
+                    ax.set_aspect(asp)
+                    if headings is not None:
+                        ax.set_title(headings[idx], fontsize=fontsize)
+                else:
+                    x_plt = dat[dat.dims[0]]
+                    y_plt = dat
                     
-                ax.bar(x_plt, y_plt, width=asp*y_plt*1)
-                ax.set_xlim(-asp*y_plt,asp*y_plt)
-                ax.set_xticks([])
-                ax.set_ylabel(dat.name)
-                ax.set_aspect(asp)
-                if headings is not None:
-                    ax.set_title(headings[idx], fontsize=fontsize)
+                    if 'asp' not in locals():
+                        asp = 1
+                        
+                    ax.plot(x_plt, y_plt)
+                    if headings is not None:
+                        ax.set_title(headings[idx], fontsize=fontsize)
+                        
+                    if over_count % ncol == 0:
+                        ax.yaxis.tick_right()
+                    elif (over_count+ncol-1) % ncol == 0: 
+                        ax.set_ylabel(y_plt.name, fontsize=fontsize)
+                    else:
+                        ax.set_yticks([])
+                    if idx / ncol >= nrow - 1:
+                        ax.set_xlabel(x_plt.name, fontsize=fontsize)
+                    
             else:
                 ax = plt.subplot(nrow, ncol, over_count)
                 if 'lat' in dat.dims:
@@ -710,25 +734,16 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
                 extent = [x_plt.min(), x_plt.max(), 
                           y_plt.min(), y_plt.max()]
 
-                if contour is True:
+                if ncontour is not None:
                     if clims is not None:
-                        im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,12), vmin=vmin, vmax=vmax, 
+                        im = ax.contourf(x_plt, y_plt, dat, levels=np.linspace(vmin,vmax,ncontour), vmin=vmin, vmax=vmax, 
                                          cmap=cmap)
-                        ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='w', linewidths=2)
-                        ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,12), colors='k', linewidths=1)
+                        ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,ncontour), colors='w', linewidths=2)
+                        ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,ncontour), colors='k', linewidths=1)
                     else:
                         im = ax.contourf(x_plt, y_plt, dat, vmin=vmin, vmax=vmax, cmap=cmap)
                 else:
                     im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
-
-                if over_count % ncol == 0:
-                    ax.yaxis.tick_right()
-                elif (over_count+ncol-1) % ncol == 0: 
-                    ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
-                else:
-                    ax.set_yticks([])
-                if idx / ncol >= nrow - 1:
-                    ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
 
                 if not one_cbar:
                     cbar = plt.colorbar(im, ax=ax, orientation="horizontal", aspect=30/squeeze_cbar, pad=shift_cbar*0.1)
@@ -739,6 +754,15 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
                         cbar.set_label(headings[idx], labelpad=5, fontsize=fontsize);
                 elif headings is not None:
                     ax.set_title(headings[idx], fontsize=fontsize)
+                    
+                if over_count % ncol == 0:
+                    ax.yaxis.tick_right()
+                elif (over_count+ncol-1) % ncol == 0: 
+                    ax.set_ylabel(y_plt.dims[0], fontsize=fontsize)
+                else:
+                    ax.set_yticks([])
+                if idx / ncol >= nrow - 1:
+                    ax.set_xlabel(x_plt.dims[0], fontsize=fontsize)
             
             if invert:
                 ax.invert_yaxis()
@@ -759,7 +783,7 @@ def plot_fields(data, title=None, headings=None, ncol=2, contour=False, vlims=No
         cbar.set_ticks(np.linspace(vmin,vmax,5))
     elif title is not None:
         fig.suptitle(title, y=1)
-    
+        
     
 # ===================================================================================================
 def size_GB(xr_object):
@@ -1561,33 +1585,51 @@ def auto_merge(paths, preprocess=None, parallel=True, **kwargs):
 
 
 # ===================================================================================================
+import dask
 def _drop_offending_variables(ds):
     drop_vars = ['average_T1','average_T2','average_DT','time_bounds', 'geolat_t', 'geolat_c', 'geolon_t', 'geolon_c']
     for drop_var in drop_vars:
-        if drop_var in ds.data_vars:
+        if (drop_var in ds.data_vars) | (drop_var in ds.coords):
             ds = ds.drop(drop_var)
     return ds
 
-def _load_ncfile(row, variables, chunks, time2lead, clip_time, time_dim='time', **kwargs):
-    """ Lazily load row[1] and add coordinates stored in dictionary in row[0] """
+def _load_ncfile(row, variables, chunks, resample_time_like, convert_time_to_lead, clip_time_at, time_dim='time', **kwargs):
+    """ 
+        Lazily load row[1] and add coordinates stored in dictionary in row[0] 
+        A number of unecessary variables are automatically droppped while loading as these caused issues in concatenation
+    """
     
     coords = row[0]
     path = row[-1]
     
     # Lazily load the dataset -----
-    dataset = xr.open_mfdataset(path, chunks, parallel=True, preprocess=_drop_offending_variables, **kwargs)[variables]
-    
-    # Clip time dimension -----
-    if (clip_time is not None) and (clip_time < len(dataset[time_dim])):
-        dataset = dataset.isel({time_dim : range(clip_time)})
+    dataset = xr.open_mfdataset(path, chunks, preprocess=_drop_offending_variables, **kwargs)[variables] 
         
     # Add new coordinates -----
     for key, value in zip(coords.keys(), coords.values()):
         dataset.coords[key] = value
         
+    # Resample time dimension -----
+    if resample_time_like is not None:
+        resample_freq = resample_time_like[0]
+        resample_method = resample_time_like[1]
+        if resample_method == 'mean':
+            dataset = dataset.resample({time_dim: resample_freq}).mean(time_dim)
+        elif resample_method == 'sum':
+            dataset = dataset.resample({time_dim: resample_freq}).sum(time_dim)
+        else:
+            raise ValueError('Unrecognised resample method. Method options are "mean" and "sum", provided via resample_time_like=[freq, method]')
+    
+    # Clip time dimension -----
+    if (clip_time_at is not None) and (clip_time_at < len(dataset[time_dim])):
+        dataset = dataset.isel({time_dim : range(clip_time_at)})
+    
     # Convert "time" dimension to a "time since date" (lead_time) dimension -----
-    if time2lead:
-        freq = pd.infer_freq(dataset[time_dim].values)
+    if convert_time_to_lead:
+        if xr.coding.times.contains_cftime_datetimes(dataset[time_dim]):
+            freq = pd.infer_freq(xr.coding.times.cftime_to_nptime(dataset[time_dim].values[:3]))
+        else:
+            freq = pd.infer_freq(dataset[time_dim].values[:3])
         dataset[time_dim] = np.arange(len(dataset[time_dim]))
         dataset = dataset.rename({time_dim : 'lead_time'})
         dataset.lead_time.attrs = {'units' : freq}
@@ -1597,9 +1639,10 @@ def _load_ncfile(row, variables, chunks, time2lead, clip_time, time_dim='time', 
     else:
         return dataset.to_dataset()
 
-def load_and_concat(rows, variables, chunks=None, time2lead=False, clip_time=None, isel=None, 
+def load_and_concat(rows, variables, chunks=None, resample_time_like=None, convert_time_to_lead=False, clip_time_at=None, 
                     time_dim='time', **kwargs):
-    """ Lazily load all paths in rows in parallel and concatenate into single object 
+    """ 
+        Lazily load all paths in rows in parallel and concatenate into single object 
         The loading functions below expect a list of tuples with the following format:
             ```
             paths = [({dictionary of coordinate names, and their values, to expand and concatentate along}, [list of files corresponding to coordinates in dictionary])]
@@ -1612,8 +1655,8 @@ def load_and_concat(rows, variables, chunks=None, time2lead=False, clip_time=Non
     """
     
     open_ = dask.delayed(_load_ncfile)
-    datasets = [open_(row, variables=variables, chunks=chunks, time2lead=time2lead, 
-                      clip_time=clip_time, time_dim=time_dim, **kwargs) for row in rows]
+    datasets = [open_(row, variables=variables, chunks=chunks, resample_time_like=resample_time_like,
+                      convert_time_to_lead=convert_time_to_lead, clip_time_at=clip_time_at, time_dim=time_dim, **kwargs) for row in rows]
     datasets = dask.compute(datasets)[0]
 
     # Get list of new_dims, dropping those which only have a single element -----
@@ -1623,7 +1666,7 @@ def load_and_concat(rows, variables, chunks=None, time2lead=False, clip_time=Non
         if len(np.unique([val[key] for val in all_dims])) > 1:
             new_dims.append(key)
     
-    if (chunks is not None) & (time2lead is True):
+    if (chunks is not None) & (convert_time_to_lead is True):
         chunks['lead_time'] = chunks.pop(time_dim)
     if len(new_dims) == 0:
         return xr.auto_combine(datasets)[variables]
