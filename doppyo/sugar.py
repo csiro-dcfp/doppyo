@@ -1675,3 +1675,82 @@ def load_and_concat(rows, variables, chunks=None, resample_time_like=None, conve
     else:
         return xr.concat(datasets, dim='stack') \
                  .set_index(stack=new_dims).unstack('stack')[variables]
+
+
+# ===================================================================================================   
+def interpolate_lonlat(da, lon_des, lat_des):
+    """
+        Interpolate to specified latitude and longitude values, wrapping edges longitudinally and flipping edges latitudinally 
+    """
+
+    lat_name = utils.get_lat_name(da)
+    lon_name = utils.get_lon_name(da)
+    dims = da.dims
+
+    # Wrap longitudes at egdes-----
+    da_minlon = da.isel({lon_name : 0})
+    minlon = da_minlon[lon_name]
+    da_maxlon = da.isel({lon_name : -1})
+    maxlon = da_maxlon[lon_name]
+    da_minlon[lon_name] = minlon + 360
+    da_maxlon[lon_name] = maxlon - 360
+    da_lonwrap = xr.concat([da_maxlon, da, da_minlon], dim=lon_name)
+
+    # Flip latitudes at edges -----
+    da_minlat = da_lonwrap.isel({lat_name : 0})
+    minlat = da_minlat[lat_name] 
+    da_maxlat = da_lonwrap.isel({lat_name : -1})
+    maxlat = da_maxlat[lat_name]
+    da_minlat[lat_name] = maxlat - 180
+    da_maxlat[lat_name] = minlat + 180
+    da_wrap = xr.concat([da_minlat, da_lonwrap, da_maxlat], dim=lat_name).chunk({lon_name:-1, lat_name:-1})
+
+    return da_wrap.interp({lon_name : lon_des, lat_name : lat_des}).transpose(*dims)
+
+
+ # ===================================================================================================   
+def global_average(da):
+    """
+        Returns the area weighted global average of da
+    """
+    def _get_area_weights(lon, lat):
+        """
+            Get area weights, wrapping edges longitudinally and flipping edges latitudinally 
+        """
+
+        lat_name = utils.get_lat_name(lat)
+        lon_name = utils.get_lon_name(lon)
+
+        dlon = lon.diff(lon_name) / 2
+        minlon = lon.isel({lon_name:0})-dlon.isel({lon_name:0})
+        minlon[lon_name] = minlon.values
+        maxlon = lon.isel({lon_name:-1})+dlon.isel({lon_name:-1})
+        maxlon[lon_name] = maxlon.values
+        midlon = lon.isel({lon_name:slice(0,-1)})+dlon.values
+        midlon[lon_name] = midlon.values
+        lonb = xr.concat([minlon, midlon, maxlon], dim=lon_name)
+
+        dlat = lat.diff(lat_name) / 2
+        minlat = lat.isel({lat_name:0})-dlat.isel({lat_name:0})
+        minlat[lat_name] = minlat.values
+        maxlat = lat.isel({lat_name:-1})+dlat.isel({lat_name:-1})
+        maxlat[lat_name] = maxlat.values
+        midlat = lat.isel({lat_name:slice(0,-1)})+dlat.values
+        midlat[lat_name] = midlat.values
+        latb = xr.concat([minlat, midlat, maxlat], dim=lat_name)
+
+        xb, yb = utils.xy_from_lonlat(lonb,latb)
+        dxb = abs(xb.diff(lon_name))
+        dyb = abs(yb.diff(lat_name))
+        area = dxb * dyb
+        area[lon_name] = lon.values
+        area[lat_name] = lat.values
+
+        return area
+    
+    lat_name = utils.get_lat_name(da)
+    lon_name = utils.get_lon_name(da)
+    
+    return utils.average(da, dim=[lat_name, lon_name], 
+                         weights=_get_area_weights(da[lon_name], 
+                                                   da[lat_name]))
