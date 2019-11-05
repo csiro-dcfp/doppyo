@@ -26,6 +26,7 @@ import time
 import collections
 import itertools
 from scipy.interpolate import interp1d
+from itertools import compress
 from scipy import ndimage
 import dask.array
 import copy
@@ -2480,11 +2481,14 @@ def get_time_name(da):
         'time'
     """
     
-    if 'time' in da.dims:
-        return 'time'
-    else:
-        raise KeyError('Unable to determine longitude dimension')
-        pass
+    look_fors = ['time']
+    for look_for in look_fors:
+        found = [look_for in dim for dim in da.dims]
+        if sum(found) > 1:
+            return list(compress(da.dims, found))
+        elif sum(found) == 1:
+            return list(compress(da.dims, found))[0]
+    raise KeyError('Unable to determine time dimension')
     
 
 # ===================================================================================================
@@ -2514,15 +2518,14 @@ def get_lon_name(da):
         'lon'
     """
     
-    if 'lon' in da.dims:
-        return 'lon'
-    elif 'lon_2' in da.dims:
-        return 'lon_2'
-    elif 'xt_ocean' in da.dims:
-        return 'xt_ocean'
-    else:
-        raise KeyError('Unable to determine longitude dimension')
-        pass
+    look_fors = ['lon', 'xt_ocean']
+    for look_for in look_fors:
+        found = [look_for in dim for dim in da.dims]
+        if sum(found) > 1:
+            return list(compress(da.dims, found))
+        elif sum(found) == 1:
+            return list(compress(da.dims, found))[0]
+    raise KeyError('Unable to determine longitude dimension')
 
 
 # ===================================================================================================
@@ -2552,15 +2555,14 @@ def get_lat_name(da):
         'lat'
     """
     
-    if 'lat' in da.dims:
-        return 'lat'
-    elif 'lat_2' in da.dims:
-        return 'lat_2'
-    elif 'yt_ocean' in da.dims:
-        return 'yt_ocean'
-    else:
-        raise KeyError('Unable to determine latitude dimension')
-        pass
+    look_fors = ['lat', 'yt_ocean']
+    for look_for in look_fors:
+        found = [look_for in dim for dim in da.dims]
+        if sum(found) > 1:
+            return list(compress(da.dims, found))
+        elif sum(found) == 1:
+            return list(compress(da.dims, found))[0]
+    raise KeyError('Unable to determine latitude dimension')
 
     
 # ===================================================================================================
@@ -2590,15 +2592,15 @@ def get_depth_name(da):
         'depth'
     """
     
-    if 'depth' in da.dims:
-        return 'depth'
-    elif 'depth_coord' in da.dims:
-        return 'depth_coord'
-    elif 'st_ocean' in da.dims:
-        return 'st_ocean'
-    else:
-        raise KeyError('Unable to determine depth dimension')
-        pass
+    look_fors = ['depth', 'st_ocean']
+    for look_for in look_fors:
+        found = [look_for in dim for dim in da.dims]
+        if sum(found) > 1:
+            return list(compress(da.dims, found))
+        elif sum(found) == 1:
+            return list(compress(da.dims, found))[0]
+    raise KeyError('Unable to determine depth dimension')
+    
     
 # ===================================================================================================
 def get_level_name(da):
@@ -2627,11 +2629,14 @@ def get_level_name(da):
         'level'
     """
     
-    if 'level' in da.dims:
-        return 'level'
-    else:
-        raise KeyError('Unable to determine level dimension')
-        pass
+    look_fors = ['level']
+    for look_for in look_fors:
+        found = [look_for in dim for dim in da.dims]
+        if sum(found) > 1:
+            return list(compress(da.dims, found))
+        elif sum(found) == 1:
+            return list(compress(da.dims, found))[0]
+    raise KeyError('Unable to determine level dimension')
     
     
 # ===================================================================================================
@@ -2661,11 +2666,14 @@ def get_plevel_name(da):
         'level'
     """
     
-    if 'level' in da.dims:
-        return 'level'
-    else:
-        raise KeyError('Unable to determine pressure level dimension')
-        pass
+    look_fors = ['level']
+    for look_for in look_fors:
+        found = [look_for in dim for dim in da.dims]
+        if sum(found) > 1:
+            return list(compress(da.dims, found))
+        elif sum(found) == 1:
+            return list(compress(da.dims, found))[0]
+    raise KeyError('Unable to determine pressure level dimension')
 
     
 # ===================================================================================================
@@ -2742,7 +2750,4 @@ def _equal_coords(da_1, da_2):
                                        .sel({coord:slice(None, None, -1)}))) \
                      for coord in da1_coords.coords]
         return np.all(bool_list)
-
-
-
 
