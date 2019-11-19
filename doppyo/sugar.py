@@ -1680,29 +1680,36 @@ def load_and_concat(rows, variables, chunks=None, resample_time_like=None, conve
 # ===================================================================================================   
 def interpolate_lonlat(da, lon_des, lat_des):
     """
-        Interpolate to specified latitude and longitude values, wrapping edges longitudinally and flipping edges latitudinally 
+        Interpolate to specified latitude and longitude values, wrapping edges longitudinally \
+            and flipping edges latitudinally 
+        Assumed latitudes are monotonic and longitudes are monotonic and increasing
     """
 
-    lat_name = utils.get_lat_name(da)
-    lon_name = utils.get_lon_name(da)
+    lat_name = doppyo.utils.get_lat_name(da)
+    lon_name = doppyo.utils.get_lon_name(da)
     dims = da.dims
 
     # Wrap longitudes at egdes-----
     da_minlon = da.isel({lon_name : 0})
-    minlon = da_minlon[lon_name]
     da_maxlon = da.isel({lon_name : -1})
-    maxlon = da_maxlon[lon_name]
-    da_minlon[lon_name] = minlon + 360
-    da_maxlon[lon_name] = maxlon - 360
+    da_minlon[lon_name] += 360
+    da_maxlon[lon_name] -= 360
     da_lonwrap = xr.concat([da_maxlon, da, da_minlon], dim=lon_name)
 
     # Flip latitudes at edges -----
-    da_minlat = da_lonwrap.isel({lat_name : 0})
-    minlat = da_minlat[lat_name] 
-    da_maxlat = da_lonwrap.isel({lat_name : -1})
-    maxlat = da_maxlat[lat_name]
-    da_minlat[lat_name] = maxlat - 180
-    da_maxlat[lat_name] = minlat + 180
+    flip_points = [0,-1]
+    if (da[lat_name][0] == 90 ) | (da[lat_name][0] == -90 ):
+        flip_points[0] = 1
+    if (da[lat_name][-1] == 90 ) | (da[lat_name][-1] == -90 ):
+        flip_points[-1] = -2
+    da_minlat = da_lonwrap.isel({lat_name : flip_points[0]})
+    dminlat = da_lonwrap[lat_name].isel({lat_name : flip_points[0]+1}).values \
+                  - da_lonwrap[lat_name].isel({lat_name : flip_points[0]}).values
+    da_maxlat = da_lonwrap.isel({lat_name : flip_points[1]})
+    dmaxlat = da_lonwrap[lat_name].isel({lat_name : flip_points[1]}).values \
+                  - da_lonwrap[lat_name].isel({lat_name : flip_points[1]-1}).values
+    da_minlat[lat_name] -= 2*dminlat
+    da_maxlat[lat_name] += 2*dmaxlat
     da_wrap = xr.concat([da_minlat, da_lonwrap, da_maxlat], dim=lat_name).chunk({lon_name:-1, lat_name:-1})
 
     return da_wrap.interp({lon_name : lon_des, lat_name : lat_des}).transpose(*dims)
