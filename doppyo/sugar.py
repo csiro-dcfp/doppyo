@@ -1685,8 +1685,8 @@ def interpolate_lonlat(da, lon_des, lat_des):
         Assumed latitudes are monotonic and longitudes are monotonic and increasing
     """
 
-    lat_name = doppyo.utils.get_lat_name(da)
-    lon_name = doppyo.utils.get_lon_name(da)
+    lat_name = utils.get_lat_name(da)
+    lon_name = utils.get_lon_name(da)
     dims = da.dims
 
     # Wrap longitudes at egdes-----
