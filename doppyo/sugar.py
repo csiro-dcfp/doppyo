@@ -592,14 +592,14 @@ def plot_fields(data, title=None, headings=None, ncol=2, ncontour=None, vlims=No
                 return level
             seq = list(chain.from_iterable(s for s in seq if isinstance(s, Sequence)))
 
-    matplotlib.rc('font', family='sans-serif')
-    matplotlib.rc('font', serif='Helvetica') 
-    matplotlib.rc('text', usetex='false') 
-    matplotlib.rcParams.update({'font.size': fontsize})
+#     matplotlib.rc('font', family='sans-serif')
+#     matplotlib.rc('font', serif='Helvetica') 
+#     matplotlib.rc('text', usetex='false') 
+#     matplotlib.rcParams.update({'font.size': fontsize})
 
     nrow = int(np.ceil(len(data)/ncol));
 
-    fig = plt.figure(figsize=(11*squeeze_col, nrow*4*squeeze_row))
+    fig = plt.figure()#figsize=(11*squeeze_col, nrow*4*squeeze_row))
     
     if not isinstance(data,list):
         data = [data]
@@ -647,7 +647,7 @@ def plot_fields(data, title=None, headings=None, ncol=2, ncontour=None, vlims=No
                                vmin=vmin, vmax=vmax, colors='k', linewidths=1)
                 else:
                     ax.coastlines(color='black')
-                    im = ax.contourf(dat.lon, dat.lat, dat, origin='lower', transform=trans, vmin=vmin, vmax=vmax, 
+                    im = ax.contourf(dat.lon, dat.lat, dat, levels=ncontour, origin='lower', transform=trans, vmin=vmin, vmax=vmax, 
                                      cmap=cmap)
             else:
                 ax.coastlines(color='black')
@@ -741,7 +741,7 @@ def plot_fields(data, title=None, headings=None, ncol=2, ncontour=None, vlims=No
                         ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,ncontour), colors='w', linewidths=2)
                         ax.contour(x_plt, y_plt, dat, levels=np.linspace(cmin,cmax,ncontour), colors='k', linewidths=1)
                     else:
-                        im = ax.contourf(x_plt, y_plt, dat, vmin=vmin, vmax=vmax, cmap=cmap)
+                        im = ax.contourf(x_plt, y_plt, dat, levels=ncontour, vmin=vmin, vmax=vmax, cmap=cmap)
                 else:
                     im = ax.imshow(dat, origin='lower', extent=extent, vmin=vmin, vmax=vmax, cmap=cmap)
 

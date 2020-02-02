@@ -1073,7 +1073,7 @@ def integrate(da, over_dim, x=None, dx=None, method='trapz', cumulative=False, s
     else:
         raise ValueError(f'{method} is not a recognised integration method')
     
-    return integral.rename('integral')
+    return integral
     
 
 # ===================================================================================================
@@ -2402,9 +2402,9 @@ def get_other_dims(da, dims_exclude):
         if isinstance(dims_exclude, str):
             dims_exclude = [dims_exclude]
 
-        other_dims = tuple(set(dims).difference(set(dims_exclude)))
+        other_dims = set(dims) - set(dims_exclude)
         
-        return other_dims
+        return tuple([o for o in dims if o in other_dims])
 
 
 # ===================================================================================================
@@ -2482,14 +2482,20 @@ def get_time_name(da):
     """
     
     look_fors = ['time']
+    dims = []
     for look_for in look_fors:
         found = [look_for in dim for dim in da.dims]
         if sum(found) > 1:
-            return list(compress(da.dims, found))
+            dims += list(compress(da.dims, found))
         elif sum(found) == 1:
-            return list(compress(da.dims, found))[0]
-    raise KeyError('Unable to determine time dimension')
-    
+            dims.append(list(compress(da.dims, found))[0])
+    if dims == []:
+        raise KeyError('Unable to determine time dimension')
+    elif len(dims) == 1:
+        return dims[0]
+    else:
+        return dims
+        
 
 # ===================================================================================================
 def get_lon_name(da):
@@ -2518,14 +2524,20 @@ def get_lon_name(da):
         'lon'
     """
     
-    look_fors = ['lon', 'xt_ocean']
+    look_fors = ['lon', 'xt', 'xu']
+    dims = []
     for look_for in look_fors:
         found = [look_for in dim for dim in da.dims]
         if sum(found) > 1:
-            return list(compress(da.dims, found))
+            dims += list(compress(da.dims, found))
         elif sum(found) == 1:
-            return list(compress(da.dims, found))[0]
-    raise KeyError('Unable to determine longitude dimension')
+            dims.append(list(compress(da.dims, found))[0])
+    if dims == []:
+        raise KeyError('Unable to determine longitude dimension')
+    elif len(dims) == 1:
+        return dims[0]
+    else:
+        return dims
 
 
 # ===================================================================================================
@@ -2555,15 +2567,21 @@ def get_lat_name(da):
         'lat'
     """
     
-    look_fors = ['lat', 'yt_ocean']
+    look_fors = ['lat', 'yt', 'yu']
+    dims = []
     for look_for in look_fors:
         found = [look_for in dim for dim in da.dims]
         if sum(found) > 1:
-            return list(compress(da.dims, found))
+            dims += list(compress(da.dims, found))
         elif sum(found) == 1:
-            return list(compress(da.dims, found))[0]
-    raise KeyError('Unable to determine latitude dimension')
-
+            dims.append(list(compress(da.dims, found))[0])
+    if dims == []:
+        raise KeyError('Unable to determine latitude dimension')
+    elif len(dims) == 1:
+        return dims[0]
+    else:
+        return dims
+    
     
 # ===================================================================================================
 def get_depth_name(da):
@@ -2592,14 +2610,20 @@ def get_depth_name(da):
         'depth'
     """
     
-    look_fors = ['depth', 'st_ocean']
+    look_fors = ['depth', 'st']
+    dims = []
     for look_for in look_fors:
         found = [look_for in dim for dim in da.dims]
         if sum(found) > 1:
-            return list(compress(da.dims, found))
+            dims += list(compress(da.dims, found))
         elif sum(found) == 1:
-            return list(compress(da.dims, found))[0]
-    raise KeyError('Unable to determine depth dimension')
+            dims.append(list(compress(da.dims, found))[0])
+    if dims == []:
+        raise KeyError('Unable to determine depth dimension')
+    elif len(dims) == 1:
+        return dims[0]
+    else:
+        return dims
     
     
 # ===================================================================================================
@@ -2630,15 +2654,21 @@ def get_level_name(da):
     """
     
     look_fors = ['level']
+    dims = []
     for look_for in look_fors:
         found = [look_for in dim for dim in da.dims]
         if sum(found) > 1:
-            return list(compress(da.dims, found))
+            dims += list(compress(da.dims, found))
         elif sum(found) == 1:
-            return list(compress(da.dims, found))[0]
-    raise KeyError('Unable to determine level dimension')
+            dims.append(list(compress(da.dims, found))[0])
+    if dims == []:
+        raise KeyError('Unable to determine level dimension')
+    elif len(dims) == 1:
+        return dims[0]
+    else:
+        return dims
     
-    
+
 # ===================================================================================================
 def get_plevel_name(da):
     """ 
@@ -2667,13 +2697,19 @@ def get_plevel_name(da):
     """
     
     look_fors = ['level']
+    dims = []
     for look_for in look_fors:
         found = [look_for in dim for dim in da.dims]
         if sum(found) > 1:
-            return list(compress(da.dims, found))
+            dims += list(compress(da.dims, found))
         elif sum(found) == 1:
-            return list(compress(da.dims, found))[0]
-    raise KeyError('Unable to determine pressure level dimension')
+            dims.append(list(compress(da.dims, found))[0])
+    if dims == []:
+        raise KeyError('Unable to determine pressure level dimension')
+    elif len(dims) == 1:
+        return dims[0]
+    else:
+        return dims
 
     
 # ===================================================================================================

@@ -1046,7 +1046,7 @@ def mean_merid_mass_streamfunction(v, lat_name=None, lon_name=None, plevel_name=
     
     return (2 * utils.constants().pi * utils.constants().R_earth * cos_lat * \
                 utils.integrate(v_Z, over_dim=plevel_name, x=(v_Z[plevel_name] * 100), cumulative=True) \
-                / utils.constants().g).rename('mmms')
+                / utils.constants().g)
 
 
 # ===================================================================================================
@@ -2000,7 +2000,7 @@ def nino3(sst_anom):
     
     box = [-5.0,5.0,210.0,270.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(sst_anom, box).rename('nino3')
+    return utils.latlon_average(sst_anom, box)
 
 
 # ===================================================================================================
@@ -2040,7 +2040,7 @@ def nino34(sst_anom):
     
     box = [-5.0,5.0,190.0,240.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(sst_anom, box).rename('nino34')
+    return utils.latlon_average(sst_anom, box)
 
 
 # ===================================================================================================
@@ -2080,7 +2080,7 @@ def nino4(sst_anom):
     
     box = [-5.0,5.0,160.0,210.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(sst_anom, box).rename('nino4')
+    return utils.latlon_average(sst_anom, box)
 
 
 # ===================================================================================================
@@ -2126,7 +2126,7 @@ def emi(sst_anom):
     da_sstB = utils.latlon_average(sst_anom, boxB)
     da_sstC = utils.latlon_average(sst_anom, boxC)
     
-    return (da_sstA - 0.5*da_sstB - 0.5*da_sstC).rename('emi')
+    return (da_sstA - 0.5*da_sstB - 0.5*da_sstC)
 
 
 # ===================================================================================================
@@ -2170,7 +2170,7 @@ def dmi(sst_anom):
     da_W = utils.latlon_average(sst_anom, boxW)
     da_E = utils.latlon_average(sst_anom, boxE)
     
-    return (da_W - da_E).rename('dmi')
+    return (da_W - da_E)
 
 
 # ===================================================================================================
