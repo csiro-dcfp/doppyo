@@ -945,9 +945,9 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
     _SENSOR_DIM_NAME = 'sensor_dims'
     _MODE_DIM_NAME = 'mode'
     name = da.name
-    degtorad = doppyo.utils.constants().pi / 180
+    degtorad = utils.constants().pi / 180
     if lat_name is None:
-        lat_name = doppyo.utils.get_lat_name(da)
+        lat_name = utils.get_lat_name(da)
 
     # Apply weights -----
     if weight is None:
@@ -2344,11 +2344,11 @@ def soi(slp_anom, persist_std=False, lat_name=None, lon_name=None, time_name=Non
     """
     
     if lat_name is None:
-        lat_name = doppyo.utils.get_lat_name(slp_anom)
+        lat_name = utils.get_lat_name(slp_anom)
     if lon_name is None:
-        lon_name = doppyo.utils.get_lon_name(slp_anom)
+        lon_name = utils.get_lon_name(slp_anom)
     if time_name is None:
-        time_name = doppyo.utils.get_time_name(slp_anom)
+        time_name = utils.get_time_name(slp_anom)
 
     lat_Tahiti = -17.6509
     lon_Tahiti = -149.4260+360
@@ -2476,11 +2476,11 @@ def nao(slp_anom, persist_std=False, lat_name=None, lon_name=None, time_name=Non
     """
     
     if lat_name is None:
-        lat_name = doppyo.utils.get_lat_name(slp_anom)
+        lat_name = utils.get_lat_name(slp_anom)
     if lon_name is None:
-        lon_name = doppyo.utils.get_lon_name(slp_anom)
+        lon_name = utils.get_lon_name(slp_anom)
     if time_name is None:
-        time_name = doppyo.utils.get_time_name(slp_anom)
+        time_name = utils.get_time_name(slp_anom)
   
     lat_Reykjavik = 64.1443
     lon_Reykjavik = -21.9421+360
@@ -2551,11 +2551,11 @@ def pna(h500_anom, persist_std=False, lat_name=None, lon_name=None, time_name=No
     """
     
     if lat_name is None:
-        lat_name = doppyo.utils.get_lat_name(h500_anom)
+        lat_name = utils.get_lat_name(h500_anom)
     if lon_name is None:
-        lon_name = doppyo.utils.get_lon_name(h500_anom)
+        lon_name = utils.get_lon_name(h500_anom)
     if time_name is None:
-        time_name = doppyo.utils.get_time_name(h500_anom)
+        time_name = utils.get_time_name(h500_anom)
   
     lat_p1 = 20
     lon_p1 = -160+360
