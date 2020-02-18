@@ -8,7 +8,8 @@
 __all__ = ['velocity_potential', 'stream_function', 'Rossby_wave_source', 'divergent', 'wave_activity_flux', 
            'Brunt_Vaisala', 'Rossby_wave_number', 'Eady_growth_rate', 'thermal_wind', 'eofs', 
            'mean_merid_mass_streamfunction', 'atmos_energy_cycle', 'isotherm_depth', 'pwelch', 
-           'inband_variance', 'nino3', 'nino34', 'nino4', 'emi', 'dmi', 'soi', '_int_over_atmos']
+           'inband_variance', 'nino3', 'nino34', 'nino4', 'emi', 'dmi', 'soi', 'sam', 'nao', 'pna',
+           '_int_over_atmos']
 
 # ===================================================================================================
 # Packages
@@ -861,7 +862,7 @@ def thermal_wind(gh, plevel_lower, plevel_upper, lat_name=None, lon_name=None, p
 
 
 # ===================================================================================================
-def eofs(da, sample_dim='time', weight=None, n_modes=20):
+def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=None, lon_name=None, norm_PCs=True):
     """
         Returns the empirical orthogonal functions (EOFs), and associated principle component \
                 timeseries (PCs), and explained variances of provided array. Follows notation used in \
@@ -869,22 +870,22 @@ def eofs(da, sample_dim='time', weight=None, n_modes=20):
                 whereby, (phi, sqrt_lambdas, EOFs) = svd(data) and PCs = phi * sqrt_lambdas
         
         | Author: Dougie Squire
-        | Date: 19/18/2018
+        | Date: 19/18/2019
         
         Parameters
         ----------
-        da : xarray DataArray or sequence of xarray DataArrays
-            Array to use to compute EOFs. When input array is a list of xarray objects, returns the \
-                    joint EOFs associated with each object. In this case, all xarray objects in da must have \
-                    sample_dim dimensions of equal length.
+        ds : xarray DataArray
+            Array to use to compute EOFs.
+        sensor_dims : str, optional
+            EOFs sample dimension. Usually 'time'.
         sample_dim : str, optional
-            EOFs sample dimension
-        weight : xarray DataArray or sequence of xarray DataArrays, optional
-            Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used. If weight \
-                    is specified, it must be the same length as da with each element broadcastable onto each \
-                    element of da
+            EOFs sample dimension. Usually 'time'.
+        weight : xarray DataArray
+            Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used.
         n_modes : values, optional
             Number of EOF modes to return
+        norm_PCs : boolean, optional
+            If True, return the PCs normalised by sqrt(lambda) (ie phi), else return PCs = phi * sqrt(lambda)
             
         Returns
         -------
@@ -914,72 +915,194 @@ def eofs(da, sample_dim='time', weight=None, n_modes=20):
             PCs            (time, mode) float64 1.183 -1.107 -0.5385 ... -0.08552 0.1951
             lambdas        (mode) float64 87.76 80.37 68.5 58.14 ... 8.269 6.279 4.74
             explained_var  (mode) float64 0.1348 0.1234 0.1052 ... 0.009644 0.00728
-            
-        Notes
-        -----------
-        This function is a wrapper on scipy.sparse.linalg.svds which is a naive implementation \
-                using ARPACK. Thus, the approach implemented here is non-lazy and could incur large \
-                increases in memory usage.
     """
-    
-    if isinstance(da, xr.core.dataarray.DataArray):
-        da = [da]
-    if isinstance(weight, xr.core.dataarray.DataArray):
-        weight = [weight]
+
+    def _svd(X, n_modes, norm_PCs):
+        if isinstance(X, darray.core.Array):
+            @darray.as_gufunc(signature="(sample,sensor)->(sample,mode),(mode),(mode,sensor)", 
+                              output_dtypes=(float, float, float), 
+                              output_sizes={'sample': X.shape[-2],
+                                            'sensor': X.shape[-1],
+                                            'mode': min(X.shape[-2], X.shape[-1])},
+                              allow_rechunk=True)
+            def _gu_svd(x):
+                return np.linalg.svd(x, full_matrices=False)
+            
+            u, s, v = _gu_svd(X)
+        else:
+            u, s, v = np.linalg.svd(X, full_matrices=False)
+        
+        if norm_PCs:
+            pcs = u 
+        else:
+            pcs = np.swapaxes((np.swapaxes(u, -1, -2).T * s.T).T, -1, -2)
+        eofs = v
+        lambdas = s ** 2
+        explained_var = (lambdas.T / np.sum(lambdas, axis=-1).T).T
+        
+        return pcs[..., :n_modes], eofs[..., :n_modes, :], lambdas[..., :n_modes], explained_var[..., :n_modes]
+
+    _SENSOR_DIM_NAME = 'sensor_dims'
+    _MODE_DIM_NAME = 'mode'
+    name = da.name
+    degtorad = doppyo.utils.constants().pi / 180
+    if lat_name is None:
+        lat_name = doppyo.utils.get_lat_name(da)
 
     # Apply weights -----
     if weight is None:
-        degtorad = utils.constants().pi / 180
-        weight = [xr.ufuncs.cos(da[idx][utils.get_lat_name(da[idx])] * degtorad) ** 0.5
-                  for idx in range(len(da))]
+        weight = xr.ufuncs.cos(da[lat_name] * degtorad) ** 0.5
+    da_weighted = weight.fillna(0) * da
     
-    if len(weight) != len(da):
-        raise ValueError('da and weight must be of equal length')
-    da = [weight[idx].fillna(0) * da[idx] for idx in range(len(da))]
+    # Stack sample dimensions -----
+    da_weighted_stacked = da_weighted.stack(**{_SENSOR_DIM_NAME : sensor_dims})
     
-    # Stack along everything but the sample dimension -----
-    sensor_dims = [utils.get_other_dims(d, sample_dim) for d in da]
-    da = [d.stack(sensor_dim=sensor_dims[idx])
-           .transpose(*[sample_dim, 'sensor_dim'])  for idx, d in enumerate(da)]
-    sensor_segs = np.cumsum([0] + [len(d.sensor_dim) for d in da])
+    pc_dims = [sample_dim, _MODE_DIM_NAME]
+    eof_dims = [_MODE_DIM_NAME, _SENSOR_DIM_NAME]
+    lambda_dims = [_MODE_DIM_NAME]
+    explained_var_dims = [_MODE_DIM_NAME]
+    output_core_dims = [pc_dims,
+                        eof_dims,
+                        lambda_dims,
+                        explained_var_dims]
+    output_sizes = {_MODE_DIM_NAME: n_modes}
     
-    # Load and concatenate each object in da -----
-    try: 
-        data = np.concatenate(da, axis=1)
-    except ValueError:
-        raise ValueError('sample_dim must be equal length for all data in da')
+    pcs, eofs, lambda_, explained_var = xr.apply_ufunc(_svd, *(da_weighted_stacked, n_modes, norm_PCs),
+                                                       input_core_dims=[[sample_dim, _SENSOR_DIM_NAME, ], [], []],
+                                                       output_core_dims=output_core_dims,
+                                                       output_sizes=output_sizes,
+                                                       output_dtypes=[float],
+                                                       dask='allowed',
+                                                       )
+    pcs = pcs.rename('pc') if name is None else pcs.rename('pc__'+name)
+    eofs =eofs.rename('eof') if name is None else eofs.rename('eof__'+name)
+    lambda_ = explained_var.rename('lambda') if name is None else explained_var.rename('lambda__'+name)
+    explained_var = explained_var.rename('explained_var') if name is None else explained_var.rename('explained_var__'+name)
     
-    # First dimension must be sample dimension -----
-    phi, sqrt_lambdas, eofs = linalg.svds(data, k=n_modes)
-    pcs = phi * sqrt_lambdas
-    lambdas = sqrt_lambdas ** 2
+    EOF = xr.merge([pcs, eofs, lambda_, explained_var])
+    EOF[_MODE_DIM_NAME] = np.arange(1, n_modes+1)
     
-    # n_modes largest modes are ordered from smallest to largest -----
-    pcs = np.flip(pcs, axis=1)
-    lambdas = np.flip(lambdas, axis=0)
-    eofs = np.flip(eofs, axis=0)
+    return EOF.unstack(_SENSOR_DIM_NAME)
 
-    # Compute the sum of the lambdas -----
-    sum_of_lambdas = np.trace(np.dot(data,data.T))
-
-    # Restructure back into xarray object -----
-    dims_eof = ['mode', 'sensor_dim']
-    dims_pc = [sample_dim, 'mode']
-    dims_lambda = ['mode']
-    EOF = []
-    for idx in range(len(sensor_segs)-1):
-        data_vars = {'EOFs' : (tuple(dims_eof), eofs[:, sensor_segs[idx]:sensor_segs[idx+1]]),
-                     'PCs' : (tuple(dims_pc), pcs),
-                     'lambdas' : (tuple(dims_lambda), lambdas),
-                     'explained_var' : (tuple(dims_lambda), lambdas / sum_of_lambdas)}
-        coords = dict(da[idx].coords.items())
-        coords['mode'] = np.arange(1, n_modes+1)
-        EOF.append(xr.Dataset(data_vars,coords).unstack('sensor_dim'))
+# def eofs(da, sample_dim='time', weight=None, n_modes=20):
+#     """
+#         Returns the empirical orthogonal functions (EOFs), and associated principle component \
+#                 timeseries (PCs), and explained variances of provided array. Follows notation used in \
+#                 "Bjornsson H. and Venegas S. A. 1997 A Manual for EOF and SVD analyses of Climatic Data", \
+#                 whereby, (phi, sqrt_lambdas, EOFs) = svd(data) and PCs = phi * sqrt_lambdas
+        
+#         | Author: Dougie Squire
+#         | Date: 19/18/2018
+        
+#         Parameters
+#         ----------
+#         da : xarray DataArray or sequence of xarray DataArrays
+#             Array to use to compute EOFs. When input array is a list of xarray objects, returns the \
+#                     joint EOFs associated with each object. In this case, all xarray objects in da must have \
+#                     sample_dim dimensions of equal length.
+#         sample_dim : str, optional
+#             EOFs sample dimension
+#         weight : xarray DataArray or sequence of xarray DataArrays, optional
+#             Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used. If weight \
+#                     is specified, it must be the same length as da with each element broadcastable onto each \
+#                     element of da
+#         n_modes : values, optional
+#             Number of EOF modes to return
+            
+#         Returns
+#         -------
+#         eofs : xarray Dataset
+#             | Dataset containing the following variables:
+#             | EOFs; array containing the empirical orthogonal functions
+#             | PCs; array containing the associated principle component timeseries
+#             | lambdas; array containing the eigenvalues of the covariance of the input data
+#             | explained_var; array containing the fraction of the total variance explained by each EOF \
+#                     mode
+            
+#         Examples
+#         --------
+#         >>> A = xr.DataArray(np.random.normal(size=(6,4,40)), 
+#         ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
+#         ...                          ('time', pd.date_range('2000-01-01', periods=40, freq='M'))])
+#         >>> doppyo.diagnostic.eofs(A)
+#         <xarray.Dataset>
+#         Dimensions:        (lat: 6, lon: 4, mode: 20, time: 40)
+#         Coordinates:
+#           * time           (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2003-04-30
+#           * mode           (mode) int64 1 2 3 4 5 6 7 8 9 ... 12 13 14 15 16 17 18 19 20
+#           * lat            (lat) int64 -75 -45 -15 15 45 75
+#           * lon            (lon) int64 45 135 225 315
+#         Data variables:
+#             EOFs           (mode, lat, lon) float64 -0.05723 -0.01997 ... 0.08166
+#             PCs            (time, mode) float64 1.183 -1.107 -0.5385 ... -0.08552 0.1951
+#             lambdas        (mode) float64 87.76 80.37 68.5 58.14 ... 8.269 6.279 4.74
+#             explained_var  (mode) float64 0.1348 0.1234 0.1052 ... 0.009644 0.00728
+            
+#         Notes
+#         -----------
+#         This function is a wrapper on scipy.sparse.linalg.svds which is a naive implementation \
+#                 using ARPACK. Thus, the approach implemented here is non-lazy and could incur large \
+#                 increases in memory usage.
+#     """
     
-    if len(EOF) == 1:
-        return EOF[0]
-    else:
-        return EOF
+#     if isinstance(da, xr.core.dataarray.DataArray):
+#         da = [da]
+#     if isinstance(weight, xr.core.dataarray.DataArray):
+#         weight = [weight]
+
+#     # Apply weights -----
+#     if weight is None:
+#         degtorad = utils.constants().pi / 180
+#         weight = [xr.ufuncs.cos(da[idx][utils.get_lat_name(da[idx])] * degtorad) ** 0.5
+#                   for idx in range(len(da))]
+    
+#     if len(weight) != len(da):
+#         raise ValueError('da and weight must be of equal length')
+#     da = [weight[idx].fillna(0) * da[idx] for idx in range(len(da))]
+    
+#     # Stack along everything but the sample dimension -----
+#     sensor_dims = [utils.get_other_dims(d, sample_dim) for d in da]
+#     da = [d.stack(sensor_dim=sensor_dims[idx])
+#            .transpose(*[sample_dim, 'sensor_dim'])  for idx, d in enumerate(da)]
+#     sensor_segs = np.cumsum([0] + [len(d.sensor_dim) for d in da])
+    
+#     # Load and concatenate each object in da -----
+#     try: 
+#         data = np.concatenate(da, axis=1)
+#     except ValueError:
+#         raise ValueError('sample_dim must be equal length for all data in da')
+    
+#     # First dimension must be sample dimension -----
+#     phi, sqrt_lambdas, eofs = linalg.svds(data, k=n_modes)
+#     pcs = phi * sqrt_lambdas
+#     lambdas = sqrt_lambdas ** 2
+    
+#     # n_modes largest modes are ordered from smallest to largest -----
+#     pcs = np.flip(pcs, axis=1)
+#     lambdas = np.flip(lambdas, axis=0)
+#     eofs = np.flip(eofs, axis=0)
+
+#     # Compute the sum of the lambdas -----
+#     sum_of_lambdas = np.trace(np.dot(data,data.T))
+
+#     # Restructure back into xarray object -----
+#     dims_eof = ['mode', 'sensor_dim']
+#     dims_pc = [sample_dim, 'mode']
+#     dims_lambda = ['mode']
+#     EOF = []
+#     for idx in range(len(sensor_segs)-1):
+#         data_vars = {'EOFs' : (tuple(dims_eof), eofs[:, sensor_segs[idx]:sensor_segs[idx+1]]),
+#                      'PCs' : (tuple(dims_pc), pcs),
+#                      'lambdas' : (tuple(dims_lambda), lambdas),
+#                      'explained_var' : (tuple(dims_lambda), lambdas / sum_of_lambdas)}
+#         coords = dict(da[idx].coords.items())
+#         coords['mode'] = np.arange(1, n_modes+1)
+#         EOF.append(xr.Dataset(data_vars,coords).unstack('sensor_dim'))
+    
+#     if len(EOF) == 1:
+#         return EOF[0]
+#     else:
+#         return EOF
     
 
 # ===================================================================================================
@@ -2174,10 +2297,10 @@ def dmi(sst_anom):
 
 
 # ===================================================================================================
-def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
+def soi(slp_anom, persist_std=False, lat_name=None, lon_name=None, time_name=None):
     """
-        Returns southern oscillation index as defined by NOAA (see, for example, \
-                https://www.esrl.noaa.gov/psd/gcos_wgsp/Timeseries/SOI/)
+        Returns the Troup Southern Oscillation Index (see, for example, http://www.bom.gov.au/climate/glossary/soi.shtml, 
+            https://www.pmel.noaa.gov/pubs/outstand/harr1647/troup.shtml)
         
         | Author: Dougie Squire
         | Date: 10/04/2018
@@ -2186,6 +2309,8 @@ def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
         ----------
         slp_anom : xarray DataArray
             Array containing sea level pressure anomalies
+        persist_std : boolean, optional
+            If True, persist the standard deviation prior to computing. This may be required for very large calculations
         lat_name : str, optional
             Name of the latitude dimension. If None, doppyo will attempt to determine lat_name \
                     automatically
@@ -2219,29 +2344,27 @@ def soi(slp_anom, lat_name=None, lon_name=None, time_name=None):
     """
     
     if lat_name is None:
-        lat_name = utils.get_lat_name(slp_anom)
+        lat_name = doppyo.utils.get_lat_name(slp_anom)
     if lon_name is None:
-        lon_name = utils.get_lon_name(slp_anom)
+        lon_name = doppyo.utils.get_lon_name(slp_anom)
     if time_name is None:
-        time_name = utils.get_time_name(slp_anom)
-    
-    lat_Tahiti = 17.6509
-    lon_Tahiti = 149.4260
+        time_name = doppyo.utils.get_time_name(slp_anom)
 
-    lat_Darwin = 12.4634
+    lat_Tahiti = -17.6509
+    lon_Tahiti = -149.4260+360
+    lat_Darwin = -12.4634
     lon_Darwin = 130.8456
 
-    da_Tahiti_anom = slp_anom.sel({lat_name : lat_Tahiti, lon_name : lon_Tahiti}, method='nearest')
-    da_Tahiti_std = da_Tahiti_anom.std(dim=time_name)
-    da_Tahiti_stdzd = da_Tahiti_anom / da_Tahiti_std
+    slp_anom_Tahiti = slp_anom.interp({lat_name : lat_Tahiti, lon_name : lon_Tahiti})
+    slp_anom_Darwin = slp_anom.interp({lat_name : lat_Darwin, lon_name : lon_Darwin})
 
-    da_Darwin_anom = slp_anom.sel({lat_name : lat_Darwin, lon_name : lon_Darwin}, method='nearest')
-    da_Darwin_std = da_Darwin_anom.std(dim=time_name)
-    da_Darwin_stdzd = da_Darwin_anom / da_Darwin_std
+    slp_anom_group = (slp_anom_Tahiti - slp_anom_Darwin).groupby(time_name+'.month')
 
-    MSD = (da_Tahiti_stdzd - da_Darwin_stdzd).std(dim=time_name)
-        
-    return ((da_Tahiti_stdzd - da_Darwin_stdzd) / MSD).rename('soi')
+    if persist_std:
+        std = slp_anom_group.std(time_name).persist(); wait(std)
+        return 10 * (slp_anom_group / std).drop('month')
+    else:
+        return 10 * (slp_anom_group / slp_anom_group.std(time_name)).drop('month')
 
 
 # ===================================================================================================
@@ -2303,8 +2426,172 @@ def sam(slp_anom, lat_name=None, lon_name=None, time_name=None):
     slp_65_stdzd = slp_65 / slp_65.std(dim=time_name)
     
     return (slp_40_stdzd - slp_65_stdzd).rename('sam')
-    
 
+
+# ===================================================================================================
+def nao(slp_anom, persist_std=False, lat_name=None, lon_name=None, time_name=None):
+    """
+        Returns the Hurrell North Atlantic Oscillation Index (see, for example, 
+            https://climatedataguide.ucar.edu/climate-data/hurrell-north-atlantic-oscillation-nao-index-station-based)
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
+        
+        Parameters
+        ----------
+        slp_anom : xarray DataArray
+            Array containing sea level pressure
+        persist_std : boolean, optional
+            If True, persist the standard deviation prior to computing. This may be required for very large calculations
+        lat_name : str, optional
+            Name of the latitude dimension. If None, doppyo will attempt to determine lat_name \
+                    automatically
+        lon_name : str, optional
+            Name of the longitude dimension. If None, doppyo will attempt to determine lon_name \
+                    automatically
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
+            
+        Returns
+        -------
+        nao : xarray DataArray
+            Array containing the north Atlantic oscillation index
+            
+        Examples
+        --------
+        >>> slp = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                    ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> slp_clim = slp.groupby('time.month').mean(dim='time')
+        >>> slp_anom = doppyo.utils.anomalize(slp, slp_clim)
+        >>> doppyo.diagnostic.nao(slp_anom)
+        <xarray.DataArray 'nao' (time: 24)>
+        array([ 0.355277,  0.38263 ,  0.563005, -1.256122, -1.252341,  0.202942,
+                0.691819,  0.412523, -1.368695,  0.421943,  2.349053,  0.069382,
+               -0.355277, -0.38263 , -0.563005,  1.256122,  1.252341, -0.202942,
+               -0.691819, -0.412523,  1.368695, -0.421943, -2.349053, -0.069382])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """
+    
+    if lat_name is None:
+        lat_name = doppyo.utils.get_lat_name(slp_anom)
+    if lon_name is None:
+        lon_name = doppyo.utils.get_lon_name(slp_anom)
+    if time_name is None:
+        time_name = doppyo.utils.get_time_name(slp_anom)
+  
+    lat_Reykjavik = 64.1443
+    lon_Reykjavik = -21.9421+360
+    lat_PontaDelgada = 37.7394
+    lon_PontaDelgada = -25.6687+360
+
+    slp_anom_Reykjavik = slp_anom.interp({lat_name : lat_Reykjavik, lon_name : lon_Reykjavik})
+    slp_anom_PontaDelgada = slp_anom.interp({lat_name : lat_PontaDelgada, lon_name : lon_PontaDelgada})
+
+    slp_anom_Reykjavik_group = slp_anom_Reykjavik.groupby(time_name+'.month')
+    slp_anom_PontaDelgada_group = slp_anom_PontaDelgada.groupby(time_name+'.month')
+    
+    if persist_std:
+        std_PontaDelgada = slp_anom_PontaDelgada_group.std(time_name).persist(); wait(std_PontaDelgada)
+        std_Reykjavik = slp_anom_Reykjavik_group.std(time_name).persist(); wait(std_Reykjavik)
+        return  (slp_anom_PontaDelgada_group / std_PontaDelgada).drop('month') - \
+                (slp_anom_Reykjavik_group / std_Reykjavik).drop('month')
+    else:
+        return  (slp_anom_PontaDelgada_group / slp_anom_PontaDelgada_group.std(time_name)).drop('month') - \
+                (slp_anom_Reykjavik_group / slp_anom_Reykjavik_group.std(time_name)).drop('month')
+
+    
+# ===================================================================================================
+def pna(h500_anom, persist_std=False, lat_name=None, lon_name=None, time_name=None):
+    """
+        Returns the Wallace and Gutzler Pacific north American mode index (see, for example, 
+            http://research.jisao.washington.edu/data_sets/pna/)
+        
+        | Author: Dougie Squire
+        | Date: 10/04/2018
+        
+        Parameters
+        ----------
+        h500_anom : xarray DataArray
+            Array containing anomalies of 500hPa geopotential height
+        persist_std : boolean, optional
+            If True, persist the standard deviation prior to computing. This may be required for very large calculations
+        lat_name : str, optional
+            Name of the latitude dimension. If None, doppyo will attempt to determine lat_name \
+                    automatically
+        lon_name : str, optional
+            Name of the longitude dimension. If None, doppyo will attempt to determine lon_name \
+                    automatically
+        time_name : str, optional
+            Name of the time dimension. If None, doppyo will attempt to determine time_name \
+                    automatically
+            
+        Returns
+        -------
+        nao : xarray DataArray
+            Array containing the Pacific north American mode index
+            
+        Examples
+        --------
+        >>> pna = xr.DataArray(np.random.normal(size=(90,90,24)), 
+        ...                    coords=[('lat', np.arange(-90,90,2)), ('lon', np.arange(0,360,4)), 
+        ...                    ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
+        >>> h500_clim = h500.groupby('time.month').mean(dim='time')
+        >>> h500_anom = doppyo.utils.anomalize(h500, h500_clim)
+        >>> doppyo.diagnostic.pna(h500_anom)
+        <xarray.DataArray 'pna' (time: 24)>
+        array([ 0.355277,  0.38263 ,  0.563005, -1.256122, -1.252341,  0.202942,
+                0.691819,  0.412523, -1.368695,  0.421943,  2.349053,  0.069382,
+               -0.355277, -0.38263 , -0.563005,  1.256122,  1.252341, -0.202942,
+               -0.691819, -0.412523,  1.368695, -0.421943, -2.349053, -0.069382])
+        Coordinates:
+          * time     (time) datetime64[ns] 2000-01-31 2000-02-29 ... 2001-12-31
+    """
+    
+    if lat_name is None:
+        lat_name = doppyo.utils.get_lat_name(h500_anom)
+    if lon_name is None:
+        lon_name = doppyo.utils.get_lon_name(h500_anom)
+    if time_name is None:
+        time_name = doppyo.utils.get_time_name(h500_anom)
+  
+    lat_p1 = 20
+    lon_p1 = -160+360
+    lat_p2 = 45
+    lon_p2 = -165+360
+    lat_p3 = 55
+    lon_p3 = -115+360
+    lat_p4 = 30
+    lon_p4 = -85+360
+
+    h500_anom_p1 = h500_anom.interp({lat_name : lat_p1, lon_name : lon_p1})
+    h500_anom_p2 = h500_anom.interp({lat_name : lat_p2, lon_name : lon_p2})
+    h500_anom_p3 = h500_anom.interp({lat_name : lat_p3, lon_name : lon_p3})
+    h500_anom_p4 = h500_anom.interp({lat_name : lat_p4, lon_name : lon_p4})
+
+    h500_anom_p1_group = h500_anom_p1.groupby(time_name+'.month')
+    h500_anom_p2_group = h500_anom_p2.groupby(time_name+'.month')
+    h500_anom_p3_group = h500_anom_p3.groupby(time_name+'.month')
+    h500_anom_p4_group = h500_anom_p4.groupby(time_name+'.month')
+    
+    if persist_std:
+        std_p1 = h500_anom_p1_group.std(time_name).persist(); wait(std_p1)
+        std_p2 = h500_anom_p2_group.std(time_name).persist(); wait(std_p2)
+        std_p3 = h500_anom_p3_group.std(time_name).persist(); wait(std_p3)
+        std_p4 = h500_anom_p4_group.std(time_name).persist(); wait(std_p4)
+        return  0.25 * ((h500_anom_p1_group / std_p1).drop('month') - \
+                        (h500_anom_p2_group / std_p2).drop('month') + \
+                        (h500_anom_p3_group / std_p3).drop('month') - \
+                        (h500_anom_p4_group / std_p4).drop('month'))
+    else:
+        return  0.25 * ((h500_anom_p1_group / h500_anom_p1_group.std(time_name)).drop('month') - \
+                        (h500_anom_p2_group / h500_anom_p2_group.std(time_name)).drop('month') + \
+                        (h500_anom_p3_group / h500_anom_p3_group.std(time_name)).drop('month') - \
+                        (h500_anom_p4_group / h500_anom_p4_group.std(time_name)).drop('month'))
+    
+    
 # ===================================================================================================
 # General functions
 # ===================================================================================================

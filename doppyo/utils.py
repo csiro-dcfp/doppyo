@@ -1263,8 +1263,7 @@ def average(da, dim=None, weights=None):
     if weights is None:
         return da.mean(dim)
     else:
-        weights = (0 * da + 1) * weights
-        return (da * weights).sum(dim) / weights.sum(dim)
+        return (da * weights).sum(dim) / weights.where(da.notnull()).sum(dim)
 
 
 # ===================================================================================================
