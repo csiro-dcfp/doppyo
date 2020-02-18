@@ -14,6 +14,7 @@ __all__ = ['velocity_potential', 'stream_function', 'Rossby_wave_source', 'diver
 # ===================================================================================================
 # Packages
 # ===================================================================================================
+import dask.array as darray
 import collections
 import warnings
 import numpy as np
@@ -877,7 +878,7 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
         ds : xarray DataArray
             Array to use to compute EOFs.
         sensor_dims : str, optional
-            EOFs sample dimension. Usually 'time'.
+            EOFs sensor dimension. Dimensions over which to compute the EOF.
         sample_dim : str, optional
             EOFs sample dimension. Usually 'time'.
         weight : xarray DataArray
@@ -885,7 +886,7 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
         n_modes : values, optional
             Number of EOF modes to return
         norm_PCs : boolean, optional
-            If True, return the PCs normalised by sqrt(lambda) (ie phi), else return PCs = phi * sqrt(lambda)
+            If True, return the PCs normalised by sqrt(lambda) (ie return phi), else return PCs = phi * sqrt(lambda)
             
         Returns
         -------
@@ -902,7 +903,7 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
         >>> A = xr.DataArray(np.random.normal(size=(6,4,40)), 
         ...                  coords=[('lat', np.arange(-75,76,30)), ('lon', np.arange(45,316,90)), 
         ...                          ('time', pd.date_range('2000-01-01', periods=40, freq='M'))])
-        >>> doppyo.diagnostic.eofs(A)
+        >>> doppyo.diagnostic.eofs(A, sensor_dims=['lat','lon'], sample_dim='time')
         <xarray.Dataset>
         Dimensions:        (lat: 6, lon: 4, mode: 20, time: 40)
         Coordinates:
@@ -911,10 +912,10 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
           * lat            (lat) int64 -75 -45 -15 15 45 75
           * lon            (lon) int64 45 135 225 315
         Data variables:
-            EOFs           (mode, lat, lon) float64 -0.05723 -0.01997 ... 0.08166
-            PCs            (time, mode) float64 1.183 -1.107 -0.5385 ... -0.08552 0.1951
-            lambdas        (mode) float64 87.76 80.37 68.5 58.14 ... 8.269 6.279 4.74
-            explained_var  (mode) float64 0.1348 0.1234 0.1052 ... 0.009644 0.00728
+            pc             (time, mode) float64 0.0985 0.007285 ... -0.3559 0.08668
+            eof            (mode, lat, lon) float64 0.07215 0.07758 ... -0.101 -0.2486
+            lambda         (mode) float64 0.1695 0.1129 0.1005 ... 0.008286 0.006141
+            explained_var  (mode) float64 0.1695 0.1129 0.1005 ... 0.008286 0.006141
     """
 
     def _svd(X, n_modes, norm_PCs):

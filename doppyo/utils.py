@@ -1973,7 +1973,9 @@ def leadtime_to_datetime(da, init_date_name='init_date', lead_time_name='lead_ti
     lead_times = list(map(int, da[lead_time_name].values))
     freq = da[lead_time_name].attrs['units']
      
-    datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
+    #datetimes = (pd.date_range(init_date, periods=len(lead_times), freq=freq)).values
+    datetimes = [pd.DatetimeIndex([init_date]).shift(n, freq=freq)[0]
+                 for n in lead_times]
     
     da_out = da.drop(init_date_name)
     da_out = da_out.rename({lead_time_name : time_name})
