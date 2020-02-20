@@ -977,7 +977,7 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
                                                        )
     pcs = pcs.rename('pc') if name is None else pcs.rename('pc__'+name)
     eofs =eofs.rename('eof') if name is None else eofs.rename('eof__'+name)
-    lambda_ = explained_var.rename('lambda') if name is None else explained_var.rename('lambda__'+name)
+    lambda_ = lambda_.rename('lambda') if name is None else lambda_.rename('lambda__'+name)
     explained_var = explained_var.rename('explained_var') if name is None else explained_var.rename('explained_var__'+name)
     
     EOF = xr.merge([pcs, eofs, lambda_, explained_var])
