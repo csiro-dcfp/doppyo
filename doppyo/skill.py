@@ -755,29 +755,29 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
             
         # Compute contingency table for current probability -----
         category_edges = [-np.inf, probability_bin_edge, np.inf]
-        contingency = contingency_table(cmp_likelihood, ref_binary, 
-                                        category_edges, category_edges, over_dims=over_dims)
+        roc_contingency = contingency_table(cmp_likelihood, ref_binary, 
+                                            category_edges, category_edges, over_dims=over_dims)
         
         # Add hit rate and false alarm rate to lists -----
-        hit_rate_list.append(hit_rate(contingency,yes_category=2))
-        false_alarm_rate_list.append(false_alarm_rate(contingency,yes_category=2))
+        hit_rate_list.append(hit_rate(roc_contingency,yes_category=2))
+        false_alarm_rate_list.append(false_alarm_rate(roc_contingency,yes_category=2))
     
     # Concatenate lists -----
-    hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
-    hit_rate['probability_bin'] = probability_bins
-    false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin')
-    false_alarm_rate['probability_bin'] = probability_bins
+    roc_hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
+    roc_hit_rate['probability_bin'] = probability_bins
+    roc_false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin')
+    roc_false_alarm_rate['probability_bin'] = probability_bins
     
     # Calculate area under curve -----
-    dx = false_alarm_rate - false_alarm_rate.shift(**{'probability_bin':1})
+    dx = roc_false_alarm_rate - roc_false_alarm_rate.shift(**{'probability_bin':1})
     dx = dx.fillna(0.0)
-    area = abs(((hit_rate.shift(**{'probability_bin':1}) + hit_rate) * dx / 2.0) \
+    area = abs(((roc_hit_rate.shift(**{'probability_bin':1}) + roc_hit_rate) * dx / 2.0) \
                  .fillna(0.0).sum(dim='probability_bin'))
     
     # Package in dataset -----
-    roc = hit_rate.to_dataset(name='hit_rate')
+    roc = roc_hit_rate.to_dataset(name='hit_rate')
     roc.hit_rate.attrs['name'] = 'hit rate'
-    roc['false_alarm_rate'] = false_alarm_rate
+    roc['false_alarm_rate'] = roc_false_alarm_rate
     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
     roc['area'] = area
     roc.area.attrs['name'] = 'area under roc'
