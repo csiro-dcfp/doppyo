@@ -457,21 +457,30 @@ def wave_activity_flux(psi_anom, u, v, plevel=None, lat_name=None, lon_name=None
             plev = plevel / 1000 # Takaya and Nakmura p.610
     
     # Create a VectorWind instance (use gradient function) -----
-    w = wsh.xarray.VectorWind(u, v)
+#     w = wsh.xarray.VectorWind(u, v)
     
     # Compute the various stream function gradients required -----
-    psi_x, psi_y = w.gradient(psi_anom)
-    psi_xx, psi_xy = w.gradient(psi_x)
-    psi_yx, psi_yy = w.gradient(psi_y)
+    x, y = utils.xy_from_lonlat(psi_anom[lon_name], psi_anom[lat_name])
+    psi_x = utils.differentiate_wrt(psi_anom, dim=lon_name, x=x)
+    psi_y = utils.differentiate_wrt(psi_anom, dim=lat_name, x=y)
+    psi_xx = utils.differentiate_wrt(psi_x, dim=lon_name, x=x)
+    psi_xy = utils.differentiate_wrt(psi_x, dim=lat_name, x=y)
+    psi_yx = utils.differentiate_wrt(psi_y, dim=lon_name, x=x)
+    psi_yy = utils.differentiate_wrt(psi_y, dim=lat_name, x=y)
+    
+    # Or use windspharm -----
+    # psi_x, psi_y = w.gradient(psi_anom)
+    # psi_xx, psi_xy = w.gradient(psi_x)
+    # psi_yx, psi_yy = w.gradient(psi_y)
     
     # Compute the wave activity flux -----
     vel = (u * u + v * v) ** 0.5
     u_waf = (0.5 * plev * (u * (psi_x * psi_x - psi_anom * psi_xx) + 
-                          v * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('u_waf')
+                           v * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('u_waf')
     u_waf.attrs['units'] = 'm^2/s^2'
     u_waf.attrs['long_name'] = 'Zonal Rossby wave activity flux'
     v_waf = (0.5 * plev * (v * (psi_y * psi_y - psi_anom * psi_yy) + 
-                          u * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('v_waf')
+                           u * (psi_x * psi_y - 0.5 * psi_anom * (psi_xy + psi_yx))) / vel).rename('v_waf')
     v_waf.attrs['units'] = 'm^2/s^2'
     v_waf.attrs['long_name'] = 'Meridional Rossby wave activity flux'
         

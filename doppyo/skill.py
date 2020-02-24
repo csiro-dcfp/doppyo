@@ -381,12 +381,12 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
             
         # Compute contingency table for current probability -----
         category_edges = [-np.inf, probability_bin_edge, np.inf]
-        contingency = compute_contingency_table(cmp_likelihood, ref_binary, 
-                                                category_edges, category_edges, over_dims=over_dims)
+        contingency = contingency(cmp_likelihood, ref_binary, 
+                                  category_edges, category_edges, over_dims=over_dims)
         
         # Add hit rate and false alarm rate to lists -----
-        hit_rate_list.append(compute_hit_rate(contingency,yes_category=2))
-        false_alarm_rate_list.append(compute_false_alarm_rate(contingency,yes_category=2))
+        hit_rate_list.append(hit_rate(contingency,yes_category=2))
+        false_alarm_rate_list.append(false_alarm_rate(contingency,yes_category=2))
     
     # Concatenate lists -----
     hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
@@ -401,14 +401,17 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
                  .fillna(0.0).sum(dim='probability_bin'))
     
     # Package in dataset -----
-    roc = hit_rate.to_dataset(name='hit_rate')
-    roc.hit_rate.attrs['name'] = 'hit rate'
-    roc['false_alarm_rate'] = false_alarm_rate
-    roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
-    roc['area'] = area
-    roc.area.attrs['name'] = 'area under roc'
+    #     roc = hit_rate.to_dataset(name='hit_rate')
+    #     roc.hit_rate.attrs['name'] = 'hit rate'
+    #     roc['false_alarm_rate'] = false_alarm_rate
+    #     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
+    #     roc['area'] = area
+    #     roc.area.attrs['name'] = 'area under roc'
+    hit_rate.attrs['name'] = 'hit rate'
+    false_alarm_rate.attrs['name'] = 'false alarm rate'
+    area.attrs['name'] = 'area under roc'
 
-    return roc
+    return hit_rate, false_alarm_rate, area #roc
 
 
 # ===================================================================================================
@@ -1651,8 +1654,7 @@ def mean_absolute_error(da_cmp, da_ref, over_dims):
     if over_dims == None:
         over_dims = []  
     
-    return abs(da_cmp - da_ref).mean(dim=over_dims, skipna=True) \
-                               .rename('mean_absolute_error')
+    return abs(da_cmp - da_ref).mean(dim=over_dims, skipna=True)
 
 
 # ===================================================================================================
@@ -1700,8 +1702,7 @@ def mean_squared_error(da_cmp, da_ref, over_dims):
     if over_dims == None:
         over_dims = []  
         
-    return xr.ufuncs.square(da_cmp - da_ref).mean(dim=over_dims,skipna=True) \
-                                            .rename('mean_squared_error')
+    return xr.ufuncs.square(da_cmp - da_ref).mean(dim=over_dims,skipna=True)
 
 
 # ===================================================================================================
@@ -1743,8 +1744,7 @@ def rms_error(da_cmp, da_ref, over_dims):
         See http://www.cawcr.gov.au/projects/verification/
     """
     
-    return xr.ufuncs.sqrt(mean_squared_error(da_cmp, da_ref, over_dims=over_dims)) \
-                    .rename('root_mean_squared_error')
+    return xr.ufuncs.sqrt(mean_squared_error(da_cmp, da_ref, over_dims=over_dims))
 
 
 # ===================================================================================================
@@ -1803,14 +1803,18 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
     intersection_dims = list(set(over_dims_in_cmp).intersection(set(over_dims_in_ref)))
     difference_dims = list(set(over_dims_in_cmp).difference(set(over_dims_in_ref)))
 
+    # Get overlapping coordinates so that normalisations and subtracted means are correct ----
+    da_cmp_overlap = da_cmp.where(da_ref)
+    da_ref_overlap = da_ref.where(da_cmp)
+
     if subtract_local_mean:
-        cov = ((da_cmp - da_cmp.mean(intersection_dims)) * 
-               (da_ref - da_ref.mean(intersection_dims))).mean(intersection_dims)
-        norm = da_cmp.std(intersection_dims) * da_ref.std(intersection_dims)
+        cov = ((da_cmp_overlap - da_cmp_overlap.mean(intersection_dims)) * 
+               (da_ref_overlap - da_ref_overlap.mean(intersection_dims))).mean(intersection_dims)
+        norm = da_cmp_overlap.std(intersection_dims) * da_ref_overlap.std(intersection_dims)
     else:
-        cov = (da_cmp * da_ref).mean(intersection_dims)
-        norm = ((da_cmp ** 2).mean(intersection_dims) ** 0.5) * \
-                ((da_ref ** 2).mean(intersection_dims) ** 0.5)
+        cov = (da_cmp_overlap * da_ref_overlap).mean(intersection_dims)
+        norm = ((da_cmp_overlap ** 2).mean(intersection_dims) ** 0.5) * \
+               ((da_ref_overlap ** 2).mean(intersection_dims) ** 0.5)
 
     return (cov / norm).mean(difference_dims)
 
