@@ -698,12 +698,11 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
             
         Returns
         -------
-        hit_rate : xarray DataSet
-            The hit rate in each probability bin
-        false_alarm_rate : xarray DataSet
-            The false alarm rate in each probability bin
-        area : xarray DataSet
-            The area under the roc curve (false alarm rate vs hit rate)
+        roc : xarray DataSet
+            | Dataset containing the following variables:
+            | hit_rate : the hit rate in each probability bin
+            | false_alarm_rate : the false alarm rate in each probability bin
+            | area : the area under the roc curve (false alarm rate vs hit rate)
         
         Examples
         --------
@@ -776,17 +775,14 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
                  .fillna(0.0).sum(dim='probability_bin'))
     
     # Package in dataset -----
-    #     roc = hit_rate.to_dataset(name='hit_rate')
-    #     roc.hit_rate.attrs['name'] = 'hit rate'
-    #     roc['false_alarm_rate'] = false_alarm_rate
-    #     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
-    #     roc['area'] = area
-    #     roc.area.attrs['name'] = 'area under roc'
-    hit_rate.attrs['name'] = 'hit rate'
-    false_alarm_rate.attrs['name'] = 'false alarm rate'
-    area.attrs['name'] = 'area under roc'
+    roc = hit_rate.to_dataset(name='hit_rate')
+    roc.hit_rate.attrs['name'] = 'hit rate'
+    roc['false_alarm_rate'] = false_alarm_rate
+    roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
+    roc['area'] = area
+    roc.area.attrs['name'] = 'area under roc'
 
-    return hit_rate, false_alarm_rate, area #roc
+    return roc
 
 
 # ===================================================================================================
