@@ -675,7 +675,7 @@ def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.lins
 
 
 # ===================================================================================================
-def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
+def roc(cmp_likelihood, ref_logical, over_dims, probability_bin_edges=np.linspace(0.1,1,10)):
     """ 
         Computes the relative operating characteristic of an event for a range of probability \
                 threshold bins given the comparison likelihood and reference logical event data 
@@ -693,8 +693,8 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
                     ref_logical = (da_ref > 1))
         over_dims : str or sequence of str
             Dimensions over which to compute the relative operating characteristic
-        probability_bins : array_like, optional
-            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+        probability_bin_edges : array_like, optional
+            Probability thresholds. Defaults to 10 equally spaced thresholds between 0.1 and 1
             
         Returns
         -------
@@ -739,17 +739,8 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
     
     ref_binary = ref_logical * 1
 
-    # Initialise probability bins -----
-    dprob = np.diff(probability_bins)/2
-    probability_bin_edges = probability_bins[:-1]+dprob
-    if np.any(probability_bin_edges >= 1.0):
-            raise ValueError('No element of probability_bins can exceed 1.0')
-
-    # Fill first probability bin with ones -----
-    all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
-    hit_rate_list = [all_ones]
-    false_alarm_rate_list = [all_ones]
-    
+    hit_rate_list = []
+    false_alarm_rate_list = []
     # Loop over probability bins -----
     for idx,probability_bin_edge in enumerate(probability_bin_edges):
             
@@ -763,16 +754,16 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
         false_alarm_rate_list.append(false_alarm_rate(roc_contingency,yes_category=2))
     
     # Concatenate lists -----
-    roc_hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
-    roc_hit_rate['probability_bin'] = probability_bins
-    roc_false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin')
-    roc_false_alarm_rate['probability_bin'] = probability_bins
+    roc_hit_rate = xr.concat(hit_rate_list, dim='probability_bin_edge')
+    roc_hit_rate['probability_bin_edge'] = probability_bin_edges
+    roc_false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin_edge')
+    roc_false_alarm_rate['probability_bin_edge'] = probability_bin_edges
     
     # Calculate area under curve -----
-    dx = roc_false_alarm_rate - roc_false_alarm_rate.shift(**{'probability_bin':1})
+    dx = roc_false_alarm_rate - roc_false_alarm_rate.shift(**{'probability_bin_edge':1})
     dx = dx.fillna(0.0)
-    area = abs(((roc_hit_rate.shift(**{'probability_bin':1}) + roc_hit_rate) * dx / 2.0) \
-                 .fillna(0.0).sum(dim='probability_bin'))
+    area = abs(((roc_hit_rate.shift(**{'probability_bin_edge':1}) + roc_hit_rate) * dx / 2.0) \
+                 .fillna(0.0).sum(dim='probability_bin_edge'))
     
     # Package in dataset -----
     roc = roc_hit_rate.to_dataset(name='hit_rate')
