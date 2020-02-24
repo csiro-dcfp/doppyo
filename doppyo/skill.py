@@ -31,607 +31,6 @@ from doppyo import utils
 
 
 # ===================================================================================================
-# Methods for probabilistic comparisons
-# ===================================================================================================
-def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'):
-    """ 
-        Returns the rank histogram along the specified dimensions
-        
-        | Authors: Dougie Squire
-        | Date: 01/11/2018
-        
-        Parameters
-        ----------
-        da_cmp : xarray DataArray
-            Array containing data to be compared to reference dataset (usually forecasts). This data \
-                    is used to rank the reference data. Must include an ensemble dimension
-        da_ref : xarray DataArray
-            Array containing reference data (usually observations). This data is ranked within the \
-                    comparison data. Dimensions should match those of da_cmp
-        over_dims : str or sequence of str
-            The dimension(s) over which to compute the histogram of ranks
-        norm : bool, optional
-            If True, rank histograms are normalised by their enclosed area
-        ensemble_dim : str, optional
-            The name of the ensemble dimension in da_cmp
-            
-        Returns
-        -------
-        rank_histogram : xarray DataArray
-            New DataArray object containing the rank histograms
-            
-        Examples
-        --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
-        ...                               ('ensemble', np.arange(3))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
-        ...                                                             ('y', np.arange(3))])
-        >>> doppyo.skill.rank_histogram(da_cmp, da_ref, over_dims='x')
-        <xarray.DataArray 'rank_histogram' (bins: 4, y: 3)>
-        array([[1.      , 0.333333, 0.333333],
-               [0.      , 0.333333, 0.333333],
-               [0.      , 0.      , 0.333333],
-               [0.      , 0.333333, 0.      ]])
-        Coordinates:
-          * bins     (bins) float64 1.0 2.0 3.0 4.0
-          * y        (y) int64 0 1 2
-
-        Notes
-        -----
-        See http://www.cawcr.gov.au/projects/verification/
-    """
-    
-    def _rank_first(x):
-        """ Returns the rank of the first element along the last axes """
-
-        ranks = bottleneck.nanrankdata(x,axis=-1)
-
-        return ranks[...,0]
-    
-    if over_dims is None:
-        raise ValueError('Cannot compute rank histogram with no independent dimensions')
-       
-    # Stack da_cmp and da_ref along ensemble dimension -----
-    if ensemble_dim not in da_ref.coords:
-        da_2 = da_ref.copy()
-        da_2.coords[ensemble_dim] = -1
-        da_2 = da_2.expand_dims(ensemble_dim)
-    else:
-        raise ValueError('da_ref cannot contain an ensemble dimension')
-
-    # Only keep and combine instances that appear in both dataarrays (excluding the ensemble dim) -----
-    aligned = xr.align(da_2, da_cmp, join='inner', exclude=ensemble_dim)
-    combined = xr.concat(aligned, dim=ensemble_dim)
-
-    # Rank the data -----
-    if isinstance(combined.data, dask_array_type):
-        combined = combined.chunk(chunks={ensemble_dim: -1})
-    da_ranked = xr.apply_ufunc(_rank_first, combined,
-                               input_core_dims=[[ensemble_dim]],
-                               dask='parallelized',
-                               output_dtypes=[int]).rename('rank')
-    
-    # Initialise bins -----
-    bins = range(1, len(da_cmp[ensemble_dim])+2)
-    bin_edges = utils.get_bin_edges(bins)
-    
-    if norm:
-        return utils.pdf(da_ranked, bin_edges, over_dims=over_dims).rename('rank_histogram')
-    else:
-        return utils.histogram(da_ranked, bin_edges, over_dims=over_dims).rename('rank_histogram')
-
-
-# ===================================================================================================
-def rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
-    """ 
-        Returns the ranked probability score
-        
-        | Author: Dougie Squire
-        | Date: 10/05/2018
-        
-        Parameters
-        ----------
-        da_cmp : xarray DataArray
-            Array containing data to be compared to reference dataset (usually forecasts)
-        da_ref : xarray DataArray
-            Array containing reference data (usually observations)
-        bins : array_like
-            Bins to compute the ranked probability score over
-        over_dims : str or sequence of str, optional
-            Dimensions over which to average the ranked probability score
-        ensemble_dim : str, optional
-            Name of ensemble dimension
-            
-        Returns
-        -------
-        rps : xarray DataArray
-            Array containing ranked probability score 
-            
-        Examples
-        --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
-        ...                               ('ensemble', np.arange(3))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
-        ...                                                             ('y', np.arange(3))])
-        >>> bins = np.linspace(-2,2,10)
-        >>> doppyo.skill.rps(da_cmp, da_ref, bins=bins, over_dims='x')
-        <xarray.DataArray 'rps' (y: 3)>
-        array([0.36214 , 0.806584, 0.263374])
-        Coordinates:
-          * y        (y) int64 0 1 2
-        
-        Notes
-        -----
-        See http://www.cawcr.gov.au/projects/verification/
-    """
-
-    if over_dims is None:
-        over_dims = []
-    
-    # Initialise bins -----
-    bin_edges = utils.get_bin_edges(bins)
-
-    # Compute cumulative density functions -----
-    cdf_cmp = utils.cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
-    cdf_ref = utils.cdf(da_ref, bin_edges=bin_edges, over_dims=None)
-    
-    return utils.integrate((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
-                .mean(dim=over_dims, skipna=True).rename('rps')
-
-
-# ===================================================================================================
-def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5), 
-                nans_as_zeros=True):
-    """ 
-        Computes the relative frequency of an event for a range of probability threshold bins \
-                given the comparison likelihood and reference logical event data 
-        
-        | Author: Dougie Squire
-        | Date: 10/05/2018
-        
-        Parameters
-        ----------
-        cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
-                    (da_cmp > 1).mean(dim='ensemble'))
-        ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
-                    ref_logical = (da_ref > 1))
-        over_dims : str or sequence of str
-            Dimensions over which to compute the reliability
-        probability_bins : array_like, optional
-            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
-        nans_as_zeros : bool, optional
-            Replace output nans (resulting fron bins with no data) with zeros
-            
-        Returns
-        -------
-        reliability : xarray DataSet
-            | Dataset containing the following variables:
-            | relative_freq; the relative frequency of occurence for each probability threshold bin
-            | cmp_number; the number of instances that the comparison data fall within each probability \
-                    threshold bin
-            | ref_occur; the number of instances that the reference data is True when the comparison data \
-                    falls within each probability threshold bin
-        
-        Examples
-        --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
-        ...                               ('ensemble', np.arange(3))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
-        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
-        >>> ref_logical = da_ref > 0.1
-        >>> doppyo.skill.reliability(cmp_likelihood, ref_logical, over_dims='x')
-        <xarray.Dataset>
-        Dimensions:          (probability_bin: 5, y: 3)
-        Coordinates:
-          * y                (y) int64 0 1 2
-          * probability_bin  (probability_bin) float64 0.0 0.25 0.5 0.75 1.0
-        Data variables:
-            relative_freq    (probability_bin, y) float64 0.0 0.5 0.0 ... 1.0 0.0 0.0
-            cmp_number       (probability_bin, y) int64 0 2 1 2 0 1 0 0 0 0 1 1 1 0 0
-            ref_occur        (probability_bin, y) int64 0 1 0 1 0 0 0 0 0 0 0 1 1 0 0
-        
-        Notes
-        -----
-        See http://www.cawcr.gov.au/projects/verification/
-
-        To do
-        
-        - Currently using a for-loop to process each probability bin separately. Is it possible \
-                to remove this loop?
-    """
-    
-    if over_dims is None:
-        over_dims = []
-        
-    ref_binary = ref_logical.copy()*1
-        
-    # Check that comparison data is likelihoods and reference data is binary -----
-    if ((cmp_likelihood > 1).any().item()) | ((cmp_likelihood < 0).any().item()):
-        raise ValueError('Input "cmp_likelihood" must represent likelihoods and must have values between 0 and 1')
-    if not ((ref_logical == 0) | (ref_logical == 1)).all().item():
-        raise ValueError('Input "ref_logical" must represent logical (True/False) outcomes')
-    
-    # Initialise probability bins -----
-    probability_bin_edges = utils.get_bin_edges(probability_bins)
-
-    # Loop over probability bins -----
-    cmp_number_list = []
-    ref_occur_list = []
-    for idx in range(len(probability_bin_edges)-1):
-        # Logical of comparisons that fall within probability bin -----
-        cmp_in_bin = (cmp_likelihood >= probability_bin_edges[idx]) & \
-                     (cmp_likelihood < probability_bin_edges[idx+1])
-        
-        # Number of comparisons that fall within probability bin -----
-        cmp_number_list.append((1 * cmp_in_bin).sum(dim=over_dims, skipna=True))  
-        
-        # Number of reference occurences where comparison likelihood is within probability bin -----
-        ref_occur_list.append((1 * ((cmp_in_bin == True) & (ref_logical == True))) \
-                      .sum(dim=over_dims, skipna=True))
-    
-    # Concatenate lists -----
-    cmp_number = xr.concat(cmp_number_list, dim='probability_bin')
-    cmp_number['probability_bin'] = probability_bins       
-
-    ref_occur = xr.concat(ref_occur_list, dim='probability_bin')
-    ref_occur['probability_bin'] = probability_bins  
-
-    # Reference relative frequency -----
-    relative_freq = ref_occur / cmp_number
-
-    # Replace nans with zeros -----
-    if nans_as_zeros:
-        relative_freq = relative_freq.fillna(0)
-
-    # Package in dataset -----
-    reliability = relative_freq.to_dataset(name='relative_freq')
-    reliability.relative_freq.attrs['name'] = 'relative frequency'
-    reliability['cmp_number'] = cmp_number
-    reliability.cmp_number.attrs['name'] = 'number of comparisons in bin'
-    reliability['ref_occur'] = ref_occur
-    reliability.ref_occur.attrs['name'] = 'number of reference occurences when comparisons in bin'
-
-    return reliability
-
-
-# ===================================================================================================
-def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
-    """ 
-        Computes the relative operating characteristic of an event for a range of probability \
-                threshold bins given the comparison likelihood and reference logical event data 
-        
-        | Author: Dougie Squire
-        | Date: 10/05/2018
-        
-        Parameters
-        ----------
-        cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
-                    (da_cmp > 1).mean(dim='ensemble'))
-        ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
-                    ref_logical = (da_ref > 1))
-        over_dims : str or sequence of str
-            Dimensions over which to compute the relative operating characteristic
-        probability_bins : array_like, optional
-            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
-            
-        Returns
-        -------
-        roc : xarray DataSet
-            | Dataset containing the following variables:
-            | hit_rate; the hit rate in each probability bin
-            | false_alarm_rate; the false alarm rate in each probability bin
-            | area; the area under the roc curve (false alarm rate vs hit rate)
-        
-        Examples
-        --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
-        ...                               ('ensemble', np.arange(3))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
-        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
-        >>> ref_logical = da_ref > 0.1
-        >>> doppyo.skill.roc(cmp_likelihood, ref_logical, over_dims='x')
-        <xarray.Dataset>
-        Dimensions:           (probability_bin: 5, y: 3)
-        Coordinates:
-          * y                 (y) int64 0 1 2
-          * probability_bin   (probability_bin) float64 0.0 0.25 0.5 0.75 1.0
-        Data variables:
-            hit_rate          (probability_bin, y) float64 1.0 1.0 1.0 ... nan 0.0 0.0
-            false_alarm_rate  (probability_bin, y) float64 1.0 1.0 1.0 ... 0.0 0.0 0.0
-            area              (y) float64 0.0 0.0 0.0
-        
-        Notes
-        -----
-        See http://www.cawcr.gov.au/projects/verification/
-
-        To do
-        
-        - Currently using a for-loop to process each probability bin separately. Is it possible \
-                to remove this loop?
-    """
-    
-    if over_dims is None:
-        over_dims = []
-    
-    ref_binary = ref_logical * 1
-
-    # Initialise probability bins -----
-    dprob = np.diff(probability_bins)/2
-    probability_bin_edges = probability_bins[:-1]+dprob
-    if np.any(probability_bin_edges >= 1.0):
-            raise ValueError('No element of probability_bins can exceed 1.0')
-
-    # Fill first probability bin with ones -----
-    all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
-    hit_rate_list = [all_ones]
-    false_alarm_rate_list = [all_ones]
-    
-    # Loop over probability bins -----
-    for idx,probability_bin_edge in enumerate(probability_bin_edges):
-            
-        # Compute contingency table for current probability -----
-        category_edges = [-np.inf, probability_bin_edge, np.inf]
-        contingency = contingency(cmp_likelihood, ref_binary, 
-                                  category_edges, category_edges, over_dims=over_dims)
-        
-        # Add hit rate and false alarm rate to lists -----
-        hit_rate_list.append(hit_rate(contingency,yes_category=2))
-        false_alarm_rate_list.append(false_alarm_rate(contingency,yes_category=2))
-    
-    # Concatenate lists -----
-    hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
-    hit_rate['probability_bin'] = probability_bins
-    false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin')
-    false_alarm_rate['probability_bin'] = probability_bins
-    
-    # Calculate area under curve -----
-    dx = false_alarm_rate - false_alarm_rate.shift(**{'probability_bin':1})
-    dx = dx.fillna(0.0)
-    area = abs(((hit_rate.shift(**{'probability_bin':1}) + hit_rate) * dx / 2.0) \
-                 .fillna(0.0).sum(dim='probability_bin'))
-    
-    # Package in dataset -----
-    #     roc = hit_rate.to_dataset(name='hit_rate')
-    #     roc.hit_rate.attrs['name'] = 'hit rate'
-    #     roc['false_alarm_rate'] = false_alarm_rate
-    #     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
-    #     roc['area'] = area
-    #     roc.area.attrs['name'] = 'area under roc'
-    hit_rate.attrs['name'] = 'hit rate'
-    false_alarm_rate.attrs['name'] = 'false alarm rate'
-    area.attrs['name'] = 'area under roc'
-
-    return hit_rate, false_alarm_rate, area #roc
-
-
-# ===================================================================================================
-def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
-    """ 
-        Returns the discrimination diagram of an event; the histogram of comparison likelihood when \
-                references indicate the event has occurred and has not occurred
-        
-        | Author: Dougie Squire
-        | Date: 10/05/2018
-        
-        Parameters
-        ----------
-        cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
-                    (da_cmp > 1).mean(dim='ensemble'))
-        ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
-                    ref_logical = (da_ref > 1))
-        over_dims : str or sequence of str
-            Dimensions over which to compute the discrimantion histograms
-        probability_bins : array_like, optional
-            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
-            
-        Returns
-        -------
-        discrimination : xarray DataSet
-            | Dataset containing the following variables:
-            | hist_event; histogram of comparison likelihoods when reference data indicates that the \
-                    event has occurred
-            | hist_no_event; histogram of comparison likelihoods when reference data indicates that the \
-                    event has not occurred
-        
-        Examples
-        --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
-        ...                               ('ensemble', np.arange(3))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
-        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
-        >>> ref_logical = da_ref > 0.1
-        >>> doppyo.skill.discrimination(cmp_likelihood, ref_logical, over_dims='x')
-        <xarray.Dataset>
-        Dimensions:        (bins: 5, y: 3)
-        Coordinates:
-          * bins           (bins) float64 0.0 0.25 0.5 0.75 1.0
-          * y              (y) int64 0 1 2
-        Data variables:
-            hist_event     (bins, y) float64 0.0 0.0 nan 0.5 1.0 ... 0.0 nan 0.0 0.0 nan
-            hist_no_event  (bins, y) float64 0.0 0.0 0.0 1.0 ... 0.3333 0.0 0.0 0.3333
-        
-        Notes
-        -----
-        See http://www.cawcr.gov.au/projects/verification/
-
-        To do
-        
-        - Currently using a for-loop to process each probability bin separately. Is it possible \
-                to remove this loop?
-    """
-    
-    # Initialise probability bins -----
-    probability_bin_edges = utils.get_bin_edges(probability_bins)
-
-    # Compute histogram of comparison likelihoods when reference is True/False -----
-    hist_event = utils.histogram(cmp_likelihood.where(ref_logical == True), 
-                                 probability_bin_edges, over_dims=over_dims) / \
-                                 (ref_logical == True).sum(dim=over_dims)
-    hist_no_event = utils.histogram(cmp_likelihood.where(ref_logical == False), 
-                                    probability_bin_edges, over_dims=over_dims) / \
-                                    (ref_logical == False).sum(dim=over_dims)
-    
-    # Package in dataset -----
-    discrimination = hist_event.to_dataset(name='hist_event')
-    discrimination.hist_event.attrs['name'] = 'histogram of comparison likelihood, yes event'
-    discrimination['hist_no_event'] = hist_no_event
-    discrimination.hist_no_event.attrs['name'] = 'histogram of comparison likelihood, no event'
-
-    return discrimination
-
-
-# ===================================================================================================
-def Brier_score(cmp_likelihood, ref_logical, over_dims, probability_bins=None):
-    """ 
-        Computes the Brier score(s) of an event given the comparison likelihood and reference logical \
-                event data. When comparison probability bins are also provided, this function also computes \
-                the reliability, resolution and uncertainty components of the Brier score, where Brier = \
-                reliability - resolution + uncertainty
-        
-        | Author: Dougie Squire
-        | Date: 10/05/2018
-        
-        Parameters
-        ----------
-        cmp_likelihood : xarray DataArray
-            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
-                    (da_cmp > 1).mean(dim='ensemble'))
-        ref_logical : xarray DataArray
-            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
-                    ref_logical = (da_ref > 1))
-        over_dims : str or sequence of str
-            Dimensions over which to compute the Brier score
-        probability_bins : array_like, optional
-            Probability threshold bins. If specified, this function also computes the reliability, \
-                    resolution and uncertainty components of the Brier score. Defaults to None
-            
-        Returns
-        -------
-        Brier : xarray DataArray or xarray DataSet
-            If probability_bins = None, returns a DataArray containing Brier scores. Otherwise returns \
-                    a DataSet containing the reliability, resolution and uncertainty components of the Brier \
-                    score, where Brier = reliability - resolution + uncertainty
-        
-        Examples
-        --------
-        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
-        ...                               ('ensemble', np.arange(3))])
-        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
-        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
-        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
-        >>> ref_logical = da_ref > 0.1
-        >>> doppyo.skill.Brier_score(cmp_likelihood, ref_logical, over_dims='x')
-        <xarray.DataArray (y: 3)>
-        array([0.148148, 0.444444, 0.222222])
-        Coordinates:
-          * y        (y) int64 0 1 2
-        
-        Notes
-        -----
-        See http://www.cawcr.gov.au/projects/verification/
-
-        To do
-        
-        - Currently using a for-loop to process each probability bin separately. Is it possible \
-                to remove this loop?
-    """
-    
-    if over_dims is None:
-        over_dims = []   
-    N = (0*cmp_likelihood + 1).sum(dim=over_dims, skipna=True)
-
-    ref_binary = ref_logical.copy()*1
-    
-    # Calculate total Brier score -----
-    Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims, skipna=True) \
-                                                          .rename('Brier_score')
-        
-    # Calculate components
-    if probability_bins is not None:
-
-        # Initialise probability bins -----
-        probability_bin_edges = utils.get_bin_edges(probability_bins)
-
-        # Initialise mean_cmp_likelihood array -----
-        mean_cmp_likelihood = cmp_likelihood.copy(deep=True)
-        
-        # Loop over probability bins -----
-        mean_probability_bin_list = []
-        cmp_number_list = []
-        ref_occur_list = []
-        for idx in range(len(probability_bin_edges)-1):
-            # Logical of comparisons that fall within probability bin -----
-            cmp_in_bin = (cmp_likelihood >= probability_bin_edges[idx]) & \
-                         (cmp_likelihood < probability_bin_edges[idx+1])
-            
-            # Replace likelihood with mean likelihood (so that Brier components add to total) -----
-            mean_cmp_likelihood = mean_cmp_likelihood.where(~cmp_in_bin).fillna( \
-                                                     mean_cmp_likelihood.where(cmp_in_bin)
-                                                                        .mean(dim=over_dims, skipna=True))
-
-            # Mean comparison probability within current probability bin -----
-            mean_probability_bin_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
-                                                    .mean(dim=over_dims, skipna=True)) 
-
-            # Number of comparisons that fall within probability bin -----
-            cmp_number_list.append(cmp_in_bin.sum(dim=over_dims, skipna=True))
-
-            # Number of reference occurences where comparison likelihood is within probability bin -----
-            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)) \
-                                    .sum(dim=over_dims)) 
-
-        # Concatenate lists -----
-        mean_probability_bin = xr.concat(mean_probability_bin_list, dim='probability_bin')
-        mean_probability_bin['probability_bin'] = probability_bins
-        cmp_number = xr.concat(cmp_number_list, dim='probability_bin')
-        cmp_number['probability_bin'] = probability_bins
-        ref_occur = xr.concat(ref_occur_list, dim='probability_bin')
-        ref_occur['probability_bin'] = probability_bins
-
-        # Compute Brier components -----
-        base_rate = ref_occur / cmp_number
-        Brier_reliability = (1 / N) * (cmp_number*(mean_probability_bin - base_rate) ** 2) \
-                                       .sum(dim='probability_bin', skipna=True)
-            
-        sample_clim = ref_binary.mean(dim=over_dims, skipna=True)
-        Brier_resolution = (1 / N) * (cmp_number*(base_rate - sample_clim) ** 2) \
-                                      .sum(dim='probability_bin', skipna=True)
-        Brier_uncertainty = sample_clim * (1 - sample_clim)
-        
-        # When a binned approach is used, compute total Brier using binned probabilities -----
-        # (This way Brier_total = Brier_reliability - Brier_resolution + Brier_uncertainty)
-        Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2) \
-                      .sum(dim=over_dims, skipna=True)
-        
-        # Package in dataset -----
-        Brier = Brier_total.to_dataset(name='Brier_total')
-        Brier.Brier_total.attrs['name'] = 'total Brier score'
-        Brier['Brier_reliability'] = Brier_reliability
-        Brier.Brier_reliability.attrs['name'] = 'reliability component of Brier score'
-        Brier['Brier_resolution'] = Brier_resolution
-        Brier.Brier_resolution.attrs['name'] = 'resolution component of Brier score'
-        Brier['Brier_uncertainty'] = Brier_uncertainty
-        Brier.Brier_uncertainty.attrs['name'] = 'uncertainty component of Brier score'
-        
-    return Brier
-
-
-# ===================================================================================================
 # Methods for categorized comparisons
 # ===================================================================================================
 def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
@@ -1003,6 +402,608 @@ def Gerrity_score(contingency):
     
     return ((contingency * S).sum(dim=('reference_category','comparison_category'), skipna=True) / \
             _sum_contingency(contingency, 'total')).rename('Gerrity_score')
+
+
+# ===================================================================================================
+# Methods for probabilistic comparisons
+# ===================================================================================================
+def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'):
+    """ 
+        Returns the rank histogram along the specified dimensions
+        
+        | Authors: Dougie Squire
+        | Date: 01/11/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts). This data \
+                    is used to rank the reference data. Must include an ensemble dimension
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations). This data is ranked within the \
+                    comparison data. Dimensions should match those of da_cmp
+        over_dims : str or sequence of str
+            The dimension(s) over which to compute the histogram of ranks
+        norm : bool, optional
+            If True, rank histograms are normalised by their enclosed area
+        ensemble_dim : str, optional
+            The name of the ensemble dimension in da_cmp
+            
+        Returns
+        -------
+        rank_histogram : xarray DataArray
+            New DataArray object containing the rank histograms
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
+        ...                                                             ('y', np.arange(3))])
+        >>> doppyo.skill.rank_histogram(da_cmp, da_ref, over_dims='x')
+        <xarray.DataArray 'rank_histogram' (bins: 4, y: 3)>
+        array([[1.      , 0.333333, 0.333333],
+               [0.      , 0.333333, 0.333333],
+               [0.      , 0.      , 0.333333],
+               [0.      , 0.333333, 0.      ]])
+        Coordinates:
+          * bins     (bins) float64 1.0 2.0 3.0 4.0
+          * y        (y) int64 0 1 2
+
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+    
+    def _rank_first(x):
+        """ Returns the rank of the first element along the last axes """
+
+        ranks = bottleneck.nanrankdata(x,axis=-1)
+
+        return ranks[...,0]
+    
+    if over_dims is None:
+        raise ValueError('Cannot compute rank histogram with no independent dimensions')
+       
+    # Stack da_cmp and da_ref along ensemble dimension -----
+    if ensemble_dim not in da_ref.coords:
+        da_2 = da_ref.copy()
+        da_2.coords[ensemble_dim] = -1
+        da_2 = da_2.expand_dims(ensemble_dim)
+    else:
+        raise ValueError('da_ref cannot contain an ensemble dimension')
+
+    # Only keep and combine instances that appear in both dataarrays (excluding the ensemble dim) -----
+    aligned = xr.align(da_2, da_cmp, join='inner', exclude=ensemble_dim)
+    combined = xr.concat(aligned, dim=ensemble_dim)
+
+    # Rank the data -----
+    if isinstance(combined.data, dask_array_type):
+        combined = combined.chunk(chunks={ensemble_dim: -1})
+    da_ranked = xr.apply_ufunc(_rank_first, combined,
+                               input_core_dims=[[ensemble_dim]],
+                               dask='parallelized',
+                               output_dtypes=[int]).rename('rank')
+    
+    # Initialise bins -----
+    bins = range(1, len(da_cmp[ensemble_dim])+2)
+    bin_edges = utils.get_bin_edges(bins)
+    
+    if norm:
+        return utils.pdf(da_ranked, bin_edges, over_dims=over_dims).rename('rank_histogram')
+    else:
+        return utils.histogram(da_ranked, bin_edges, over_dims=over_dims).rename('rank_histogram')
+
+
+# ===================================================================================================
+def rps(da_cmp, da_ref, bins, over_dims=None, ensemble_dim='ensemble'):
+    """ 
+        Returns the ranked probability score
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
+        
+        Parameters
+        ----------
+        da_cmp : xarray DataArray
+            Array containing data to be compared to reference dataset (usually forecasts)
+        da_ref : xarray DataArray
+            Array containing reference data (usually observations)
+        bins : array_like
+            Bins to compute the ranked probability score over
+        over_dims : str or sequence of str, optional
+            Dimensions over which to average the ranked probability score
+        ensemble_dim : str, optional
+            Name of ensemble dimension
+            
+        Returns
+        -------
+        rps : xarray DataArray
+            Array containing ranked probability score 
+            
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), coords=[('x', np.arange(3)), 
+        ...                                                             ('y', np.arange(3))])
+        >>> bins = np.linspace(-2,2,10)
+        >>> doppyo.skill.rps(da_cmp, da_ref, bins=bins, over_dims='x')
+        <xarray.DataArray 'rps' (y: 3)>
+        array([0.36214 , 0.806584, 0.263374])
+        Coordinates:
+          * y        (y) int64 0 1 2
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+    """
+
+    if over_dims is None:
+        over_dims = []
+    
+    # Initialise bins -----
+    bin_edges = utils.get_bin_edges(bins)
+
+    # Compute cumulative density functions -----
+    cdf_cmp = utils.cdf(da_cmp, bin_edges=bin_edges, over_dims=ensemble_dim)
+    cdf_ref = utils.cdf(da_ref, bin_edges=bin_edges, over_dims=None)
+    
+    return utils.integrate((cdf_cmp - cdf_ref) ** 2, over_dim='bins') \
+                .mean(dim=over_dims, skipna=True).rename('rps')
+
+
+# ===================================================================================================
+def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5), 
+                nans_as_zeros=True):
+    """ 
+        Computes the relative frequency of an event for a range of probability threshold bins \
+                given the comparison likelihood and reference logical event data 
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the reliability
+        probability_bins : array_like, optional
+            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+        nans_as_zeros : bool, optional
+            Replace output nans (resulting fron bins with no data) with zeros
+            
+        Returns
+        -------
+        reliability : xarray DataSet
+            | Dataset containing the following variables:
+            | relative_freq; the relative frequency of occurence for each probability threshold bin
+            | cmp_number; the number of instances that the comparison data fall within each probability \
+                    threshold bin
+            | ref_occur; the number of instances that the reference data is True when the comparison data \
+                    falls within each probability threshold bin
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.reliability(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.Dataset>
+        Dimensions:          (probability_bin: 5, y: 3)
+        Coordinates:
+          * y                (y) int64 0 1 2
+          * probability_bin  (probability_bin) float64 0.0 0.25 0.5 0.75 1.0
+        Data variables:
+            relative_freq    (probability_bin, y) float64 0.0 0.5 0.0 ... 1.0 0.0 0.0
+            cmp_number       (probability_bin, y) int64 0 2 1 2 0 1 0 0 0 0 1 1 1 0 0
+            ref_occur        (probability_bin, y) int64 0 1 0 1 0 0 0 0 0 0 0 1 1 0 0
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
+    """
+    
+    if over_dims is None:
+        over_dims = []
+        
+    ref_binary = ref_logical.copy()*1
+        
+    # Check that comparison data is likelihoods and reference data is binary -----
+    if ((cmp_likelihood > 1).any().item()) | ((cmp_likelihood < 0).any().item()):
+        raise ValueError('Input "cmp_likelihood" must represent likelihoods and must have values between 0 and 1')
+    if not ((ref_logical == 0) | (ref_logical == 1)).all().item():
+        raise ValueError('Input "ref_logical" must represent logical (True/False) outcomes')
+    
+    # Initialise probability bins -----
+    probability_bin_edges = utils.get_bin_edges(probability_bins)
+
+    # Loop over probability bins -----
+    cmp_number_list = []
+    ref_occur_list = []
+    for idx in range(len(probability_bin_edges)-1):
+        # Logical of comparisons that fall within probability bin -----
+        cmp_in_bin = (cmp_likelihood >= probability_bin_edges[idx]) & \
+                     (cmp_likelihood < probability_bin_edges[idx+1])
+        
+        # Number of comparisons that fall within probability bin -----
+        cmp_number_list.append((1 * cmp_in_bin).sum(dim=over_dims, skipna=True))  
+        
+        # Number of reference occurences where comparison likelihood is within probability bin -----
+        ref_occur_list.append((1 * ((cmp_in_bin == True) & (ref_logical == True))) \
+                      .sum(dim=over_dims, skipna=True))
+    
+    # Concatenate lists -----
+    cmp_number = xr.concat(cmp_number_list, dim='probability_bin')
+    cmp_number['probability_bin'] = probability_bins       
+
+    ref_occur = xr.concat(ref_occur_list, dim='probability_bin')
+    ref_occur['probability_bin'] = probability_bins  
+
+    # Reference relative frequency -----
+    relative_freq = ref_occur / cmp_number
+
+    # Replace nans with zeros -----
+    if nans_as_zeros:
+        relative_freq = relative_freq.fillna(0)
+
+    # Package in dataset -----
+    reliability = relative_freq.to_dataset(name='relative_freq')
+    reliability.relative_freq.attrs['name'] = 'relative frequency'
+    reliability['cmp_number'] = cmp_number
+    reliability.cmp_number.attrs['name'] = 'number of comparisons in bin'
+    reliability['ref_occur'] = ref_occur
+    reliability.ref_occur.attrs['name'] = 'number of reference occurences when comparisons in bin'
+
+    return reliability
+
+
+# ===================================================================================================
+def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
+    """ 
+        Computes the relative operating characteristic of an event for a range of probability \
+                threshold bins given the comparison likelihood and reference logical event data 
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the relative operating characteristic
+        probability_bins : array_like, optional
+            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+            
+        Returns
+        -------
+        hit_rate : xarray DataSet
+            The hit rate in each probability bin
+        false_alarm_rate : xarray DataSet
+            The false alarm rate in each probability bin
+        area : xarray DataSet
+            The area under the roc curve (false alarm rate vs hit rate)
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.roc(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.Dataset>
+        Dimensions:           (probability_bin: 5, y: 3)
+        Coordinates:
+          * y                 (y) int64 0 1 2
+          * probability_bin   (probability_bin) float64 0.0 0.25 0.5 0.75 1.0
+        Data variables:
+            hit_rate          (probability_bin, y) float64 1.0 1.0 1.0 ... nan 0.0 0.0
+            false_alarm_rate  (probability_bin, y) float64 1.0 1.0 1.0 ... 0.0 0.0 0.0
+            area              (y) float64 0.0 0.0 0.0
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
+    """
+    
+    if over_dims is None:
+        over_dims = []
+    
+    ref_binary = ref_logical * 1
+
+    # Initialise probability bins -----
+    dprob = np.diff(probability_bins)/2
+    probability_bin_edges = probability_bins[:-1]+dprob
+    if np.any(probability_bin_edges >= 1.0):
+            raise ValueError('No element of probability_bins can exceed 1.0')
+
+    # Fill first probability bin with ones -----
+    all_ones = 0 * ref_binary.mean(dim=over_dims) + 1
+    hit_rate_list = [all_ones]
+    false_alarm_rate_list = [all_ones]
+    
+    # Loop over probability bins -----
+    for idx,probability_bin_edge in enumerate(probability_bin_edges):
+            
+        # Compute contingency table for current probability -----
+        category_edges = [-np.inf, probability_bin_edge, np.inf]
+        contingency = contingency(cmp_likelihood, ref_binary, 
+                                  category_edges, category_edges, over_dims=over_dims)
+        
+        # Add hit rate and false alarm rate to lists -----
+        hit_rate_list.append(hit_rate(contingency,yes_category=2))
+        false_alarm_rate_list.append(false_alarm_rate(contingency,yes_category=2))
+    
+    # Concatenate lists -----
+    hit_rate = xr.concat(hit_rate_list, dim='probability_bin')
+    hit_rate['probability_bin'] = probability_bins
+    false_alarm_rate = xr.concat(false_alarm_rate_list, dim='probability_bin')
+    false_alarm_rate['probability_bin'] = probability_bins
+    
+    # Calculate area under curve -----
+    dx = false_alarm_rate - false_alarm_rate.shift(**{'probability_bin':1})
+    dx = dx.fillna(0.0)
+    area = abs(((hit_rate.shift(**{'probability_bin':1}) + hit_rate) * dx / 2.0) \
+                 .fillna(0.0).sum(dim='probability_bin'))
+    
+    # Package in dataset -----
+    #     roc = hit_rate.to_dataset(name='hit_rate')
+    #     roc.hit_rate.attrs['name'] = 'hit rate'
+    #     roc['false_alarm_rate'] = false_alarm_rate
+    #     roc.false_alarm_rate.attrs['name'] = 'false alarm rate'
+    #     roc['area'] = area
+    #     roc.area.attrs['name'] = 'area under roc'
+    hit_rate.attrs['name'] = 'hit rate'
+    false_alarm_rate.attrs['name'] = 'false alarm rate'
+    area.attrs['name'] = 'area under roc'
+
+    return hit_rate, false_alarm_rate, area #roc
+
+
+# ===================================================================================================
+def discrimination(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1,5)):
+    """ 
+        Returns the discrimination diagram of an event; the histogram of comparison likelihood when \
+                references indicate the event has occurred and has not occurred
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the discrimantion histograms
+        probability_bins : array_like, optional
+            Probability threshold bins. Defaults to 5 equally spaced bins between 0 and 1
+            
+        Returns
+        -------
+        discrimination : xarray DataSet
+            | Dataset containing the following variables:
+            | hist_event; histogram of comparison likelihoods when reference data indicates that the \
+                    event has occurred
+            | hist_no_event; histogram of comparison likelihoods when reference data indicates that the \
+                    event has not occurred
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.discrimination(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.Dataset>
+        Dimensions:        (bins: 5, y: 3)
+        Coordinates:
+          * bins           (bins) float64 0.0 0.25 0.5 0.75 1.0
+          * y              (y) int64 0 1 2
+        Data variables:
+            hist_event     (bins, y) float64 0.0 0.0 nan 0.5 1.0 ... 0.0 nan 0.0 0.0 nan
+            hist_no_event  (bins, y) float64 0.0 0.0 0.0 1.0 ... 0.3333 0.0 0.0 0.3333
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
+    """
+    
+    # Initialise probability bins -----
+    probability_bin_edges = utils.get_bin_edges(probability_bins)
+
+    # Compute histogram of comparison likelihoods when reference is True/False -----
+    hist_event = utils.histogram(cmp_likelihood.where(ref_logical == True), 
+                                 probability_bin_edges, over_dims=over_dims) / \
+                                 (ref_logical == True).sum(dim=over_dims)
+    hist_no_event = utils.histogram(cmp_likelihood.where(ref_logical == False), 
+                                    probability_bin_edges, over_dims=over_dims) / \
+                                    (ref_logical == False).sum(dim=over_dims)
+    
+    # Package in dataset -----
+    discrimination = hist_event.to_dataset(name='hist_event')
+    discrimination.hist_event.attrs['name'] = 'histogram of comparison likelihood, yes event'
+    discrimination['hist_no_event'] = hist_no_event
+    discrimination.hist_no_event.attrs['name'] = 'histogram of comparison likelihood, no event'
+
+    return discrimination
+
+
+# ===================================================================================================
+def Brier_score(cmp_likelihood, ref_logical, over_dims, probability_bins=None):
+    """ 
+        Computes the Brier score(s) of an event given the comparison likelihood and reference logical \
+                event data. When comparison probability bins are also provided, this function also computes \
+                the reliability, resolution and uncertainty components of the Brier score, where Brier = \
+                reliability - resolution + uncertainty
+        
+        | Author: Dougie Squire
+        | Date: 10/05/2018
+        
+        Parameters
+        ----------
+        cmp_likelihood : xarray DataArray
+            Array containing likelihoods of the event from the comparison data (e.g. cmp_likelihood = \
+                    (da_cmp > 1).mean(dim='ensemble'))
+        ref_logical : xarray DataArray
+            Array containing logical (True/False) outcomes of the event from the reference data (e.g.\
+                    ref_logical = (da_ref > 1))
+        over_dims : str or sequence of str
+            Dimensions over which to compute the Brier score
+        probability_bins : array_like, optional
+            Probability threshold bins. If specified, this function also computes the reliability, \
+                    resolution and uncertainty components of the Brier score. Defaults to None
+            
+        Returns
+        -------
+        Brier : xarray DataArray or xarray DataSet
+            If probability_bins = None, returns a DataArray containing Brier scores. Otherwise returns \
+                    a DataSet containing the reliability, resolution and uncertainty components of the Brier \
+                    score, where Brier = reliability - resolution + uncertainty
+        
+        Examples
+        --------
+        >>> da_cmp = xr.DataArray(np.random.normal(size=(3,3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3)), 
+        ...                               ('ensemble', np.arange(3))])
+        >>> da_ref = xr.DataArray(np.random.normal(size=(3,3)), 
+        ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
+        >>> cmp_likelihood = (da_cmp > 0.1).mean('ensemble')
+        >>> ref_logical = da_ref > 0.1
+        >>> doppyo.skill.Brier_score(cmp_likelihood, ref_logical, over_dims='x')
+        <xarray.DataArray (y: 3)>
+        array([0.148148, 0.444444, 0.222222])
+        Coordinates:
+          * y        (y) int64 0 1 2
+        
+        Notes
+        -----
+        See http://www.cawcr.gov.au/projects/verification/
+
+        To do
+        
+        - Currently using a for-loop to process each probability bin separately. Is it possible \
+                to remove this loop?
+    """
+    
+    if over_dims is None:
+        over_dims = []   
+    N = (0*cmp_likelihood + 1).sum(dim=over_dims, skipna=True)
+
+    ref_binary = ref_logical.copy()*1
+    
+    # Calculate total Brier score -----
+    Brier = (1 / N) * ((cmp_likelihood - ref_binary) ** 2).sum(dim=over_dims, skipna=True) \
+                                                          .rename('Brier_score')
+        
+    # Calculate components
+    if probability_bins is not None:
+
+        # Initialise probability bins -----
+        probability_bin_edges = utils.get_bin_edges(probability_bins)
+
+        # Initialise mean_cmp_likelihood array -----
+        mean_cmp_likelihood = cmp_likelihood.copy(deep=True)
+        
+        # Loop over probability bins -----
+        mean_probability_bin_list = []
+        cmp_number_list = []
+        ref_occur_list = []
+        for idx in range(len(probability_bin_edges)-1):
+            # Logical of comparisons that fall within probability bin -----
+            cmp_in_bin = (cmp_likelihood >= probability_bin_edges[idx]) & \
+                         (cmp_likelihood < probability_bin_edges[idx+1])
+            
+            # Replace likelihood with mean likelihood (so that Brier components add to total) -----
+            mean_cmp_likelihood = mean_cmp_likelihood.where(~cmp_in_bin).fillna( \
+                                                     mean_cmp_likelihood.where(cmp_in_bin)
+                                                                        .mean(dim=over_dims, skipna=True))
+
+            # Mean comparison probability within current probability bin -----
+            mean_probability_bin_list.append(cmp_likelihood.where(cmp_in_bin,np.nan) \
+                                                    .mean(dim=over_dims, skipna=True)) 
+
+            # Number of comparisons that fall within probability bin -----
+            cmp_number_list.append(cmp_in_bin.sum(dim=over_dims, skipna=True))
+
+            # Number of reference occurences where comparison likelihood is within probability bin -----
+            ref_occur_list.append(((cmp_in_bin == True) & (ref_logical == True)) \
+                                    .sum(dim=over_dims)) 
+
+        # Concatenate lists -----
+        mean_probability_bin = xr.concat(mean_probability_bin_list, dim='probability_bin')
+        mean_probability_bin['probability_bin'] = probability_bins
+        cmp_number = xr.concat(cmp_number_list, dim='probability_bin')
+        cmp_number['probability_bin'] = probability_bins
+        ref_occur = xr.concat(ref_occur_list, dim='probability_bin')
+        ref_occur['probability_bin'] = probability_bins
+
+        # Compute Brier components -----
+        base_rate = ref_occur / cmp_number
+        Brier_reliability = (1 / N) * (cmp_number*(mean_probability_bin - base_rate) ** 2) \
+                                       .sum(dim='probability_bin', skipna=True)
+            
+        sample_clim = ref_binary.mean(dim=over_dims, skipna=True)
+        Brier_resolution = (1 / N) * (cmp_number*(base_rate - sample_clim) ** 2) \
+                                      .sum(dim='probability_bin', skipna=True)
+        Brier_uncertainty = sample_clim * (1 - sample_clim)
+        
+        # When a binned approach is used, compute total Brier using binned probabilities -----
+        # (This way Brier_total = Brier_reliability - Brier_resolution + Brier_uncertainty)
+        Brier_total = (1 / N) * ((mean_cmp_likelihood - ref_binary) ** 2) \
+                      .sum(dim=over_dims, skipna=True)
+        
+        # Package in dataset -----
+        Brier = Brier_total.to_dataset(name='Brier_total')
+        Brier.Brier_total.attrs['name'] = 'total Brier score'
+        Brier['Brier_reliability'] = Brier_reliability
+        Brier.Brier_reliability.attrs['name'] = 'reliability component of Brier score'
+        Brier['Brier_resolution'] = Brier_resolution
+        Brier.Brier_resolution.attrs['name'] = 'resolution component of Brier score'
+        Brier['Brier_uncertainty'] = Brier_uncertainty
+        Brier.Brier_uncertainty.attrs['name'] = 'uncertainty component of Brier score'
+        
+    return Brier
 
 
 # ===================================================================================================
