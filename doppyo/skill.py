@@ -10,7 +10,7 @@
 """
 
 __all__ = ['rank_histogram', 'rps', 'reliability', 'roc', 'discrimination', 'Brier_score', 
-           'contingency', '_sum_contingency', 'accuracy_score', 'Heidke_score', 'Peirce_score', 
+           'contingency_table', '_sum_contingency', 'accuracy_score', 'Heidke_score', 'Peirce_score', 
            'Gerrity_score', 'bias_score', 'hit_rate', 'false_alarm_ratio', 'false_alarm_rate', 
            'success_ratio', 'threat_score', 'equit_threat_score', 'odds_ratio', 
            'odds_ratio_skill_score', 'mean_additive_bias', 'mean_multiplicative_bias', 
@@ -33,7 +33,7 @@ from doppyo import utils
 # ===================================================================================================
 # Methods for categorized comparisons
 # ===================================================================================================
-def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
+def contingency_table(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dims):
     """ 
         Return the contingency table between da_cmp and da_ref for given categories
         
@@ -55,7 +55,7 @@ def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dim
             
         Returns
         -------
-        contingency : xarray DataArray
+        contingency_table : xarray DataArray
             Contingency table of input data
             
         Examples
@@ -66,7 +66,7 @@ def contingency(da_cmp, da_ref, category_edges_cmp, category_edges_ref, over_dim
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,5)
         >>> category_edges_ref = np.linspace(-2,2,5)
-        doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
+        doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
         ...                      category_edges_ref, over_dims=['x','y'])
         <xarray.DataArray 'contingency' (comparison_category: 4, reference_category: 4)>
         array([[0, 1, 0, 1],
@@ -116,7 +116,7 @@ def _sum_contingency(contingency, category='total'):
         Parameters
         ----------
         contingency : xarray DataArray
-            A contingency table of the form output from doppyo.skill.contingency
+            A contingency table of the form output from doppyo.skill.contingency_table
         category : str, optional
             Contingency table category to sum. Options are 'total', 'reference' and 'comparison'
             
@@ -133,8 +133,8 @@ def _sum_contingency(contingency, category='total'):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill._sum_contingency(contingency, category='reference')
         <xarray.DataArray 'contingency' (x: 3, category: 2)>
         array([[0, 3],
@@ -169,7 +169,7 @@ def accuracy_score(contingency):
         Parameters
         ----------
         contingency : xarray DataArray
-            A contingency table of the form output from doppyo.skill.contingency
+            A contingency table of the form output from doppyo.skill.contingency_table
             
         Returns
         -------
@@ -184,8 +184,8 @@ def accuracy_score(contingency):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,5)
         >>> category_edges_ref = np.linspace(-2,2,5)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.accuracy_score(contingency)
         <xarray.DataArray 'accuracy_score' (x: 3)>
         array([0.      , 0.333333, 0.333333])
@@ -215,7 +215,7 @@ def Heidke_score(contingency):
         Parameters
         ----------
         contingency : xarray DataArray
-            A contingency table of the form output from doppyo.skill.contingency
+            A contingency table of the form output from doppyo.skill.contingency_table
             
         Returns
         -------
@@ -230,8 +230,8 @@ def Heidke_score(contingency):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,5)
         >>> category_edges_ref = np.linspace(-2,2,5)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.Heidke_score(contingency)
         <xarray.DataArray 'Heidke_score' (x: 3)>
         array([-0.285714,  0.      ,  0.142857])
@@ -266,7 +266,7 @@ def Peirce_score(contingency):
         Parameters
         ----------
         contingency : xarray DataArray
-            A contingency table of the form output from doppyo.skill.contingency
+            A contingency table of the form output from doppyo.skill.contingency_table
             
         Returns
         -------
@@ -281,8 +281,8 @@ def Peirce_score(contingency):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,5)
         >>> category_edges_ref = np.linspace(-2,2,5)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.Peirce_score(contingency)
         <xarray.DataArray 'Peirce_score' (x: 3)>
         array([-0.25,  0.  , -0.5 ])
@@ -319,7 +319,7 @@ def Gerrity_score(contingency):
         Parameters
         ----------
         contingency : xarray DataArray
-            A contingency table of the form output from doppyo.skill.contingency
+            A contingency table of the form output from doppyo.skill.contingency_table
             
         Returns
         -------
@@ -334,8 +334,8 @@ def Gerrity_score(contingency):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,5)
         >>> category_edges_ref = np.linspace(-2,2,5)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.Gerrity_score(contingency)
         <xarray.DataArray 'Gerrity_score' (x: 3)>
         array([-2.777778e-01,  0.000000e+00, -5.551115e-17])
@@ -756,8 +756,8 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bins=np.linspace(0,1
             
         # Compute contingency table for current probability -----
         category_edges = [-np.inf, probability_bin_edge, np.inf]
-        contingency = contingency(cmp_likelihood, ref_binary, 
-                                  category_edges, category_edges, over_dims=over_dims)
+        contingency = contingency_table(cmp_likelihood, ref_binary, 
+                                        category_edges, category_edges, over_dims=over_dims)
         
         # Add hit rate and false alarm rate to lists -----
         hit_rate_list.append(hit_rate(contingency,yes_category=2))
@@ -1019,7 +1019,7 @@ def bias_score(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         yes_category : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1036,8 +1036,8 @@ def bias_score(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.bias_score(contingency)
         <xarray.DataArray 'bias_score' (x: 3)>
         array([0.5     , 0.333333, 1.      ])
@@ -1075,7 +1075,7 @@ def hit_rate(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         yes_category : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1092,8 +1092,8 @@ def hit_rate(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.hit_rate(contingency)
         <xarray.DataArray 'hit_rate' (x: 3)>
         array([ 0., nan,  1.])
@@ -1129,7 +1129,7 @@ def false_alarm_ratio(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         yes_category : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1146,8 +1146,8 @@ def false_alarm_ratio(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.false_alarm_ratio(contingency)
         <xarray.DataArray 'false_alarm_ratio' (x: 3)>
         array([nan, nan,  0.])
@@ -1183,7 +1183,7 @@ def false_alarm_rate(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         yes_category : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1200,8 +1200,8 @@ def false_alarm_rate(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.false_alarm_rate(contingency)
         <xarray.DataArray 'false_alarm_rate' (x: 3)>
         array([ 0.,  0., nan])
@@ -1237,7 +1237,7 @@ def success_ratio(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         success_ratio : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1254,8 +1254,8 @@ def success_ratio(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.success_ratio(contingency)
         <xarray.DataArray 'success_ratio' (x: 3)>
         array([nan, nan,  1.])
@@ -1291,7 +1291,7 @@ def threat_score(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         success_ratio : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1308,8 +1308,8 @@ def threat_score(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.threat_score(contingency)
         <xarray.DataArray 'threat_score' (x: 3)>
         array([0. , 0. , 0.5])
@@ -1347,7 +1347,7 @@ def equit_threat_score(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         success_ratio : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1364,8 +1364,8 @@ def equit_threat_score(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.equit_threat_score(contingency)
         <xarray.DataArray 'equit_threat_score' (x: 3)>
         array([0., 0., 0.])
@@ -1404,7 +1404,7 @@ def odds_ratio(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         success_ratio : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1421,8 +1421,8 @@ def odds_ratio(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.odds_ratio(contingency)
         <xarray.DataArray 'odds_ratio' (x: 3)>
         array([ 0.,  0., nan])
@@ -1462,7 +1462,7 @@ def odds_ratio_skill_score(contingency, yes_category=2):
         Parameters
         ----------
         contingency : xarray DataArray
-            A 2 category contingency table of the form output from doppyo.skill.contingency
+            A 2 category contingency table of the form output from doppyo.skill.contingency_table
         success_ratio : value, optional
             The coordinate value of the category corresponding to 'yes'
             
@@ -1479,8 +1479,8 @@ def odds_ratio_skill_score(contingency, yes_category=2):
         ...                       coords=[('x', np.arange(3)), ('y', np.arange(3))])
         >>> category_edges_cmp = np.linspace(-2,2,3)
         >>> category_edges_ref = np.linspace(-2,2,3)
-        >>> contingency = doppyo.skill.contingency(da_cmp, da_ref, category_edges_cmp, 
-        ...                                        category_edges_ref, over_dims='y')
+        >>> contingency = doppyo.skill.contingency_table(da_cmp, da_ref, category_edges_cmp, 
+        ...                                              category_edges_ref, over_dims='y')
         >>> doppyo.skill.odds_ratio_skill_score(contingency)
         <xarray.DataArray 'odds_ratio_skill' (x: 3)>
         array([-1., -1., nan])
