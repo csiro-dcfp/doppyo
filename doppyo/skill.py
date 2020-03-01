@@ -1873,7 +1873,8 @@ def sign_test(da_cmp1, da_cmp2, da_ref, time_dim='init_date', categorical=False)
     # z_alpha is the value at which the standardized cumulative Gaussian distributed exceeds alpha
     confidence = 1.95996496 * xr.ufuncs.sqrt(N) 
     
-    return sign_test.rename('sign_test'), confidence.rename('confidence')
+    return xr.merge([sign_test.to_dataset(name='sign_test'), 
+                     confidence.to_dataset(name='confidence')])
 
 
     
