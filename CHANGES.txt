@@ -1,5 +1,10 @@
+v0.0.3,
+
+	27/07/2020
+		adapt for xr.Dataset also instead of only xr.DataArray
+
 v0.0.1, 23/07/2018 -- Initial release.
-	
+
 	07/11/2018 -- merged from 20181031_squire_daskify
 		Added Sphinx-compatible docstrings, including examples, to all functions
 		Added sugar module for old/untested/arbitrary/un-doppyo-like functions
@@ -7,14 +12,14 @@ v0.0.1, 23/07/2018 -- Initial release.
 		Renamed a number of functions across all modules for clarity
 		Changed utils.digitize() to use new dask.digitize()
 		Made skill.rank_histogram() parallelizable
-		Replaced appropriate usages of utils.calc_gradient() with new xr.differentiate(). Renamed 
+		Replaced appropriate usages of utils.calc_gradient() with new xr.differentiate(). Renamed
 			utils.calc_gradient(), utils.differentiate_wrt() for differentiation over multi-
 			dimensional coordinates
 		Fixed bug in utils.xy_from_latlon()
 		Added utils.add() and utils.multiply() functions
-		Restructured utils.leadtime_to_datetime() and datetime_to_leadtime() to be simpler but only 
+		Restructured utils.leadtime_to_datetime() and datetime_to_leadtime() to be simpler but only
 			deal with times that have frequencies that can be determined from pandas.infer_freq()
-		Moved utils.bias_correction functions, skill.did_event(), skill.likelihood(), 
+		Moved utils.bias_correction functions, skill.did_event(), skill.likelihood(),
 			diagnostic.atmos_energy_cycle with loop_triple_terms to sugar
 		Added nan-catch to utils.histogram()
 		Added utils._equal_coords() for checking whether the coordinates of two xarray objects are equal

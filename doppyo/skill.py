@@ -93,7 +93,7 @@ def rank_histogram(da_cmp, da_ref, over_dims, norm=True, ensemble_dim='ensemble'
         raise ValueError('Cannot compute rank histogram with no independent dimensions')
 
     # Stack da_cmp and da_ref along ensemble dimension -----
-    if ensemble_dim not in da_ref.coords:
+    if ensemble_dim not in da_ref.dims:
         da_2 = da_ref.copy()
         da_2.coords[ensemble_dim] = -1
         da_2 = da_2.expand_dims(ensemble_dim)
@@ -254,9 +254,13 @@ def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.lins
     ref_binary = ref_logical.copy()*1
 
     # Check that comparison data is likelihoods and reference data is binary -----
-    if ((cmp_likelihood > 1).any()) or ((cmp_likelihood < 0).any()):
+    if isinstance(cmp_likelihood, xr.Dataset):
+        item_method = 'items'
+    elif isinstance(cmp_likelihood, xr.DataArray):
+        item_method = 'item'
+    if getattr((cmp_likelihood > 1).any(),item_method)() or getattr((cmp_likelihood < 0).any(),item_method)():
         raise ValueError(f'Input "cmp_likelihood" must represent likelihoods and must have values between 0 and 1, found {cmp_likelihood}, {(cmp_likelihood >1).any()} {(cmp_likelihood <0).any()}')
-    if not ((ref_logical == 0) | (ref_logical == 1)).all().item():
+    if not getattr(((ref_logical == 0) | (ref_logical == 1)).all(), item_method)():
         raise ValueError('Input "ref_logical" must represent logical (True/False) outcomes')
 
     # Initialise probability bins -----

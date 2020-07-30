@@ -1,4 +1,4 @@
-from doppyo.skill import Heidke_score, accuracy_score, Heidke_score, bias_score, Peirce_score,Gerrity_score, rank_histogram, Brier_score, contingency,threat_score,odds_ratio_skill_score, hit_rate,false_alarm_rate, false_alarm_ratio,discrimination, success_ratio, equit_threat_score,odds_ratio, rps, mean_multiplicative_bias,Pearson_corrcoeff, roc, mean_absolute_error,mean_squared_error,rms_error
+from doppyo.skill import Heidke_score, accuracy_score, Heidke_score, bias_score, Peirce_score,Gerrity_score, rank_histogram, Brier_score, contingency,threat_score,odds_ratio_skill_score, hit_rate,false_alarm_rate, false_alarm_ratio,discrimination, success_ratio, equit_threat_score,odds_ratio, rps, mean_multiplicative_bias,Pearson_corrcoeff, roc, reliability, mean_absolute_error,mean_squared_error,rms_error
 import numpy as np
 import xarray as xr
 import pytest
@@ -14,7 +14,7 @@ equit_threat_score,odds_ratio,odds_ratio_skill_score, success_ratio,false_alarm_
 
 distance_metrics = [mean_multiplicative_bias,rms_error, Pearson_corrcoeff,mean_absolute_error, mean_squared_error]
 
-probabilistic_metrics = [rank_histogram, Brier_score, rps, roc,discrimination]
+probabilistic_metrics = [rank_histogram, Brier_score, rps, roc, discrimination, reliability]
 
 
 
@@ -97,7 +97,7 @@ def test_2_contingency_skill_ds(ds_cmp, ds_ref, category_2_edges_cmp, category_2
 @pytest.mark.parametrize('skill', probabilistic_metrics)
 def test_probabilistic_skill_da(da_cmp_ensemble, da_ref, skill, bins, probability_bin_edges, over_dims):
     skill_name = skill.__name__
-    if skill_name in ['Brier_score','roc','discrimination']:
+    if skill_name in ['Brier_score','roc','discrimination','reliability']:
         da_cmp_ensemble = (da_cmp_ensemble > .1).mean('ensemble')
         da_ref = da_ref > 0.1
     if skill_name in ['rps']:
@@ -112,11 +112,11 @@ def test_probabilistic_skill_da(da_cmp_ensemble, da_ref, skill, bins, probabilit
     else:
         skill(da_cmp_ensemble, da_ref, over_dims)
 
-@pytest.mark.parametrize('over_dims', ['x','y',['x','y']])
+@pytest.mark.parametrize('over_dims', ['x','y',['x','y'],None])
 @pytest.mark.parametrize('skill', probabilistic_metrics)
 def test_probabilistic_skill_ds(skill, ds_cmp_ensemble, ds_ref, bins, probability_bin_edges, over_dims):
     skill_name = skill.__name__
-    if skill_name in ['Brier_score', 'roc','discrimination']:
+    if skill_name in ['Brier_score', 'roc','discrimination','reliability']:
         ds_cmp_ensemble = (ds_cmp_ensemble > .1).mean('ensemble')
         ds_ref = ds_ref > 0.1
     if skill_name in ['rps']:

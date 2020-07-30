@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="doppyo",
-    version="0.0.2",
+    version="0.0.3",
     author="Dougie Squire",
     author_email="dougie.squire@csiro.au",
     description="Diagnostics and verification package",
