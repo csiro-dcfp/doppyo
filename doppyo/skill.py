@@ -254,14 +254,25 @@ def reliability(cmp_likelihood, ref_logical, over_dims, probability_bins=np.lins
     ref_binary = ref_logical.copy()*1
 
     # Check that comparison data is likelihoods and reference data is binary -----
+    def check_likelihood_in_0_1(cmp_likelihood):
+        if (cmp_likelihood > 1).any() or (cmp_likelihood < 0).any():
+            raise ValueError(f'Input "cmp_likelihood" must represent likelihoods and must have values between 0 and 1, in {cmp_likelihood.name} found {cmp_likelihood}, {(cmp_likelihood >1).any()} {(cmp_likelihood <0).any()}')
+
+    def check_logical(ref_logical):
+        if not ((ref_logical == 0) | (ref_logical == 1)).all():
+            raise ValueError(f'Input "ref_logical" must represent logical (True/False) outcomes, in {ref_logical.name} found {ref_logical}')
+
     if isinstance(cmp_likelihood, xr.Dataset):
-        item_method = 'items'
+        cmp_likelihood.map(check_likelihood_in_0_1)
     elif isinstance(cmp_likelihood, xr.DataArray):
-        item_method = 'item'
-    if getattr((cmp_likelihood > 1).any(),item_method)() or getattr((cmp_likelihood < 0).any(),item_method)():
-        raise ValueError(f'Input "cmp_likelihood" must represent likelihoods and must have values between 0 and 1, found {cmp_likelihood}, {(cmp_likelihood >1).any()} {(cmp_likelihood <0).any()}')
-    if not getattr(((ref_logical == 0) | (ref_logical == 1)).all(), item_method)():
-        raise ValueError('Input "ref_logical" must represent logical (True/False) outcomes')
+        check_likelihood_in_0_1(cmp_likelihood)
+
+    if isinstance(ref_logical, xr.Dataset):
+        ref_logical.map(check_logical)
+    elif isinstance(ref_logical, xr.DataArray):
+        check_logical(ref_logical)
+
+
 
     # Initialise probability bins -----
     probability_bin_edges = utils.get_bin_edges(probability_bins)
