@@ -760,9 +760,17 @@ def roc(cmp_likelihood, ref_logical, over_dims, probability_bin_edges=np.linspac
     roc_false_alarm_rate['probability_bin_edge'] = probability_bin_edges
     
     # Calculate area under curve -----
-    dx = roc_false_alarm_rate - roc_false_alarm_rate.shift(**{'probability_bin_edge':1})
+    false_alarm_rate_for_area = xr.concat([(1+0*roc_false_alarm_rate).isel(probability_bin_edge=0).assign_coords({'probability_bin_edge':0}),
+                                           roc_false_alarm_rate,
+                                           (0*roc_false_alarm_rate).isel(probability_bin_edge=-1).assign_coords({'probability_bin_edge':1.1})],
+                                          dim='probability_bin_edge')
+    hit_rate_for_area = xr.concat([(1+0*roc_hit_rate).isel(probability_bin_edge=0).assign_coords({'probability_bin_edge':0}),
+                                   roc_hit_rate,
+                                   (0*roc_hit_rate).isel(probability_bin_edge=-1).assign_coords({'probability_bin_edge':1.1})],
+                                  dim='probability_bin_edge')
+    dx = false_alarm_rate_for_area - false_alarm_rate_for_area.shift(**{'probability_bin_edge':1})
     dx = dx.fillna(0.0)
-    area = abs(((roc_hit_rate.shift(**{'probability_bin_edge':1}) + roc_hit_rate) * dx / 2.0) \
+    area = abs(((hit_rate_for_area.shift(**{'probability_bin_edge':1}) + hit_rate_for_area) * dx / 2.0) \
                  .fillna(0.0).sum(dim='probability_bin_edge'))
     
     # Package in dataset -----
@@ -1792,8 +1800,8 @@ def Pearson_corrcoeff(da_cmp, da_ref, over_dims, subtract_local_mean=True):
     difference_dims = list(set(over_dims_in_cmp).difference(set(over_dims_in_ref)))
 
     # Get overlapping coordinates so that normalisations and subtracted means are correct ----
-    da_cmp_overlap = da_cmp.where(da_ref)
-    da_ref_overlap = da_ref.where(da_cmp)
+    da_cmp_overlap = da_cmp.where(xr.ufuncs.isfinite(da_ref))
+    da_ref_overlap = da_ref.where(xr.ufuncs.isfinite(da_cmp))
 
     if subtract_local_mean:
         cov = ((da_cmp_overlap - da_cmp_overlap.mean(intersection_dims)) * 

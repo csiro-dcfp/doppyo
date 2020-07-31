@@ -2107,7 +2107,69 @@ def repeat_datapoint(da, coord, coord_val):
 
 
 # ===================================================================================================
-def get_latlon_region(da, box):
+# def get_latlon_region(da, box):
+#     """
+#         Returns an array containing those elements of the input array that fall within the provided\
+#                 lat-lon box
+        
+#         | Author: Dougie Squire
+#         | Date: 04/04/2018
+        
+#         Parameters
+#         ----------
+#         da : xarray DataArray
+#             Array to extract lat-lon box from
+#         box : array_like
+#             Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]
+            
+#         Returns
+#         -------
+#         reduced : xarray DataArray
+#             Array containing those elements of the input array that fall within the box
+            
+#         Examples
+#         --------
+#         >>> A = xr.DataArray(np.random.normal(size=(180,360)), 
+#         ...                  coords=[('lat', np.arange(-90,90,1)),('lon', np.arange(-280,80,1))])
+#         >>> doppyo.utils.get_latlon_region(A, [-10, 10, 70, 90])
+#         <xarray.DataArray (lat: 21, lon: 21)>
+#         array([[ 0.854745,  1.53709 ,  0.491165, ..., -0.675664,  1.572102, -0.931492],
+#                [ 0.570822,  0.60621 , -0.125524, ..., -1.731507,  0.853652,  0.845369],
+#                [-0.061811,  0.758512,  1.215573, ..., -1.275482,  2.668203,  0.791314],
+#                ...,
+#                [-0.263597,  0.102755, -2.775252, ..., -0.736136,  0.944762,  0.005952],
+#                [ 0.009949,  0.409897, -0.138621, ...,  1.054246,  1.30817 , -0.539534],
+#                [ 1.281245, -0.792166, -1.736007, ...,  0.474207, -0.781518,  0.738593]])
+#         Coordinates:
+#           * lat      (lat) int64 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10
+#           * lon      (lon) int64 -280 -279 -278 -277 -276 -275 ... 74 75 76 77 78 79
+#     """
+
+#     lat_name = get_lat_name(da)
+#     lon_name = get_lon_name(da)
+    
+#     if box[2] < 0:
+#         box[2] = box[2]+360
+#     if box[3] < 0:
+#         box[3] = box[3]+360
+        
+#     # Make sure lats are organised in same way between da and box -----
+#     if da[lat_name][-1] < da[lat_name][0]:
+#         box = [box[1], box[0], box[2], box[3]]
+        
+#     # Account for datasets with negative longitudes -----
+#     if np.any(da[lon_name] < 0):
+#         lons = da[lon_name].values
+#         lons_pos = np.where(lons < 0, lons+360, lons)
+#         idx = np.where((lons_pos >= box[2]) & (lons_pos <= box[3]))[0]
+#         if np.all(np.diff(idx)[0] == np.diff(idx)):
+#             return da.sel({lat_name : slice(box[0],box[1])}).isel({lon_name : slice(idx[0],idx[-1])})
+#         else:
+#             return da.sel({lat_name : slice(box[0],box[1])}).isel({lon_name : idx})
+#     else:
+#         return da.sel({lat_name : slice(box[0],box[1]), lon_name : slice(box[2],box[3])})
+    
+def get_latlon_region(ds, box, wrap_lons=True):
     """
         Returns an array containing those elements of the input array that fall within the provided\
                 lat-lon box
@@ -2117,10 +2179,12 @@ def get_latlon_region(da, box):
         
         Parameters
         ----------
-        da : xarray DataArray
+        ds : xarray DataArray or Dataset
             Array to extract lat-lon box from
         box : array_like
-            Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]
+            Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max] where -90 <= lat < 90, 0 <= lon < 306
+        wrap_lons : boolean, optional
+            Wrap longitude values of da into the range between 0 and 360
             
         Returns
         -------
@@ -2145,33 +2209,19 @@ def get_latlon_region(da, box):
           * lon      (lon) int64 -280 -279 -278 -277 -276 -275 ... 74 75 76 77 78 79
     """
 
-    lat_name = get_lat_name(da)
-    lon_name = get_lon_name(da)
+    lat_name = get_lat_name(ds)
+    lon_name = get_lon_name(ds)
+        
+    if wrap_lons:
+        ds = ds.assign_coords({lon_name: (ds[lon_name] + 360)  % 360})
     
-    if box[2] < 0:
-        box[2] = box[2]+360
-    if box[3] < 0:
-        box[3] = box[3]+360
-        
-    # Make sure lats are organised in same way between da and box -----
-    if da[lat_name][-1] < da[lat_name][0]:
-        box = [box[1], box[0], box[2], box[3]]
-        
-    # Account for datasets with negative longitudes -----
-    if np.any(da[lon_name] < 0):
-        lons = da[lon_name].values
-        lons_pos = np.where(lons < 0, lons+360, lons)
-        idx = np.where((lons_pos >= box[2]) & (lons_pos <= box[3]))[0]
-        if np.all(np.diff(idx)[0] == np.diff(idx)):
-            return da.sel({lat_name : slice(box[0],box[1])}).isel({lon_name : slice(idx[0],idx[-1])})
-        else:
-            return da.sel({lat_name : slice(box[0],box[1])}).isel({lon_name : idx})
-    else:
-        return da.sel({lat_name : slice(box[0],box[1]), lon_name : slice(box[2],box[3])})
+    region = ((ds[lat_name] >= box[0]) & (ds[lat_name] <= box[1])) & ((ds[lon_name] >= box[2]) & (ds[lon_name] <= box[3]))
+    
+    return ds.where(region)
 
     
 # ===================================================================================================
-def latlon_average(da, box):
+def latlon_average(ds, box, wrap_lons=True):
     '''
         Returns the average of the input array over a provide lat-lon box, 
         
@@ -2180,10 +2230,12 @@ def latlon_average(da, box):
        
         Parameters
         ----------
-        da : xarray DataArray
+        ds : xarray DataArray or Dataset
             Array to average lat-lon box from
         box : array_like
             Edges of lat-lon box in the format [lat_min, lat_max, lon_min, lon_max]
+        wrap_lons : boolean
+            Wrap longitude values of ds into the range between 0 and 360
             
         Returns
         -------
@@ -2199,10 +2251,17 @@ def latlon_average(da, box):
         array(-0.056776)
     '''
     
-    lat_name = get_lat_name(da)
-    lon_name = get_lon_name(da)
+    lat_name = get_lat_name(ds)
+    lon_name = get_lon_name(ds)
     
-    return get_latlon_region(da, box).mean(dim=[lat_name, lon_name])
+    if (lat_name in ds.dims) and (lon_name in ds.dims):
+        return get_latlon_region(ds, box, wrap_lons).mean(dim=[lat_name, lon_name])
+    elif (lat_name in ds.dims) and (lon_name not in ds.dims):
+        return get_latlon_region(ds, box, wrap_lons).mean(dim=set([lat_name, *ds[lon_name].dims]))
+    elif (lat_name not in ds.dims) and (lon_name in ds.dims):
+        return get_latlon_region(ds, box, wrap_lons).mean(dim=set([*ds[lat_name].dims, lon_name]))
+    else:
+        return get_latlon_region(ds, box, wrap_lons).mean(dim=set([*ds[lat_name].dims, *ds[lon_name].dims]))
 
 
 # ===================================================================================================
@@ -2251,25 +2310,45 @@ def stack_by_init_date(da, init_dates, N_lead_steps, init_date_name='init_date',
           * init_date  (init_date) datetime64[ns] 1999-11-01 1999-12-01 2000-01-01
     """
 
+    freq = pd.infer_freq(da[time_name].values)
+    if freq is None:
+        raise ValueError('Cannot determine frequency of input timeseries')
+    
     init_list = []
     for init_date in init_dates:
         start_index = np.where(da[time_name] == np.datetime64(init_date))[0]
-        
-        # If init_date falls outside time bounds, fill with nans -----
+
         if start_index.size == 0:
-            da_nan = np.nan * da.isel({time_name:range(0, N_lead_steps)})
-            da_nan[time_name] = pd.date_range(init_date, periods=N_lead_steps, freq=pd.infer_freq(da[time_name].values))
-            init_list.append(datetime_to_leadtime(da_nan))
+            end_index = np.where(da[time_name] == np.datetime64(pd.DatetimeIndex([init_date]).shift(N_lead_steps, freq=freq)[0]))[0]
+            if end_index.size == 0:
+                da_nan = np.nan * da.isel({time_name:range(0, N_lead_steps)})
+                init_list.append(da_nan.assign_coords({time_name: np.arange(0, N_lead_steps)}) \
+                                       .expand_dims({init_date_name: [init_date]}) \
+                                       .rename({time_name: lead_time_name}))
+            else:
+                end_index = end_index.item()
+                start_index = end_index - N_lead_steps
+                if start_index < 0:
+                    hang = -start_index
+                    start_index = 0
+                else: hang = 0
+                init_list.append(da.isel({time_name:range(start_index, end_index)}) \
+                                   .assign_coords({time_name: np.arange(0, end_index-start_index)+hang}) \
+                                   .expand_dims({init_date_name: [init_date]}) \
+                                   .rename({time_name: lead_time_name}))
         else:
             start_index = start_index.item()
             end_index = min([start_index + N_lead_steps, len(da[time_name])])
-            if (end_index - start_index) < 3: # Cannot determine frequency with less than three times - fill with nans
-                da_nan = np.nan * da.isel({time_name:range(0, N_lead_steps)})
-                da_nan[time_name] = pd.date_range(init_date, periods=N_lead_steps, freq=pd.infer_freq(da[time_name].values))
-                init_list.append(datetime_to_leadtime(da_nan))
-            else:
-                init_list.append(datetime_to_leadtime(da.isel({time_name:range(start_index, end_index)})))
-    return xr.concat(init_list, dim=init_date_name)
+            
+            init_list.append(da.isel({time_name:range(start_index, end_index)}) \
+                               .assign_coords({time_name: np.arange(0, end_index-start_index)}) \
+                               .expand_dims({init_date_name: [init_date]}) \
+                               .rename({time_name: lead_time_name}))
+            
+    stacked = xr.concat(init_list, dim=init_date_name)
+    stacked[lead_time_name].attrs['units'] = freq
+    
+    return stacked
 
 
 # ===================================================================================================
@@ -2483,19 +2562,19 @@ def get_time_name(da):
     """
     
     look_fors = ['time']
-    dims = []
+    coords = []
     for look_for in look_fors:
-        found = [look_for in dim for dim in da.dims]
+        found = [look_for in dim for dim in da.coords]
         if sum(found) > 1:
-            dims += list(compress(da.dims, found))
+            coords += list(compress(da.coords, found))
         elif sum(found) == 1:
-            dims.append(list(compress(da.dims, found))[0])
-    if dims == []:
+            coords.append(list(compress(da.coords, found))[0])
+    if coords == []:
         raise KeyError('Unable to determine time dimension')
-    elif len(dims) == 1:
-        return dims[0]
+    elif len(coords) == 1:
+        return coords[0]
     else:
-        return dims
+        return coords
         
 
 # ===================================================================================================
@@ -2526,19 +2605,19 @@ def get_lon_name(da):
     """
     
     look_fors = ['lon', 'xt', 'xu']
-    dims = []
+    coords = []
     for look_for in look_fors:
-        found = [look_for in dim for dim in da.dims]
+        found = [look_for in dim for dim in da.coords]
         if sum(found) > 1:
-            dims += list(compress(da.dims, found))
+            coords += list(compress(da.coords, found))
         elif sum(found) == 1:
-            dims.append(list(compress(da.dims, found))[0])
-    if dims == []:
+            coords.append(list(compress(da.coords, found))[0])
+    if coords == []:
         raise KeyError('Unable to determine longitude dimension')
-    elif len(dims) == 1:
-        return dims[0]
+    elif len(coords) == 1:
+        return coords[0]
     else:
-        return dims
+        return coords
 
 
 # ===================================================================================================
@@ -2569,19 +2648,19 @@ def get_lat_name(da):
     """
     
     look_fors = ['lat', 'yt', 'yu']
-    dims = []
+    coords = []
     for look_for in look_fors:
-        found = [look_for in dim for dim in da.dims]
+        found = [look_for in dim for dim in da.coords]
         if sum(found) > 1:
-            dims += list(compress(da.dims, found))
+            coords += list(compress(da.coords, found))
         elif sum(found) == 1:
-            dims.append(list(compress(da.dims, found))[0])
-    if dims == []:
+            coords.append(list(compress(da.coords, found))[0])
+    if coords == []:
         raise KeyError('Unable to determine latitude dimension')
-    elif len(dims) == 1:
-        return dims[0]
+    elif len(coords) == 1:
+        return coords[0]
     else:
-        return dims
+        return coords
     
     
 # ===================================================================================================
@@ -2612,19 +2691,19 @@ def get_depth_name(da):
     """
     
     look_fors = ['depth', 'st']
-    dims = []
+    coords = []
     for look_for in look_fors:
-        found = [look_for in dim for dim in da.dims]
+        found = [look_for in dim for dim in da.coords]
         if sum(found) > 1:
-            dims += list(compress(da.dims, found))
+            coords += list(compress(da.coords, found))
         elif sum(found) == 1:
-            dims.append(list(compress(da.dims, found))[0])
-    if dims == []:
+            coords.append(list(compress(da.coords, found))[0])
+    if coords == []:
         raise KeyError('Unable to determine depth dimension')
-    elif len(dims) == 1:
-        return dims[0]
+    elif len(coords) == 1:
+        return coords[0]
     else:
-        return dims
+        return coords
     
     
 # ===================================================================================================
@@ -2655,19 +2734,19 @@ def get_level_name(da):
     """
     
     look_fors = ['level']
-    dims = []
+    coords = []
     for look_for in look_fors:
-        found = [look_for in dim for dim in da.dims]
+        found = [look_for in dim for dim in da.coords]
         if sum(found) > 1:
-            dims += list(compress(da.dims, found))
+            coords += list(compress(da.coords, found))
         elif sum(found) == 1:
-            dims.append(list(compress(da.dims, found))[0])
-    if dims == []:
+            coords.append(list(compress(da.coords, found))[0])
+    if coords == []:
         raise KeyError('Unable to determine level dimension')
-    elif len(dims) == 1:
-        return dims[0]
+    elif len(coords) == 1:
+        return coords[0]
     else:
-        return dims
+        return coords
     
 
 # ===================================================================================================
@@ -2698,19 +2777,19 @@ def get_plevel_name(da):
     """
     
     look_fors = ['level']
-    dims = []
+    coords = []
     for look_for in look_fors:
-        found = [look_for in dim for dim in da.dims]
+        found = [look_for in dim for dim in da.coords]
         if sum(found) > 1:
-            dims += list(compress(da.dims, found))
+            coords += list(compress(da.coords, found))
         elif sum(found) == 1:
-            dims.append(list(compress(da.dims, found))[0])
-    if dims == []:
+            coords.append(list(compress(da.coords, found))[0])
+    if coords == []:
         raise KeyError('Unable to determine pressure level dimension')
-    elif len(dims) == 1:
-        return dims[0]
+    elif len(coords) == 1:
+        return coords[0]
     else:
-        return dims
+        return coords
 
     
 # ===================================================================================================

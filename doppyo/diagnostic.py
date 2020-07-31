@@ -2097,7 +2097,7 @@ def inband_variance(da, dim, bounds, nwindow, overlap=50):
 # ===================================================================================================
 # Indices
 # ===================================================================================================
-def nino3(sst_anom):
+def nino3(sst_anom, wrap_lons=True):
     """ 
         Returns Nino-3 index 
         
@@ -2108,6 +2108,8 @@ def nino3(sst_anom):
         ----------
         sst_anom : xarray DataArray
             Array containing sea surface temperature anomalies
+        wrap_lons : boolean, optional
+            Wrap longitude values of da into the range between 0 and 360
             
         Returns
         -------
@@ -2133,11 +2135,11 @@ def nino3(sst_anom):
     
     box = [-5.0,5.0,210.0,270.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(sst_anom, box)
+    return utils.latlon_average(sst_anom, box, wrap_lons)
 
 
 # ===================================================================================================
-def nino34(sst_anom):
+def nino34(sst_anom, wrap_lons=True):
     """ 
         Returns Nino-3.4 index 
         
@@ -2148,6 +2150,8 @@ def nino34(sst_anom):
         ----------
         sst_anom : xarray DataArray
             Array containing sea surface temperature anomalies
+        wrap_lons : boolean, optional
+            Wrap longitude values of da into the range between 0 and 360
             
         Returns
         -------
@@ -2173,11 +2177,11 @@ def nino34(sst_anom):
     
     box = [-5.0,5.0,190.0,240.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(sst_anom, box)
+    return utils.latlon_average(sst_anom, box, wrap_lons)
 
 
 # ===================================================================================================
-def nino4(sst_anom):
+def nino4(sst_anom, wrap_lons=True):
     """ 
         Returns Nino-4 index 
         
@@ -2188,6 +2192,8 @@ def nino4(sst_anom):
         ----------
         sst_anom : xarray DataArray
             Array containing sea surface temperature anomalies
+        wrap_lons : boolean, optional
+            Wrap longitude values of da into the range between 0 and 360
             
         Returns
         -------
@@ -2213,11 +2219,11 @@ def nino4(sst_anom):
     
     box = [-5.0,5.0,160.0,210.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    return utils.latlon_average(sst_anom, box)
+    return utils.latlon_average(sst_anom, box, wrap_lons)
 
 
 # ===================================================================================================
-def emi(sst_anom):
+def emi(sst_anom, wrap_lons=True):
     """ 
         Returns El Nino Modoki index
         
@@ -2228,6 +2234,8 @@ def emi(sst_anom):
         ----------
         sst_anom : xarray DataArray
             Array containing sea surface temperature anomalies
+        wrap_lons : boolean, optional
+            Wrap longitude values of da into the range between 0 and 360
             
         Returns
         -------
@@ -2255,15 +2263,15 @@ def emi(sst_anom):
     boxB = [-15.0,5.0,360.0-110.0,360.0-70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxC = [-10.0,20.0,125.0,145.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    da_sstA = utils.latlon_average(sst_anom, boxA)
-    da_sstB = utils.latlon_average(sst_anom, boxB)
-    da_sstC = utils.latlon_average(sst_anom, boxC)
+    da_sstA = utils.latlon_average(sst_anom, boxA, wrap_lons)
+    da_sstB = utils.latlon_average(sst_anom, boxB, wrap_lons)
+    da_sstC = utils.latlon_average(sst_anom, boxC, wrap_lons)
     
     return (da_sstA - 0.5*da_sstB - 0.5*da_sstC)
 
 
 # ===================================================================================================
-def dmi(sst_anom):
+def dmi(sst_anom, wrap_lons=True):
     """ 
         Returns dipole mode index 
         
@@ -2274,6 +2282,8 @@ def dmi(sst_anom):
         ----------
         sst_anom : xarray DataArray
             Array containing sea surface temperature anomalies
+        wrap_lons : boolean, optional
+            Wrap longitude values of da into the range between 0 and 360
             
         Returns
         -------
@@ -2300,8 +2310,8 @@ def dmi(sst_anom):
     boxW = [-10.0,10.0,50.0,70.0] # [lat_min,lat_max,lon_min,lon_max]
     boxE = [-10.0,0.0,90.0,110.0] # [lat_min,lat_max,lon_min,lon_max]
         
-    da_W = utils.latlon_average(sst_anom, boxW)
-    da_E = utils.latlon_average(sst_anom, boxE)
+    da_W = utils.latlon_average(sst_anom, boxW, wrap_lons)
+    da_E = utils.latlon_average(sst_anom, boxE, wrap_lons)
     
     return (da_W - da_E)
 
@@ -2378,7 +2388,7 @@ def soi(slp_anom, persist_std=False, lat_name=None, lon_name=None, time_name=Non
 
 
 # ===================================================================================================
-def sam(slp_anom, lat_name=None, lon_name=None, time_name=None):
+def sam(slp_anom, persist_std=False, lat_name=None, lon_name=None, time_name=None):
     """
         Returns southern annular mode index as defined by Gong, D. and Wang, S., 1999. Definition \
             of Antarctic oscillation index. Geophysical research letters, 26(4), pp.459-462.
@@ -2390,6 +2400,8 @@ def sam(slp_anom, lat_name=None, lon_name=None, time_name=None):
         ----------
         slp_anom : xarray DataArray
             Array containing sea level pressure anomalies
+        persist_std : boolean, optional
+            If True, persist the standard deviation prior to computing. This may be required for very large calculations
         lat_name : str, optional
             Name of the latitude dimension. If None, doppyo will attempt to determine lat_name \
                     automatically
@@ -2412,8 +2424,8 @@ def sam(slp_anom, lat_name=None, lon_name=None, time_name=None):
         ...                    ('time', pd.date_range('2000-01-01', periods=24, freq='M'))])
         >>> slp_clim = slp.groupby('time.month').mean(dim='time')
         >>> slp_anom = doppyo.utils.anomalize(slp, slp_clim)
-        >>> doppyo.diagnostic.soi(slp_anom)
-        <xarray.DataArray 'soi' (time: 24)>
+        >>> doppyo.diagnostic.sam(slp_anom)
+        <xarray.DataArray 'sam' (time: 24)>
         array([ 0.355277,  0.38263 ,  0.563005, -1.256122, -1.252341,  0.202942,
                 0.691819,  0.412523, -1.368695,  0.421943,  2.349053,  0.069382,
                -0.355277, -0.38263 , -0.563005,  1.256122,  1.252341, -0.202942,
@@ -2428,14 +2440,21 @@ def sam(slp_anom, lat_name=None, lon_name=None, time_name=None):
         lon_name = utils.get_lon_name(slp_anom)
     if time_name is None:
         time_name = utils.get_time_name(slp_anom)
+
+    slp_anom_40 = slp_anom.interp({lat_name: -40}).mean(lon_name)
+    slp_anom_65 = slp_anom.interp({lat_name: -65}).mean(lon_name)
+
+    slp_anom_40_group = slp_anom_40.groupby(time_name+'.month')
+    slp_anom_65_group = slp_anom_65.groupby(time_name+'.month')
     
-    slp_40 = slp_anom.interp({lat_name:-40}).mean(lon_name)
-    slp_40_stdzd = slp_40 / slp_40.std(dim=time_name)
-    
-    slp_65 = slp_anom.interp({lat_name:-65}).mean(lon_name)
-    slp_65_stdzd = slp_65 / slp_65.std(dim=time_name)
-    
-    return (slp_40_stdzd - slp_65_stdzd).rename('sam')
+    if persist_std:
+        std_40 = slp_anom_40_group.std(time_name).persist(); wait(std_40)
+        std_65 = slp_anom_65_group.std(time_name).persist(); wait(std_65)
+        return  (slp_anom_40_group / std_40).drop('month') - \
+                (slp_anom_65_group / std_65).drop('month')
+    else:
+        return  (slp_anom_40_group / slp_anom_40_group.std(time_name)).drop('month') - \
+                (slp_anom_65_group / slp_anom_65_group.std(time_name)).drop('month')
 
 
 # ===================================================================================================
