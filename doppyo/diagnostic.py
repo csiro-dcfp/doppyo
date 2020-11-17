@@ -891,7 +891,7 @@ def eofs(da, sensor_dims, sample_dim='time', weight=None, n_modes=20, lat_name=N
         sample_dim : str, optional
             EOFs sample dimension. Usually 'time'.
         weight : xarray DataArray
-            Weighting to apply prior to svd. If weight=None, cos(lat)^2 weighting are used.
+            Weighting to apply prior to svd. If weight=None, cos(lat)^0.5 weighting are used.
         n_modes : values, optional
             Number of EOF modes to return
         norm_PCs : boolean, optional
